@@ -27,8 +27,7 @@ public:
         , block(0)
         , position(0)
         , anchorPosition(0)
-    {
-    }
+    {}
 
     struct document_t* document;
     struct block_t* block;

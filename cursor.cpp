@@ -18,8 +18,8 @@ std::string cursor_t::selectedText()
     if (!hasSelection()) {
         return "";
     }
-
-    return "heya!";
+    // todo!
+    return "";
 }
 
 bool cursor_t::isNull()
@@ -88,8 +88,6 @@ void cursorInsertText(struct cursor_t* cursor, std::string t)
     std::string blockText = block.text();
     blockText.insert(cursor->position - block.position, t);
     block.setText(blockText);
-
-    cursor->document->update();
 }
 
 void cursorEraseText(struct cursor_t* cursor, int c)
@@ -115,7 +113,6 @@ void cursorEraseText(struct cursor_t* cursor, int c)
     }
 
     block.setText(blockText);
-    cursor->document->update();
 }
 
 void cursorSplitBlock(struct cursor_t* cursor)

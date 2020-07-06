@@ -4,10 +4,10 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include <cstring>
 #include <set>
 #include <string>
 #include <vector>
-#include <cstring>
 
 #include "cursor.h"
 #include "document.h"
@@ -54,7 +54,7 @@ void setupColors(theme_ptr theme)
     use_default_colors();
     start_color();
     for (int i = 0; i < 255; i++) {
-        init_pair(i, i, !(i%2) ? bg : selBg);
+        init_pair(i, i, !(i % 2) ? bg : selBg);
         // init_pair(i, i, bg);
     }
 
@@ -150,7 +150,7 @@ int editorReadKey()
     return c;
 }
 
-void renderEditor(struct editor_t &editor)
+void renderEditor(struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
     struct cursor_t cursor = doc->cursor();
@@ -161,25 +161,25 @@ void renderEditor(struct editor_t &editor)
     //-----------------
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    
+
     editor.viewX = 0;
     editor.viewY = 0;
     editor.viewWidth = w.ws_col;
     editor.viewHeight = w.ws_row - 1;
 
-    if (!editor.win) {   
+    if (!editor.win) {
         editor.win = newwin(editor.viewHeight, editor.viewWidth, 0, 0);
     }
 
     wresize(editor.win, editor.viewHeight, editor.viewWidth);
 
     // wclear(editor.win);
-    
+
     int offsetX = 0;
     int offsetY = 0;
     editor.cursorScreenX = 0;
     editor.cursorScreenY = 0;
-    
+
     // scroll
     while (block.lineNumber + 1 - editor.scrollY > editor.viewHeight) {
         editor.scrollY++;
@@ -222,7 +222,7 @@ void renderEditor(struct editor_t &editor)
     }
 }
 
-void renderStatus(WINDOW *win, struct editor_t &editor)
+void renderStatus(WINDOW* win, struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
     struct cursor_t cursor = doc->cursor();
@@ -248,7 +248,7 @@ void renderStatus(WINDOW *win, struct editor_t &editor)
     }
 }
 
-void renderCursor(struct editor_t &editor)
+void renderCursor(struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
     struct cursor_t cursor = doc->cursor();
@@ -262,7 +262,7 @@ void renderCursor(struct editor_t &editor)
         wmove(editor.win, 0, 0);
     }
 }
-    
+
 int main(int argc, char** argv)
 {
     struct editor_t editor;
@@ -274,14 +274,14 @@ int main(int argc, char** argv)
     char* filename = 0;
     char* theme = "Dracula";
     if (argc > 1) {
-        filename = argv[argc-1];
+        filename = argv[argc - 1];
     } else {
         return 0;
     }
 
-    for(int i=0;i<argc-1;i++) {
+    for (int i = 0; i < argc - 1; i++) {
         if (strcmp(argv[i], "-t") == 0) {
-            theme = argv[i+1];
+            theme = argv[i + 1];
         }
     }
 
@@ -300,7 +300,7 @@ int main(int argc, char** argv)
     raw();
     noecho();
     setupColors(editor.theme);
-    
+
     clear();
 
     int ch = 0;
@@ -311,12 +311,12 @@ int main(int argc, char** argv)
     while (!end) {
 
         curs_set(0);
-        
+
         renderEditor(editor);
         renderCursor(editor);
         wrefresh(editor.win);
-        
-        // renderStatus(statusWin, editor);        
+
+        // renderStatus(statusWin, editor);
         // wrefresh(statusWin);
 
         //-----------------
@@ -328,7 +328,6 @@ int main(int argc, char** argv)
             if (ch != -1) {
                 break;
             }
-            // pulse ..
         }
         curs_set(0);
 
@@ -342,25 +341,11 @@ int main(int argc, char** argv)
         }
 
         //-----------------
-        // commands
+        // app commands
         //-----------------
         switch (ch) {
         case CTRL_KEY('s'):
             sprintf(keyName, "save");
-            ch = 0;
-            break;
-        case CTRL_KEY('c'):
-            editor.clipBoard = cursor.selectedText().c_str();
-            sprintf(keyName, "copy");
-            ch = 0;
-            break;
-        case CTRL_KEY('v'):
-            sprintf(keyName, "paste");
-            cursorInsertText(&cursor, editor.clipBoard);
-            if (cursorMovePosition(&cursor, cursor_t::Right, false, editor.clipBoard.length())) {
-                doc->setCursor(cursor);
-            }
-            doc->update();
             ch = 0;
             break;
         case CTRL_KEY('q'):
@@ -370,31 +355,38 @@ int main(int argc, char** argv)
         }
 
         //-----------------
-        // process keys
+        // process keys (for editor)
         //-----------------
         // main cursor
+        struct editor_t* currentEditor = &editor;
         switch (ch) {
+        case CTRL_KEY('z'):
+            doc->undo();
+            ch = 0;
+            break;
+        case CTRL_KEY('c'):
+            currentEditor->clipBoard = cursor.selectedText().c_str();
+            ch = 0;
+            break;
         case PAGE_UP:
-            for(int i=0;i<editor.viewHeight+1; i++) {
+            for (int i = 0; i < currentEditor->viewHeight + 1; i++) {
                 if (cursorMovePosition(&cursor, cursor_t::Up, ch == KEY_SR)) {
                     doc->setCursor(cursor);
+                    currentEditor->highlightBlock(doc->block(cursor));
                 } else {
                     break;
                 }
-                renderEditor(editor);
-                wrefresh(editor.win);
             }
             ch = 0;
             break;
         case PAGE_DOWN:
-            for(int i=0;i<editor.viewHeight+1; i++) {
+            for (int i = 0; i < currentEditor->viewHeight + 1; i++) {
                 if (cursorMovePosition(&cursor, cursor_t::Down, ch == KEY_SF)) {
                     doc->setCursor(cursor);
+                    currentEditor->highlightBlock(doc->block(cursor));
                 } else {
                     break;
                 }
-                renderEditor(editor);
-                wrefresh(editor.win);
             }
             ch = 0;
             break;
@@ -413,26 +405,30 @@ int main(int argc, char** argv)
                 if (cursorMovePosition(&cursor, cursor_t::Up, ch == KEY_SR)) {
                     doc->setCursor(cursor);
                 }
+                doc->history.mark();
                 break;
             case KEY_SF:
             case KEY_DOWN:
                 if (cursorMovePosition(&cursor, cursor_t::Down, ch == KEY_SF)) {
                     doc->setCursor(cursor);
                 }
+                doc->history.mark();
                 break;
             case KEY_SLEFT:
             case KEY_LEFT:
                 if (cursorMovePosition(&cursor, cursor_t::Left, ch == KEY_SLEFT)) {
                     doc->setCursor(cursor);
                 }
+                doc->history.mark();
                 break;
             case KEY_SRIGHT:
             case KEY_RIGHT:
                 if (cursorMovePosition(&cursor, cursor_t::Right, ch == KEY_SRIGHT)) {
                     doc->setCursor(cursor);
                 }
+                doc->history.mark();
                 break;
-            
+
             case KEY_RESIZE:
                 clear();
                 break;
@@ -440,7 +436,17 @@ int main(int argc, char** argv)
             //---------------
             // these go to undo history
             //---------------
+            case CTRL_KEY('v'):
+                doc->history.addInsert(cursor, currentEditor->clipBoard);
+                cursorInsertText(&cursor, currentEditor->clipBoard);
+                if (cursorMovePosition(&cursor, cursor_t::Right, false, currentEditor->clipBoard.length())) {
+                    doc->setCursor(cursor);
+                }
+                update = true;
+                ch = 0;
+                break;
             case KEY_DC:
+                doc->history.addDelete(cursor, 1);
                 cursorEraseText(&cursor, 1);
                 update = true;
                 break;
@@ -448,6 +454,7 @@ int main(int argc, char** argv)
             case BACKSPACE:
             case KEY_BACKSPACE:
                 if (cursorMovePosition(&cursor, cursor_t::Left)) {
+                    doc->history.addDelete(cursor, 1);
                     cursorEraseText(&cursor, 1);
                     doc->setCursor(cursor);
                 }
@@ -455,17 +462,23 @@ int main(int argc, char** argv)
                 break;
             case 10: // newline
             case ENTER:
+                doc->history.addSplit(cursor);
                 cursorSplitBlock(&cursor);
                 if (cursorMovePosition(&cursor, cursor_t::Right)) {
                     doc->setCursor(cursor);
                 }
+                doc->history.mark();
                 update = true;
                 break;
 
             default:
+                doc->history.addInsert(cursor, s);
                 cursorInsertText(&cursor, s);
                 if (cursorMovePosition(&cursor, cursor_t::Right)) {
                     doc->setCursor(cursor);
+                }
+                if (s == " " || s == "\t") {
+                    doc->history.mark();
                 }
                 update = true;
                 break;

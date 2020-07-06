@@ -30,7 +30,21 @@ enum block_state_e {
     BLOCK_STATE_COMMENT = 1 << 1
 };
 
+enum cursor_edit_e {
+    EDIT_NONE = 0,
+    EDIT_INSERT = 1,
+    EDIT_DELETE = 2,
+    EDIT_SPLIT = 3,
+    EDIT_STOP = 100
+};
+
 struct blockdata_t {
+public:
+    blockdata_t()
+        : dirty(true)
+    {
+    }
+    
     std::vector<span_info_t> spans;
     parse::stack_ptr parser_state;
     std::map<size_t, scope::scope_t> scopes;
@@ -113,6 +127,34 @@ public:
     bool dirty;
 };
 
+struct cursor_edit_t {
+    struct cursor_t cursor;
+    std::string text;
+    int count;
+    cursor_edit_e edit;
+};
+
+typedef std::vector<cursor_edit_t> edit_batch_t;
+    
+struct history_t {
+public:
+    
+    std::vector<struct block_t> initialState;
+    // std::vector<struct cursor_edit_t> edits;
+    
+    std::vector<edit_batch_t> edits;
+    edit_batch_t editBatch;
+
+    void mark();
+    
+    void addInsert(struct cursor_t& c, std::string text);
+    void addDelete(struct cursor_t& c, int count);
+    void addSplit(struct cursor_t& c);
+    void replay();
+
+    int frames;
+};
+
 struct document_t {
 public:
     document_t()
@@ -140,7 +182,10 @@ public:
 
     struct cursor_t cursor();
     void setCursor(struct cursor_t& cursor);
-
+    void addCursor(struct cursor_t& cursor);
+    void clearCursors();
+    
+    void undo();
     void update();
     struct block_t& block(struct cursor_t& cursor);
 
@@ -148,6 +193,9 @@ public:
     std::string filePath;
     std::string tmpPath;
     std::string fileName;
+
+    std::map<size_t, struct block_t &> cursorBlockCache;
+    struct history_t history;
 };
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block);

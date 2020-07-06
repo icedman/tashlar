@@ -49,7 +49,7 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
                     }
                 }
 
-                colorPair = !(colorPair%2) ? colorPair : colorPair - 1;
+                colorPair = !(colorPair % 2) ? colorPair : colorPair - 1;
 
                 // selection
                 if (cur.hasSelection()) {

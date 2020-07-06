@@ -51,7 +51,7 @@ public:
 
     std::string status;
 
-    WINDOW *win;
+    WINDOW* win;
 };
 
 #endif // EDITOR_H

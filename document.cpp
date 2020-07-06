@@ -15,10 +15,68 @@ std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blo
     return it;
 }
 
+void history_t::mark() {
+    if (editBatch.size()) {
+        edits.push_back(editBatch);
+        editBatch.clear();
+    }
+}
+
+void history_t::addInsert(struct cursor_t& cur, std::string t)
+{
+    editBatch.push_back({ .cursor = cur,
+        .text = t,
+        .edit = cursor_edit_e::EDIT_INSERT
+    });
+}
+
+void history_t::addDelete(struct cursor_t& cur, int c)
+{
+    editBatch.push_back({ .cursor = cur,
+        .count = c,
+        .edit = cursor_edit_e::EDIT_DELETE
+    });
+}
+
+void history_t::addSplit(struct cursor_t& cur)
+{
+    editBatch.push_back({ .cursor = cur,
+        .edit = cursor_edit_e::EDIT_SPLIT
+    });
+}
+
+void history_t::replay()
+{
+    if (!edits.size()) {
+        return;
+    }
+    edits.pop_back();
+
+    for (auto batch : edits) {
+        for(auto e : batch) {
+            switch (e.edit) {           
+                
+            case cursor_edit_e::EDIT_INSERT:
+                cursorInsertText(&e.cursor, e.text);
+                break;
+            case cursor_edit_e::EDIT_DELETE:
+                cursorEraseText(&e.cursor, e.count);
+                break;
+            case cursor_edit_e::EDIT_SPLIT:
+                cursorSplitBlock(&e.cursor);
+                break;
+            }
+
+            e.cursor.document->update();
+            e.cursor.document->setCursor(e.cursor);
+        }
+    }
+}
+
 bool document_t::open(const char* path)
 {
     bool useStreamBuffer = true;
-    
+
     filePath = path;
     tmpPath = "/tmp/tmpfile.XXXXXX";
     mkstemp((char*)tmpPath.c_str());
@@ -54,7 +112,22 @@ bool document_t::open(const char* path)
     std::vector<std::string> spath = split_path(filePath, delims);
     fileName = spath.back();
 
+    history.initialState = blocks;
     return true;
+}
+
+void document_t::undo()
+{
+    cursorBlockCache.clear();
+    clearCursors();
+      
+    blocks = history.initialState;
+    update();
+
+    history.mark();   
+    history.replay();
+
+    update();
 }
 
 void document_t::close()
@@ -87,6 +160,14 @@ void document_t::setCursor(struct cursor_t& cursor)
     cursors[0].update();
 }
 
+void document_t::addCursor(struct cursor_t& cursor)
+{}
+
+void document_t::clearCursors()
+{
+    cursors.clear();
+}
+
 void document_t::update()
 {
     if (!cursors.size()) {
@@ -112,17 +193,39 @@ void document_t::update()
         pos += b.length;
         prev = &b;
     }
+
+    cursorBlockCache.clear();
 }
 
 struct block_t& document_t::block(struct cursor_t& cursor)
 {
-    for (auto& b : blocks) {
+    // TODO: This is used all over.. perpetually improve search (divide-conquer? index based?)!
+
+    if (!blocks.size()) {
+        return nullBlock;
+    }
+
+    std::map<size_t, struct block_t &>::iterator it = cursorBlockCache.find(cursor.position);
+    if (it != cursorBlockCache.end()) {
+        return it->second;
+    }
+
+    std::vector<struct block_t>::iterator bit = blocks.begin();
+    size_t idx = 0;
+
+    while (bit != blocks.end()) {
+        auto& b = *bit;
         if (b.length == 0 && cursor.position == b.position) {
+            cursorBlockCache.emplace(cursor.position, b);
             return b;
         }
         if (b.position <= cursor.position && cursor.position < b.position + b.length) {
+            cursorBlockCache.emplace(cursor.position, b);
             return b;
         }
+        idx++;
+        bit++;
     }
+
     return nullBlock;
 }
