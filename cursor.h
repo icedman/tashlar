@@ -16,6 +16,8 @@ public:
         Down,
         Left,
         Right,
+        WordLeft,
+        WordRight,
         StartOfLine,
         EndOfLine,
         StartOfDocument,
@@ -23,7 +25,8 @@ public:
     };
 
     cursor_t()
-        : document(0)
+        : uid(0)
+        , document(0)
         , block(0)
         , position(0)
         , anchorPosition(0)
@@ -34,9 +37,7 @@ public:
 
     size_t position;
     size_t anchorPosition;
-
-    size_t relativePosition;
-    size_t relativeAnchorPosition;
+    size_t uid;
 
     bool hasSelection()
     {
@@ -54,5 +55,6 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
 void cursorInsertText(struct cursor_t* cursor, std::string t);
 void cursorEraseText(struct cursor_t* cursor, int c);
 void cursorSplitBlock(struct cursor_t* cursor);
+void cursorEraseLine(struct cursor_t* cursor);
 
 #endif // CURSOR_H

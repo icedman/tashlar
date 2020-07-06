@@ -12,24 +12,9 @@
 #include "cursor.h"
 #include "document.h"
 #include "editor.h"
+#include "util.h"
 
 #include "extension.h"
-
-#define CTRL_KEY(k) ((k)&0x1f)
-
-enum KEY_ACTION {
-    KEY_NULL = 0, /* NULL */
-    ENTER = 13, /* Enter */
-    ESC = 27, /* Escape */
-    BACKSPACE = 127, /* Backspace */
-    /* The following are just soft codes, not really reported by the
-         * terminal directly. */
-    DEL_KEY,
-    HOME_KEY,
-    END_KEY,
-    PAGE_UP,
-    PAGE_DOWN
-};
 
 void setupColors(theme_ptr theme)
 {
@@ -60,94 +45,6 @@ void setupColors(theme_ptr theme)
 
     init_pair(color_pair_e::SELECTED, selFg, selBg);
     init_pair(color_pair_e::NORMAL, fg, bg);
-}
-
-int editorReadKey()
-{
-    int fd = STDIN_FILENO;
-
-    char c;
-    if (read(STDIN_FILENO, &c, 1) != 1) {
-        return -1;
-    }
-
-    if (c == ESC) {
-        char seq[3];
-        if (read(STDIN_FILENO, &seq[0], 1) != 1)
-            return '\x1b';
-        if (read(STDIN_FILENO, &seq[1], 1) != 1)
-            return '\x1b';
-
-        /* ESC [ sequences. */
-        if (seq[0] == '[') {
-
-            if (seq[1] >= '0' && seq[1] <= '9') {
-
-                /* Extended escape, read additional byte. */
-                if (read(fd, &seq[2], 1) == 0)
-                    return ESC;
-
-                if (seq[2] == '~') {
-                    switch (seq[1]) {
-                    case '3':
-                        return KEY_DC; // DEL_KEY;
-                    case '5':
-                        return PAGE_UP;
-                    case '6':
-                        return PAGE_DOWN;
-                    }
-                }
-
-                if (seq[2] == ';') {
-                    if (read(STDIN_FILENO, &seq[0], 1) != 1)
-                        return '\x1b';
-                    if (read(STDIN_FILENO, &seq[1], 1) != 1)
-                        return '\x1b';
-
-                    if (seq[0] == '2') {
-                        switch (seq[1]) {
-                        case 'A':
-                            return KEY_SR; // ARROW_UP;
-                        case 'B':
-                            return KEY_SF; // ARROW_DOWN;
-                        case 'C':
-                            return KEY_SRIGHT; // ARROW_RIGHT;
-                        case 'D':
-                            return KEY_SLEFT; // ARROW_LEFT;
-                        }
-                    }
-                }
-
-            } else {
-                switch (seq[1]) {
-                case 'A':
-                    return KEY_UP; // ARROW_UP;
-                case 'B':
-                    return KEY_DOWN; // ARROW_DOWN;
-                case 'C':
-                    return KEY_RIGHT; // ARROW_RIGHT;
-                case 'D':
-                    return KEY_LEFT; // ARROW_LEFT;
-                case 'H':
-                    return HOME_KEY;
-                case 'F':
-                    return END_KEY;
-                }
-            }
-        }
-
-        /* ESC O sequences. */
-        else if (seq[0] == 'O') {
-            switch (seq[1]) {
-            case 'H':
-                return HOME_KEY;
-            case 'F':
-                return END_KEY;
-            }
-        }
-    }
-
-    return c;
 }
 
 void renderEditor(struct editor_t& editor)
@@ -290,10 +187,6 @@ int main(int argc, char** argv)
 
     editor.document.open(filename);
 
-    struct document_t* doc = &editor.document;
-    struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
-
     /* initialize curses */
     initscr();
     // cbreak();
@@ -324,7 +217,7 @@ int main(int argc, char** argv)
         //-----------------
         curs_set(1);
         while (true) {
-            ch = editorReadKey();
+            ch = editor_read_key();
             if (ch != -1) {
                 break;
             }
@@ -336,16 +229,27 @@ int main(int argc, char** argv)
 
         sprintf(keyName, "%s", keyname(ch));
         std::string k = keyName;
-        if (k == "(null)") {
-            ch = 0;
-        }
-
+ 
+        struct editor_t* currentEditor = &editor;
+        struct document_t* doc = &editor.document;
+        struct cursor_t cursor = doc->cursor();
+        struct block_t block = doc->block(cursor);
+        
         //-----------------
         // app commands
         //-----------------
+        
+            int i = 0;
         switch (ch) {
+        case ESC:
+            doc->clearCursors();
+            ch = 0;
+            break;
         case CTRL_KEY('s'):
-            sprintf(keyName, "save");
+            // doc->save();
+            for(auto c : doc->cursors) {    
+                std::cout << "c" << (i++) << ": " << c.position << std::endl;
+            }
             ch = 0;
             break;
         case CTRL_KEY('q'):
@@ -358,21 +262,33 @@ int main(int argc, char** argv)
         // process keys (for editor)
         //-----------------
         // main cursor
-        struct editor_t* currentEditor = &editor;
+        bool didAddCursor = false;
+        
         switch (ch) {
         case CTRL_KEY('z'):
             doc->undo();
-            ch = 0;
+            ch = 0; // consume the key
             break;
         case CTRL_KEY('c'):
             currentEditor->clipBoard = cursor.selectedText().c_str();
             ch = 0;
             break;
+        case CTRL_ALT_UP:
+            doc->addCursor(cursor);
+            didAddCursor = true;
+            ch = KEY_UP;
+            break;
+        case CTRL_ALT_DOWN:
+            doc->addCursor(cursor);
+            didAddCursor = true;
+            ch = KEY_DOWN;
+            break;
         case PAGE_UP:
+            doc->clearCursors();
             for (int i = 0; i < currentEditor->viewHeight + 1; i++) {
                 if (cursorMovePosition(&cursor, cursor_t::Up, ch == KEY_SR)) {
-                    doc->setCursor(cursor);
                     currentEditor->highlightBlock(doc->block(cursor));
+                    doc->setCursor(cursor);
                 } else {
                     break;
                 }
@@ -380,10 +296,11 @@ int main(int argc, char** argv)
             ch = 0;
             break;
         case PAGE_DOWN:
+            doc->clearCursors();
             for (int i = 0; i < currentEditor->viewHeight + 1; i++) {
                 if (cursorMovePosition(&cursor, cursor_t::Down, ch == KEY_SF)) {
-                    doc->setCursor(cursor);
                     currentEditor->highlightBlock(doc->block(cursor));
+                    doc->setCursor(cursor);
                 } else {
                     break;
                 }
@@ -392,40 +309,60 @@ int main(int argc, char** argv)
             break;
         }
 
+        std::vector<struct cursor_t> cursors = doc->cursors;
+        
         // multi-cursor
-        for (auto cursor : doc->cursors) {
+        for(int i=0; i<cursors.size(); i++) {
             if (ch == 0) {
                 break;
             }
+            
+            struct cursor_t &cur = cursors[i];
 
+            int advance = 0;
             bool update = false;
+            
             switch (ch) {
-            case KEY_SR:
-            case KEY_UP:
-                if (cursorMovePosition(&cursor, cursor_t::Up, ch == KEY_SR)) {
-                    doc->setCursor(cursor);
-                }
+            case CTRL_SHIFT_LEFT:
+            case CTRL_LEFT:
+                cursorMovePosition(&cur, cursor_t::WordLeft, ch == CTRL_SHIFT_LEFT);
                 doc->history.mark();
                 break;
+            case CTRL_SHIFT_RIGHT:
+            case CTRL_RIGHT:
+                cursorMovePosition(&cur, cursor_t::WordRight, ch == CTRL_SHIFT_RIGHT);
+                doc->history.mark();
+                break;
+            case CTRL_SHIFT_ALT_LEFT:
+            case CTRL_ALT_LEFT:
+                cursorMovePosition(&cur, cursor_t::StartOfLine, ch == CTRL_SHIFT_ALT_LEFT);
+                doc->history.mark();
+                break;
+            case CTRL_SHIFT_ALT_RIGHT:
+            case CTRL_ALT_RIGHT:
+                cursorMovePosition(&cur, cursor_t::EndOfLine, ch == CTRL_SHIFT_ALT_RIGHT);
+                doc->history.mark();
+                break;
+            case CTRL_SHIFT_UP:
+            case KEY_SR:
+            case KEY_UP:
+                cursorMovePosition(&cur, cursor_t::Up, (ch == KEY_SR || ch == CTRL_SHIFT_UP));
+                doc->history.mark();
+                break;
+            case CTRL_SHIFT_DOWN:
             case KEY_SF:
             case KEY_DOWN:
-                if (cursorMovePosition(&cursor, cursor_t::Down, ch == KEY_SF)) {
-                    doc->setCursor(cursor);
-                }
+                cursorMovePosition(&cur, cursor_t::Down, (ch == KEY_SF || ch == CTRL_SHIFT_DOWN));
                 doc->history.mark();
                 break;
             case KEY_SLEFT:
             case KEY_LEFT:
-                if (cursorMovePosition(&cursor, cursor_t::Left, ch == KEY_SLEFT)) {
-                    doc->setCursor(cursor);
-                }
+                cursorMovePosition(&cur, cursor_t::Left, ch == KEY_SLEFT);
                 doc->history.mark();
                 break;
             case KEY_SRIGHT:
             case KEY_RIGHT:
-                if (cursorMovePosition(&cursor, cursor_t::Right, ch == KEY_SRIGHT)) {
-                    doc->setCursor(cursor);
-                }
+                cursorMovePosition(&cur, cursor_t::Right, ch == KEY_SRIGHT);
                 doc->history.mark();
                 break;
 
@@ -437,55 +374,67 @@ int main(int argc, char** argv)
             // these go to undo history
             //---------------
             case CTRL_KEY('v'):
-                doc->history.addInsert(cursor, currentEditor->clipBoard);
-                cursorInsertText(&cursor, currentEditor->clipBoard);
-                if (cursorMovePosition(&cursor, cursor_t::Right, false, currentEditor->clipBoard.length())) {
-                    doc->setCursor(cursor);
-                }
+                doc->history.addInsert(cur, currentEditor->clipBoard);
+                cursorInsertText(&cur, currentEditor->clipBoard);
+                cursorMovePosition(&cur, cursor_t::Right, false, currentEditor->clipBoard.length());
+                doc->history.mark();
                 update = true;
                 ch = 0;
                 break;
             case KEY_DC:
-                doc->history.addDelete(cursor, 1);
-                cursorEraseText(&cursor, 1);
+                doc->history.addDelete(cur, 1);
+                cursorEraseText(&cur, 1);
+                advance--;
                 update = true;
                 break;
 
             case BACKSPACE:
             case KEY_BACKSPACE:
-                if (cursorMovePosition(&cursor, cursor_t::Left)) {
-                    doc->history.addDelete(cursor, 1);
-                    cursorEraseText(&cursor, 1);
-                    doc->setCursor(cursor);
+                if (cursorMovePosition(&cur, cursor_t::Left)) {
+                    doc->history.addDelete(cur, 1);
+                    cursorEraseText(&cur, 1);
+                    advance--;
                 }
                 update = true;
                 break;
             case 10: // newline
             case ENTER:
-                doc->history.addSplit(cursor);
-                cursorSplitBlock(&cursor);
-                if (cursorMovePosition(&cursor, cursor_t::Right)) {
-                    doc->setCursor(cursor);
-                }
+                doc->history.addSplit(cur);
+                cursorSplitBlock(&cur);
+                cursorMovePosition(&cur, cursor_t::Right);
                 doc->history.mark();
+                advance++;
                 update = true;
                 break;
 
             default:
-                doc->history.addInsert(cursor, s);
-                cursorInsertText(&cursor, s);
-                if (cursorMovePosition(&cursor, cursor_t::Right)) {
-                    doc->setCursor(cursor);
-                }
+                doc->history.addInsert(cur, s);
+                cursorInsertText(&cur, s);
+                cursorMovePosition(&cur, cursor_t::Right, false, s.length());
                 if (s == " " || s == "\t") {
                     doc->history.mark();
                 }
+                advance+=s.length();
                 update = true;
                 break;
             }
 
+            if (!didAddCursor || i == 0) {
+                doc->updateCursor(cur);
+            }
+
             if (update) {
                 doc->update();
+
+                for(int j=0; j<cursors.size(); j++) {
+                    struct cursor_t &c = cursors[j];
+                    if (c.position> 0 && c.position + advance > cur.position && c.uid != cur.uid) {
+                        c.position += advance;
+                        c.anchorPosition += advance;
+                        // std::cout << advance << std::endl;
+                    }
+                    doc->updateCursor(c);
+                }
             }
         }
     }

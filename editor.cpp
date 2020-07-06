@@ -31,13 +31,6 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
             while (it != cursors->end()) {
                 struct cursor_t& cur = *it++;
 
-                if (firstCursor) {
-                    if (pos == cur.position) {
-                        colorPair = color_pair_e::SELECTED;
-                    }
-                    firstCursor = false;
-                }
-
                 // syntax here
                 if (block && block->data) {
                     struct blockdata_t* blockData = block->data;
@@ -63,6 +56,11 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
                         colorPair++;
                         // colorPair = color_pair_e::SELECTED;
                     }
+                }
+                
+                if (pos == cur.position) {
+                    // colorPair++;
+                    colorPair = color_pair_e::SELECTED;
                 }
             }
         }
@@ -237,5 +235,9 @@ void editor_t::highlightBlock(struct block_t& block)
 
 void editor_t::renderBlock(struct block_t& block, int offsetX)
 {
-    renderLine(block.text().c_str(), offsetX, &block);
+    std::string t = block.text();
+    if (!t.length()) {
+        t = " ";
+    }
+    renderLine(t.c_str(), offsetX, &block);
 }

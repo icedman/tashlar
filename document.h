@@ -182,12 +182,13 @@ public:
 
     struct cursor_t cursor();
     void setCursor(struct cursor_t& cursor);
+    void updateCursor(struct cursor_t& cursor);
     void addCursor(struct cursor_t& cursor);
     void clearCursors();
     
     void undo();
     void update();
-    struct block_t& block(struct cursor_t& cursor);
+    struct block_t& block(struct cursor_t& cursor, bool skipCache = false);
 
     struct block_t nullBlock;
     std::string filePath;

@@ -2,6 +2,8 @@
 #include "cursor.h"
 #include "util.h"
 
+static size_t cursor_uid = 1;
+
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block)
 {
     std::vector<struct block_t>::iterator it = blocks.begin();
@@ -50,8 +52,10 @@ void history_t::replay()
     if (!edits.size()) {
         return;
     }
+    
+    edit_batch_t last = edits.back();
     edits.pop_back();
-
+    
     for (auto batch : edits) {
         for(auto e : batch) {
             switch (e.edit) {           
@@ -68,8 +72,12 @@ void history_t::replay()
             }
 
             e.cursor.document->update();
-            e.cursor.document->setCursor(e.cursor);
         }
+    }
+
+    for(auto e : last) {
+        e.cursor.document->setCursor(e.cursor);
+        break;
     }
 }
 
@@ -118,13 +126,17 @@ bool document_t::open(const char* path)
 
 void document_t::undo()
 {
+    history.mark();
+    if (!history.edits.size()) {
+        return;
+    }
+    
     cursorBlockCache.clear();
     clearCursors();
       
     blocks = history.initialState;
     update();
 
-    history.mark();   
     history.replay();
 
     update();
@@ -132,8 +144,6 @@ void document_t::undo()
 
 void document_t::close()
 {
-    save();
-
     file.close();
     std::cout << "unlink " << tmpPath;
     remove(tmpPath.c_str());
@@ -141,7 +151,7 @@ void document_t::close()
 
 void document_t::save()
 {
-    std::ofstream tmp("out.cpp", std::ofstream::out);
+    std::ofstream tmp(filePath, std::ofstream::out);
     for (auto b : blocks) {
         std::string text = b.text();
         tmp << text << std::endl;
@@ -149,25 +159,52 @@ void document_t::save()
 }
 
 struct cursor_t document_t::cursor()
-{
+{        
     return cursors[0];
 }
 
 void document_t::setCursor(struct cursor_t& cursor)
 {
+    if (!cursors[0].uid) {
+        cursors[0].uid = cursor_uid++;
+    }
     cursors[0].position = cursor.position;
     cursors[0].anchorPosition = cursor.anchorPosition;
     cursors[0].update();
 }
 
+void document_t::updateCursor(struct cursor_t& cursor)
+{
+    for(auto &c : cursors) {
+        if (c.uid == cursor.uid) {
+            c.position = cursor.position;
+            c.anchorPosition = cursor.anchorPosition;
+            break;
+        }
+    }
+}
+    
 void document_t::addCursor(struct cursor_t& cursor)
-{}
+{
+    struct cursor_t cur = cursor;
+    cur.uid = cursor_uid++;
+    cursors.push_back(cur);
+    // std::cout << "add cursor " << cursor.position << std::endl;
+}
 
 void document_t::clearCursors()
 {
-    cursors.clear();
-}
+    if (!cursors.size()) {
+        return;
+    }
 
+    
+    
+    struct cursor_t cursor = cursors[0];
+    cursors.clear();
+    cursors.push_back(cursor);
+}
+    
 void document_t::update()
 {
     if (!cursors.size()) {
@@ -197,7 +234,7 @@ void document_t::update()
     cursorBlockCache.clear();
 }
 
-struct block_t& document_t::block(struct cursor_t& cursor)
+struct block_t& document_t::block(struct cursor_t& cursor, bool skipCache)
 {
     // TODO: This is used all over.. perpetually improve search (divide-conquer? index based?)!
 
@@ -206,7 +243,7 @@ struct block_t& document_t::block(struct cursor_t& cursor)
     }
 
     std::map<size_t, struct block_t &>::iterator it = cursorBlockCache.find(cursor.position);
-    if (it != cursorBlockCache.end()) {
+    if (!skipCache && it != cursorBlockCache.end()) {
         return it->second;
     }
 
@@ -216,11 +253,11 @@ struct block_t& document_t::block(struct cursor_t& cursor)
     while (bit != blocks.end()) {
         auto& b = *bit;
         if (b.length == 0 && cursor.position == b.position) {
-            cursorBlockCache.emplace(cursor.position, b);
+            if (!skipCache) { cursorBlockCache.emplace(cursor.position, b); }
             return b;
         }
         if (b.position <= cursor.position && cursor.position < b.position + b.length) {
-            cursorBlockCache.emplace(cursor.position, b);
+            if (!skipCache) { cursorBlockCache.emplace(cursor.position, b); }
             return b;
         }
         idx++;
