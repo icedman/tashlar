@@ -16,8 +16,6 @@
 struct document_t;
 struct block_t;
 
-std::vector<std::string> splitpath(const std::string& str, const std::set<char> delimiters);
-
 struct span_info_t {
     int start;
     int length;
@@ -39,6 +37,7 @@ struct blockdata_t {
 
     size_t lastPrevBlockRule;
     block_state_e state;
+    bool dirty;
 };
 
 struct block_t {
@@ -76,6 +75,9 @@ public:
         content = t;
         length = content.length() + 1;
         dirty = true;
+        if (data) {
+            data->dirty = true;
+        }
     }
 
     bool isValid()

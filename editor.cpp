@@ -5,35 +5,32 @@
 #include <unistd.h>
 
 #include "editor.h"
-#include "colors.h"
 
-void editor_t::renderLine(const char* line, int offsetX, struct block_t *block)
+void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
 {
     if (!line) {
         return;
     }
 
-    std::vector<struct cursor_t> *cursors = &document.cursors;
-        
-    int sx, sy;
-    getyx(stdscr, sy, sx);
-    
+    std::vector<struct cursor_t>* cursors = &document.cursors;
+
     char c;
     int idx = 0;
     while (c = line[idx++]) {
         if (offsetX-- > 0) {
             continue;
         }
-        
+
         int colorPair = color_pair_e::NORMAL;
-    
+
         if (block && cursors) {
+            int rpos = idx - 1;
             int pos = block->position + idx - 1;
             std::vector<struct cursor_t>::iterator it = cursors->begin();
             bool firstCursor = true;
-            while(it != cursors->end()) {
-                struct cursor_t &cur = *it++;
-                
+            while (it != cursors->end()) {
+                struct cursor_t& cur = *it++;
+
                 if (firstCursor) {
                     if (pos == cur.position) {
                         colorPair = color_pair_e::SELECTED;
@@ -43,14 +40,16 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t *block)
 
                 // syntax here
                 if (block && block->data) {
-                    struct blockdata_t *blockData = block->data;
-                    for(auto span : blockData->spans) {
-                        if (idx >= span.start && idx <= span.start + span.length + 1) {
+                    struct blockdata_t* blockData = block->data;
+                    for (auto span : blockData->spans) {
+                        if (rpos >= span.start && rpos < span.start + span.length) {
                             colorPair = span.colorIndex;
                             break;
                         }
                     }
                 }
+
+                colorPair = !(colorPair%2) ? colorPair : colorPair - 1;
 
                 // selection
                 if (cur.hasSelection()) {
@@ -60,40 +59,22 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t *block)
                         startSel = cur.position;
                         endSel = cur.anchorPosition;
                     }
-                    if (pos >= startSel && pos <=endSel) {
-                        colorPair = color_pair_e::SELECTED;
+                    if (pos >= startSel && pos <= endSel) {
+                        colorPair++;
+                        // colorPair = color_pair_e::SELECTED;
                     }
                 }
             }
         }
 
-        attron(COLOR_PAIR(colorPair));      
-        mvaddch(sy, sx++, c);
-        attroff(COLOR_PAIR(colorPair));
+        wattron(win, COLOR_PAIR(colorPair));
+        // mvwaddch(win, sy, sx++, c);
+        waddch(win, c);
+        wattroff(win, COLOR_PAIR(colorPair));
     }
 }
 
-static int nearestColor(int r, int g, int b)
-{
-    int idx = -1;
-    long d = 0;
-    
-    for(int i=0;i<255;i++) {
-        const color_t clr = termColors[i];
-        int rr = r - clr.r; 
-        int gg = g - clr.g; 
-        int bb = b - clr.b;
-        long dd = (rr * rr) + (gg * gg) + (bb * bb);
-        if (idx == -1 || d > dd) {
-            d = dd;
-            idx = i;
-        } 
-    }
-    
-    return idx;
-}
-    
-static void setFormatFromStyle(size_t start, size_t length, style_t& style, const char* line, struct blockdata_t *blockData, std::string scope)
+static void setFormatFromStyle(size_t start, size_t length, style_t& style, const char* line, struct blockdata_t* blockData, std::string scope)
 {
     int s = -1;
     for (int i = start; i < start + length; i++) {
@@ -113,7 +94,7 @@ static void setFormatFromStyle(size_t start, size_t length, style_t& style, cons
                     .blue = style.foreground.blue * 255
                 };
 
-                span.colorIndex = nearestColor(span.red, span.green, span.blue);
+                span.colorIndex = style.foreground.index; // nearestColor(span.red, span.green, span.blue);
                 blockData->spans.push_back(span);
             }
             s = -1;
@@ -126,28 +107,34 @@ void editor_t::highlightBlock(struct block_t& block)
     if (!lang) {
         return;
     }
-    
-    std::string text= block.text();
+
     if (!block.data) {
         block.data = new blockdata_t;
+        block.data->dirty = true;
     }
-    
-    struct blockdata_t *blockData = block.data;
+
+    if (!block.data->dirty) {
+        return;
+    }
+
+    std::string text = block.text();
+
+    struct blockdata_t* blockData = block.data;
     block_state_e previousBlockState = BLOCK_STATE_UNKNOWN;
-    
+
     std::string str = text;
     str += "\n";
 
     bool firstLine = true;
     parse::stack_ptr parser_state = NULL;
     std::map<size_t, scope::scope_t> scopes;
-    blockData->scopes.clear();    
+    blockData->scopes.clear();
     blockData->spans.clear();
-    
+
     const char* first = str.c_str();
     const char* last = first + text.length() + 1;
 
-    struct block_t *prevBlock = block.previous;
+    struct block_t* prevBlock = block.previous;
     struct blockdata_t* prevBlockData = NULL;
     if (prevBlock) {
         prevBlockData = prevBlock->data;
@@ -165,7 +152,7 @@ void editor_t::highlightBlock(struct block_t& block)
         parser_state = lang->grammar->seed();
         firstLine = true;
     }
-    
+
     parser_state = parse::parse(first, last, parser_state, scopes, firstLine);
 
     std::string prevScopeName;
@@ -213,7 +200,7 @@ void editor_t::highlightBlock(struct block_t& block)
         if (beginComment != std::string::npos) {
             // format = QSyntaxHighlighter::format(beginComment);
             // if (format.intProperty(SCOPE_PROPERTY_ID) != SCOPE_COMMENT) {
-                // beginComment = std::string::npos;
+            // beginComment = std::string::npos;
             // }
         }
 
@@ -229,12 +216,26 @@ void editor_t::highlightBlock(struct block_t& block)
             }
         }
     }
-    
+
     blockData->parser_state = parser_state;
+    blockData->dirty = false;
+
+    //----------------------
+    // mark next block for highlight
+    // .. if necessary
+    //----------------------
+    if (parser_state->rule) {
+        struct block_t* next = block.next;
+        if (next && next->isValid()) {
+            struct blockdata_t* nextBlockData = next->data;
+            if (nextBlockData && parser_state->rule->rule_id != nextBlockData->lastPrevBlockRule) {
+                nextBlockData->dirty = true;
+            }
+        }
+    }
 }
-    
+
 void editor_t::renderBlock(struct block_t& block, int offsetX)
 {
-    highlightBlock(block);
     renderLine(block.text().c_str(), offsetX, &block);
 }

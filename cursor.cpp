@@ -5,7 +5,7 @@ void cursor_t::update()
 {
     relativePosition = position;
     relativeAnchorPosition = anchorPosition;
-    
+
     block = &document->block(*this);
     if (block) {
         relativePosition -= block->position;
@@ -26,7 +26,7 @@ bool cursor_t::isNull()
 {
     return document == 0 || block == 0 || !block->isValid();
 }
-    
+
 bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool keepAnchor, int count)
 {
     struct block_t& block = cursor->document->block(*cursor);
@@ -74,7 +74,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     if (count > 0) {
         return cursorMovePosition(cursor, move, keepAnchor, count);
     }
-    
+
     return !cursor->isNull();
 }
 

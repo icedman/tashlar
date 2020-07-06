@@ -14,8 +14,8 @@
 #include "extension.h"
 
 enum color_pair_e {
-    NORMAL = 0,
-    SELECTED = 1
+    NORMAL = 250,
+    SELECTED
 };
 
 struct editor_t {
@@ -25,6 +25,7 @@ public:
         , viewY(0)
         , scrollX(0)
         , scrollY(0)
+        , win(0)
     {
     }
 
@@ -35,18 +36,22 @@ public:
     int viewY;
     int viewWidth;
     int viewHeight;
+    int cursorScreenX;
+    int cursorScreenY;
 
     struct document_t document;
 
     void highlightBlock(struct block_t& block);
     void renderBlock(struct block_t& block, int offsetX);
-    void renderLine(const char* line, int offsetX = 0, struct block_t *block = 0);
-        
+    void renderLine(const char* line, int offsetX = 0, struct block_t* block = 0);
+
     std::string clipBoard;
     language_info_ptr lang;
     theme_ptr theme;
 
     std::string status;
+
+    WINDOW *win;
 };
 
 #endif // EDITOR_H

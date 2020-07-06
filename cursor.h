@@ -32,13 +32,12 @@ public:
 
     struct document_t* document;
     struct block_t* block;
-    
+
     size_t position;
     size_t anchorPosition;
-    
-    size_t relativePosition;
-    size_t relativeAnchorPosition;    
 
+    size_t relativePosition;
+    size_t relativeAnchorPosition;
 
     bool hasSelection()
     {
@@ -46,7 +45,7 @@ public:
     }
 
     bool isNull();
-    
+
     void update();
 
     std::string selectedText();

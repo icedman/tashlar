@@ -4,12 +4,10 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include <fstream>
-#include <iostream>
-#include <istream>
 #include <set>
 #include <string>
 #include <vector>
+#include <cstring>
 
 #include "cursor.h"
 #include "document.h"
@@ -33,11 +31,46 @@ enum KEY_ACTION {
     PAGE_DOWN
 };
 
+void setupColors(theme_ptr theme)
+{
+    int bg = -1;
+    int fg = COLOR_GREEN;
+    int selBg = COLOR_GREEN;
+    int selFg = -1;
+    color_info_t clr;
+    theme->theme_color("editor.background", clr);
+    if (!clr.is_blank()) {
+        // bg = clr.index;
+    }
+    theme->theme_color("editor.foreground", clr);
+    if (!clr.is_blank()) {
+        fg = clr.index;
+    }
+    theme->theme_color("editor.selectionBackground", clr);
+    if (!clr.is_blank()) {
+        selBg = clr.index;
+    }
+
+    use_default_colors();
+    start_color();
+    for (int i = 0; i < 255; i++) {
+        init_pair(i, i, !(i%2) ? bg : selBg);
+        // init_pair(i, i, bg);
+    }
+
+    init_pair(color_pair_e::SELECTED, selFg, selBg);
+    init_pair(color_pair_e::NORMAL, fg, bg);
+}
+
 int editorReadKey()
 {
     int fd = STDIN_FILENO;
 
-    char c = getch();
+    char c;
+    if (read(STDIN_FILENO, &c, 1) != 1) {
+        return -1;
+    }
+
     if (c == ESC) {
         char seq[3];
         if (read(STDIN_FILENO, &seq[0], 1) != 1)
@@ -117,46 +150,156 @@ int editorReadKey()
     return c;
 }
 
-int main(int argc, char** argv)
-{    
-    struct editor_t editor;
+void renderEditor(struct editor_t &editor)
+{
+    struct document_t* doc = &editor.document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
+
+    //-----------------
+    // calculate view
+    //-----------------
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     
+    editor.viewX = 0;
+    editor.viewY = 0;
+    editor.viewWidth = w.ws_col;
+    editor.viewHeight = w.ws_row - 1;
+
+    if (!editor.win) {   
+        editor.win = newwin(editor.viewHeight, editor.viewWidth, 0, 0);
+    }
+
+    wresize(editor.win, editor.viewHeight, editor.viewWidth);
+
+    // wclear(editor.win);
+    
+    int offsetX = 0;
+    int offsetY = 0;
+    editor.cursorScreenX = 0;
+    editor.cursorScreenY = 0;
+    
+    // scroll
+    while (block.lineNumber + 1 - editor.scrollY > editor.viewHeight) {
+        editor.scrollY++;
+    }
+    while (editor.scrollY > 0 && block.lineNumber - editor.scrollY <= 0) {
+        editor.scrollY--;
+    }
+    while (cursor.position - block.position + 1 - editor.scrollX > editor.viewWidth) {
+        editor.scrollX++;
+    }
+    while (editor.scrollX > 0 && cursor.position - block.position - editor.scrollX <= 0) {
+        editor.scrollX--;
+    }
+
+    editor.cursorScreenY = editor.scrollY;
+    offsetY = editor.scrollY;
+    editor.cursorScreenX = editor.scrollX;
+    offsetX = editor.scrollX;
+
+    //-----------------
+    // render the editor
+    //-----------------
+    // todo: jump to first visible block
+    int y = 0;
+    for (auto& b : doc->blocks) {
+        if (offsetY-- > 0) {
+            continue;
+        }
+        wmove(editor.win, y++, 0);
+        wclrtoeol(editor.win);
+        editor.highlightBlock(b);
+        editor.renderBlock(b, offsetX);
+        if (y >= editor.viewHeight) {
+            break;
+        }
+    }
+    while (y < editor.viewHeight) {
+        wmove(editor.win, y++, 0);
+        wclrtoeol(editor.win);
+    }
+}
+
+void renderStatus(WINDOW *win, struct editor_t &editor)
+{
+    struct document_t* doc = &editor.document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
+
+    int sel = cursor.anchorPosition - cursor.position;
+    if (sel < 0) {
+        sel *= -1;
+    }
+    wmove(win, 0, 0);
+    wclrtoeol(win);
+    char tmp[512];
+    sprintf(tmp, "%s   Line: %d Col: %d   %s",
+        doc->fileName.c_str(),
+        1 + (int)(block.lineNumber),
+        1 + (int)(cursor.position - block.position),
+        editor.status.c_str());
+
+    char c;
+    int idx = 0;
+    while (c = tmp[idx++]) {
+        waddch(win, c);
+    }
+}
+
+void renderCursor(struct editor_t &editor)
+{
+    struct document_t* doc = &editor.document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
+
+    if (block.isValid()) {
+        int cy = block.lineNumber;
+        int cx = cursor.position - block.position;
+        wmove(editor.win, cy - editor.cursorScreenY, cx - editor.cursorScreenX);
+    } else {
+        wmove(editor.win, 0, 0);
+    }
+}
+    
+int main(int argc, char** argv)
+{
+    struct editor_t editor;
+
     std::vector<struct extension_t> extensions;
     load_extensions("/opt/visual-studio-code/resources/app/extensions/", extensions);
     load_extensions("/home/iceman/.ashlar/extensions/", extensions);
-    
+
     char* filename = 0;
+    char* theme = "Dracula";
     if (argc > 1) {
-        filename = argv[1];
+        filename = argv[argc-1];
     } else {
         return 0;
     }
 
+    for(int i=0;i<argc-1;i++) {
+        if (strcmp(argv[i], "-t") == 0) {
+            theme = argv[i+1];
+        }
+    }
+
     editor.lang = language_from_file(filename, extensions);
-    editor.theme = theme_from_name("Bluloco Dark", extensions);
-    // editor.theme = theme_from_name("Dracula", extensions);
-    
-    // std::cout << lang->id << std::endl;
-    // return 0;
-    
-    char path[255] = "";
+    editor.theme = theme_from_name(theme, extensions);
 
     editor.document.open(filename);
 
     struct document_t* doc = &editor.document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
 
     /* initialize curses */
     initscr();
     // cbreak();
     raw();
     noecho();
-
-    start_color();
-    for(int i=0;i<255;i++) {
-        init_pair(i, i, COLOR_BLACK);
-    }
-    init_pair(color_pair_e::SELECTED, COLOR_BLACK, COLOR_GREEN);    
-    init_pair(color_pair_e::NORMAL, COLOR_GREEN, COLOR_BLACK);
+    setupColors(editor.theme);
     
     clear();
 
@@ -167,102 +310,27 @@ int main(int argc, char** argv)
 
     while (!end) {
 
-        doc->update();
-
         curs_set(0);
         
-        //-----------------
-        // calculate view
-        //-----------------
-        struct winsize w;
-        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-        editor.viewX = 0;
-        editor.viewY = 0;
-        editor.viewWidth = w.ws_col;
-        editor.viewHeight = w.ws_row - 1;
-
-        int offsetX = 0;
-        int offsetY = 0;
-        int cursorScreenX = 0;
-        int cursorScreenY = 0;
-        struct cursor_t cursor = doc->cursor();
-        struct block_t block = doc->block(cursor);
-
-        // scroll
-        while (block.lineNumber + 1 - editor.scrollY > editor.viewHeight) {
-            editor.scrollY++;
-        }
-        while (editor.scrollY > 0 && block.lineNumber - editor.scrollY <= 0) {
-            editor.scrollY--;
-        }
-        while (cursor.position - block.position + 1 - editor.scrollX > editor.viewWidth) {
-            editor.scrollX++;
-        }
-        while (editor.scrollX > 0 && cursor.position - block.position - editor.scrollX <= 0) {
-            editor.scrollX--;
-        }
-
-        cursorScreenY = editor.scrollY;
-        offsetY = editor.scrollY;
-        cursorScreenX = editor.scrollX;
-        offsetX = editor.scrollX;
-
-        //-----------------
-        // render the editor
-        //-----------------
-        // todo get first visible block
-        int y = 0;
-        for (auto &b : doc->blocks) {
-            if (offsetY-- > 0) {
-                continue;
-            }
-            move(y++, 0);
-            clrtoeol();
-            editor.renderBlock(b, offsetX);
-            if (y >= editor.viewHeight) {
-                break;
-            }
-        }
-        while (y < editor.viewHeight) {
-            move(y++, 0);
-            clrtoeol();
-        }
-
-        //-----------------
-        // render statusbar
-        //-----------------
-        int sel = cursor.anchorPosition - cursor.position;
-        if (sel < 0) {
-            sel *= -1;
-        }
-        move(w.ws_row - 1, 0);
-        char tmp[512];
-        sprintf(tmp, "%s   Line: %d Col: %d   %s             ",
-            doc->fileName.c_str(),
-            1 + (int)(block.lineNumber),
-            1 + (int)(cursor.position - block.position),
-            editor.status.c_str());
-        editor.renderLine(tmp);
-
-        //-----------------
-        // render the cursors
-        //-----------------
-        if (block.isValid()) {
-            int cy = block.lineNumber;
-            int cx = cursor.position - block.position;
-            move(cy - cursorScreenY, cx - cursorScreenX);
-        } else {
-            move(0, 0);
-        }
-
-        refresh();
+        renderEditor(editor);
+        renderCursor(editor);
+        wrefresh(editor.win);
+        
+        // renderStatus(statusWin, editor);        
+        // wrefresh(statusWin);
 
         //-----------------
         // get input
         //-----------------
-        
         curs_set(1);
-        ch = editorReadKey();
+        while (true) {
+            ch = editorReadKey();
+            if (ch != -1) {
+                break;
+            }
+            // pulse ..
+        }
+        curs_set(0);
 
         std::string s;
         s += (char)ch;
@@ -292,6 +360,7 @@ int main(int argc, char** argv)
             if (cursorMovePosition(&cursor, cursor_t::Right, false, editor.clipBoard.length())) {
                 doc->setCursor(cursor);
             }
+            doc->update();
             ch = 0;
             break;
         case CTRL_KEY('q'):
@@ -303,13 +372,41 @@ int main(int argc, char** argv)
         //-----------------
         // process keys
         //-----------------
-        // multi-cursor ready
-        for (auto cursor : doc->cursors) {
+        // main cursor
+        switch (ch) {
+        case PAGE_UP:
+            for(int i=0;i<editor.viewHeight+1; i++) {
+                if (cursorMovePosition(&cursor, cursor_t::Up, ch == KEY_SR)) {
+                    doc->setCursor(cursor);
+                } else {
+                    break;
+                }
+                renderEditor(editor);
+                wrefresh(editor.win);
+            }
+            ch = 0;
+            break;
+        case PAGE_DOWN:
+            for(int i=0;i<editor.viewHeight+1; i++) {
+                if (cursorMovePosition(&cursor, cursor_t::Down, ch == KEY_SF)) {
+                    doc->setCursor(cursor);
+                } else {
+                    break;
+                }
+                renderEditor(editor);
+                wrefresh(editor.win);
+            }
+            ch = 0;
+            break;
+        }
 
+        // multi-cursor
+        for (auto cursor : doc->cursors) {
             if (ch == 0) {
                 break;
             }
 
+            bool update = false;
             switch (ch) {
             case KEY_SR:
             case KEY_UP:
@@ -335,8 +432,17 @@ int main(int argc, char** argv)
                     doc->setCursor(cursor);
                 }
                 break;
+            
+            case KEY_RESIZE:
+                clear();
+                break;
+
+            //---------------
+            // these go to undo history
+            //---------------
             case KEY_DC:
                 cursorEraseText(&cursor, 1);
+                update = true;
                 break;
 
             case BACKSPACE:
@@ -345,6 +451,7 @@ int main(int argc, char** argv)
                     cursorEraseText(&cursor, 1);
                     doc->setCursor(cursor);
                 }
+                update = true;
                 break;
             case 10: // newline
             case ENTER:
@@ -352,10 +459,7 @@ int main(int argc, char** argv)
                 if (cursorMovePosition(&cursor, cursor_t::Right)) {
                     doc->setCursor(cursor);
                 }
-                break;
-
-                
-            case KEY_RESIZE:
+                update = true;
                 break;
 
             default:
@@ -363,7 +467,12 @@ int main(int argc, char** argv)
                 if (cursorMovePosition(&cursor, cursor_t::Right)) {
                     doc->setCursor(cursor);
                 }
+                update = true;
                 break;
+            }
+
+            if (update) {
+                doc->update();
             }
         }
     }

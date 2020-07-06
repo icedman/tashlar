@@ -11,7 +11,9 @@ tashlar_files = [
     'cursor.cpp',
     'document.cpp',
     'editor.cpp',
-    'extension.cpp'
+    'extension.cpp',
+    'statusbar.cpp',
+    'util.cpp'
 ]
 
 curses_dep = dependency('ncurses', required: true, disabler: true)

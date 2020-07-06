@@ -1,32 +1,10 @@
 #include "extension.h"
 
-#include <dirent.h>
-
-#include <iostream>
 #include <algorithm>
-// #include <filesystem>
+#include <iostream>
 
 #include "theme.h"
-#include "document.h" // splitpath
-
-std::vector<std::string> enumerate_dir(const std::string path)
-{
-    std::cout << path << std::endl;
-    
-    std::vector<std::string> res;
-    DIR *dir;
-    struct dirent *ent;
-    if ((dir = opendir (path.c_str())) != NULL) {
-      while ((ent = readdir (dir)) != NULL) {
-          std::string fullPath = path;
-          fullPath += ent->d_name;
-          res.push_back(fullPath);
-      }
-      closedir (dir);
-    }
-
-    return res;
-}
+#include "util.h"
 
 void load_extensions(const std::string path, std::vector<struct extension_t>& extensions)
 {
@@ -34,7 +12,7 @@ void load_extensions(const std::string path, std::vector<struct extension_t>& ex
 
     std::vector<std::string> filter = { "themes", "iconThemes", "languages" };
 
-    for (const auto & extensionPath : enumerate_dir(path)) {
+    for (const auto& extensionPath : enumerate_dir(path)) {
         std::string package = extensionPath + "/package.json";
 
         // qDebug() << package;
@@ -80,8 +58,8 @@ void load_extensions(const std::string path, std::vector<struct extension_t>& ex
                     ex.hasCommands = ex.package["contributes"].isMember("commands");
                 }
                 // if (ex.package.isMember("main")) {
-                    // std::string main = ex.package["main"].asString().c_str();
-                    // ex.entryPath = QFileInfo(extensionPath + '/' + main).absoluteFilePath();
+                // std::string main = ex.package["main"].asString().c_str();
+                // ex.entryPath = QFileInfo(extensionPath + '/' + main).absoluteFilePath();
                 // }
             }
             // }
@@ -96,7 +74,7 @@ void load_extensions(const std::string path, std::vector<struct extension_t>& ex
 
     // std::cout << contribs;
 }
-    
+
 static bool load_language_configuration(const std::string path, language_info_ptr lang)
 {
     Json::Value root = parse::loadJson(path);
@@ -159,21 +137,21 @@ static bool load_language_configuration(const std::string path, language_info_pt
 
     return true;
 }
-    
+
 language_info_ptr language_from_file(const std::string path, std::vector<struct extension_t>& extensions)
 {
     static std::map<std::string, language_info_ptr> cache;
     language_info_ptr lang = std::make_shared<language_info_t>();
 
     std::set<char> delims = { '.' };
-    std::vector<std::string> spath = splitpath(path, delims);
-    
+    std::vector<std::string> spath = split_path(path, delims);
+
     std::string suffix = ".";
     suffix += spath.back();
-    
+
     // std::string suffix = ".cpp";
     std::string fileName = "";
-    
+
     auto it = cache.find(suffix);
     if (it != cache.end()) {
         // qDebug() << "langauge matched from cache" << it->second->id.c_str();
@@ -261,9 +239,9 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
 
                 // language configuration
                 // if (!resolvedConfiguration.empty()) {
-                    // path = QDir(resolvedExtension.path).filePath(resolvedConfiguration.asString().c_str());
+                // path = QDir(resolvedExtension.path).filePath(resolvedConfiguration.asString().c_str());
                 // } else {
-                    // path = QDir(resolvedExtension.path).filePath("language-configuration.json");
+                // path = QDir(resolvedExtension.path).filePath("language-configuration.json");
                 // }
                 // load_language_configuration(path, lang);
 
@@ -288,7 +266,7 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
     }
     return lang;
 }
-    
+
 icon_theme_ptr icon_theme_from_name(const std::string path, std::vector<struct extension_t>& extensions)
 {
     icon_theme_ptr icons = std::make_shared<icon_theme_t>();
@@ -333,7 +311,7 @@ icon_theme_ptr icon_theme_from_name(const std::string path, std::vector<struct e
         Json::Value src = font["src"][0];
         Json::Value src_path = src["path"];
         std::string real_font_path = icons_path + src_path.asString();
-        
+
         // QFontDatabase::addApplicationFont(real_font_path.c_str());
         // icons->font.setFamily("monospace");
         // icons->font.setFamily(family.asString().c_str());
@@ -344,7 +322,7 @@ icon_theme_ptr icon_theme_from_name(const std::string path, std::vector<struct e
     icons->definition = json;
     return icons;
 }
-    
+
 theme_ptr theme_from_name(const std::string path, std::vector<struct extension_t>& extensions)
 {
     std::string theme_path = path;
@@ -375,4 +353,16 @@ theme_ptr theme_from_name(const std::string path, std::vector<struct extension_t
     Json::Value json = parse::loadJson(theme_path);
     theme_ptr theme = parse_theme(json);
     return theme;
+}
+
+bool theme_is_dark(theme_ptr theme)
+{
+    color_info_t clr;
+    theme->theme_color("editor.background", clr);
+    return color_is_dark(clr);
+}
+
+bool color_is_dark(color_info_t& color)
+{
+    return 0.30 * color.red + 0.59 * color.green + 0.11 * color.blue < 0.5;
 }

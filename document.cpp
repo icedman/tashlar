@@ -1,5 +1,6 @@
 #include "document.h"
 #include "cursor.h"
+#include "util.h"
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block)
 {
@@ -14,30 +15,10 @@ std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blo
     return it;
 }
 
-std::vector<std::string> splitpath(const std::string& str, const std::set<char> delimiters)
-{
-    std::vector<std::string> result;
-
-    char const* pch = str.c_str();
-    char const* start = pch;
-    for (; *pch; ++pch) {
-        if (delimiters.find(*pch) != delimiters.end()) {
-            if (start != pch) {
-                std::string str(start, pch);
-                result.push_back(str);
-            } else {
-                result.push_back("");
-            }
-            start = pch + 1;
-        }
-    }
-    result.push_back(start);
-
-    return result;
-}
-
 bool document_t::open(const char* path)
 {
+    bool useStreamBuffer = true;
+    
     filePath = path;
     tmpPath = "/tmp/tmpfile.XXXXXX";
     mkstemp((char*)tmpPath.c_str());
@@ -59,6 +40,8 @@ bool document_t::open(const char* path)
         blocks.emplace_back(b);
         pos = file.tellg();
         tmp << line << std::endl;
+
+        b.setText(line);
     }
 
     tmp.close();
@@ -68,7 +51,7 @@ bool document_t::open(const char* path)
     update();
 
     std::set<char> delims = { '\\', '/' };
-    std::vector<std::string> spath = splitpath(filePath, delims);
+    std::vector<std::string> spath = split_path(filePath, delims);
     fileName = spath.back();
 
     return true;
@@ -117,7 +100,7 @@ void document_t::update()
     struct block_t* prev = NULL;
     int l = 0;
     size_t pos = 0;
-    for (auto &b : blocks) {
+    for (auto& b : blocks) {
         if (prev) {
             prev->next = &b;
         }
@@ -128,7 +111,7 @@ void document_t::update()
         b.lineNumber = l++;
         pos += b.length;
         prev = &b;
-    }    
+    }
 }
 
 struct block_t& document_t::block(struct cursor_t& cursor)
