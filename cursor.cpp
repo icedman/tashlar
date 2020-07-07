@@ -27,6 +27,10 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
 
     count--;
     size_t relativePosition = cursor->position - block.position;
+
+    if (cursor->preferredRelativePosition != 0) {
+        relativePosition = cursor->preferredRelativePosition;
+    }
     
     std::vector<search_result_t> search_results;
     bool extractWords = false;
@@ -47,6 +51,14 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         }
 
         extractWords = true;
+    }
+
+    if (move == cursor_t::Move::Left || move == cursor_t::Move::Right) {
+        cursor->preferredRelativePosition = 0;
+    } else {
+        if (cursor->preferredRelativePosition == 0) {
+            cursor->preferredRelativePosition = relativePosition;
+        }
     }
 
     if (extractWords) {    

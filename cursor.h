@@ -30,6 +30,7 @@ public:
         , block(0)
         , position(0)
         , anchorPosition(0)
+        , preferredRelativePosition(0)
     {
     }
 
@@ -40,6 +41,8 @@ public:
     size_t anchorPosition;
     size_t uid;
 
+    size_t preferredRelativePosition;
+    
     bool hasSelection()
     {
         return anchorPosition != position;

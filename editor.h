@@ -1,6 +1,7 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
+#include <curses.h>
 #include <string>
 
 #include "document.h"

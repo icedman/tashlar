@@ -178,6 +178,8 @@ int editor_read_key()
                         return PAGE_UP;
                     case '6':
                         return PAGE_DOWN;
+                    default:
+                        return -1;
                     }
                 }
 
@@ -200,6 +202,8 @@ int editor_read_key()
                             return KEY_SRIGHT;
                         case 'D':
                             return KEY_SLEFT;
+                        default:
+                            return -1;
                         }
                     }
 
@@ -214,6 +218,8 @@ int editor_read_key()
                             return CTRL_RIGHT;
                         case 'D':
                             return CTRL_LEFT;
+                        default:
+                            return -1;
                         }
                     }
 
@@ -228,6 +234,8 @@ int editor_read_key()
                             return CTRL_SHIFT_RIGHT;
                         case 'D':
                             return CTRL_SHIFT_LEFT;
+                        default:
+                            return -1;
                         }
                     }
 
@@ -242,6 +250,8 @@ int editor_read_key()
                             return CTRL_ALT_RIGHT;
                         case 'D':
                             return CTRL_ALT_LEFT;
+                        default:
+                            return -1;
                         }
                     }
 
@@ -256,6 +266,8 @@ int editor_read_key()
                             return CTRL_SHIFT_ALT_RIGHT;
                         case 'D':
                             return CTRL_SHIFT_ALT_LEFT;
+                        default:
+                            return -1;
                         }
                     }
                 }
@@ -278,6 +290,8 @@ int editor_read_key()
                     return HOME_KEY;
                 case 'F':
                     return END_KEY;
+                default:
+                    return -1;
                 }
             }
         }
@@ -289,6 +303,8 @@ int editor_read_key()
                 return HOME_KEY;
             case 'F':
                 return END_KEY;
+            default:
+                return -1;
             }
         }
     }

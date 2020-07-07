@@ -8,12 +8,14 @@ cc = meson.get_compiler('cpp')
 
 tashlar_files = [
     'main.cpp',
+    'command.cpp',
     'cursor.cpp',
     'document.cpp',
     'editor.cpp',
     'extension.cpp',
-    'statusbar.cpp',
+    'keybinding.cpp',
     'search.cpp',
+    'statusbar.cpp',
     'util.cpp'
 ]
 

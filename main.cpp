@@ -216,9 +216,9 @@ int main(int argc, char** argv)
     int ch = 0;
     bool end = false;
 
-    char keyName[32] = "";
+    char keyName[64] = "";
 
-    std::string simulatedBuffer;
+    std::string commandBuffer;
 
     while (!end) {
         
@@ -241,7 +241,7 @@ int main(int argc, char** argv)
         //-----------------
         curs_set(1);
         while (true) {
-            if (simulatedBuffer.length()) {
+            if (commandBuffer.length()) {
                 break;
             }
             if (kbhit()) {
@@ -262,14 +262,18 @@ int main(int argc, char** argv)
         }
         curs_set(0);
 
-        doc->history.paused = simulatedBuffer.length();
-        if (simulatedBuffer.length()) {
-            ch = simulatedBuffer[0];
+        doc->history.paused = commandBuffer.length();
+        if (commandBuffer.length()) {
+            ch = commandBuffer[0];
             if (ch == '\n') {
                 ch = ENTER;
             }
             
-            simulatedBuffer.erase(0,1);
+            commandBuffer.erase(0,1);
+            if (!commandBuffer.length()) {
+                doc->history.paused = false;
+                doc->history.mark();
+            }
         }
         
         std::string s;
@@ -317,12 +321,13 @@ int main(int argc, char** argv)
         case CTRL_KEY('c'):
             currentEditor->clipBoard = cursor.selectedText();
             ch = 0;
-            statusbar.setStatus("copy", 2);
+            if (currentEditor->clipBoard.length()) {
+                statusbar.setStatus("text copied", 2);
+            }
             break;
         
         case CTRL_KEY('v'):
-            statusbar.setStatus("paste", 2);
-            simulatedBuffer = currentEditor->clipBoard;
+            commandBuffer = currentEditor->clipBoard;
             ch = 0;
             break;
             
@@ -386,6 +391,11 @@ int main(int argc, char** argv)
             bool update = false;
 
             switch (ch) {
+            case CTRL_KEY('l'):
+                cursorMovePosition(&cur, cursor_t::StartOfLine, false);
+                cursorMovePosition(&cur, cursor_t::EndOfLine, true);
+                break;
+            
             case CTRL_SHIFT_LEFT:
             case CTRL_LEFT:
                 cursorMovePosition(&cur, cursor_t::WordLeft, ch == CTRL_SHIFT_LEFT);
@@ -445,6 +455,14 @@ int main(int argc, char** argv)
                 // doc->history.mark();
                 // update = true;
                 // break;
+
+            case CTRL_KEY('x'):
+                if (cur.hasSelection()) {
+                    advance -= cursorDeleteSelection(&cur);
+                    update = true;
+                    doc->history.mark();
+                }
+                break;
                 
             case KEY_DC:
                 if (cur.hasSelection()) {
