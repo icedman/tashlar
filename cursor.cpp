@@ -271,7 +271,7 @@ std::string cursor_t::selectedText()
     std::string res = "";
     std::string text = block.text();
     
-    int count = end-start+1;
+    int count = end-start;
     
     for(int i=0; i<count;i++) {
         size_t idx = start + i;

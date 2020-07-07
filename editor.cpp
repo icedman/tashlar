@@ -63,7 +63,7 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
                     startSel = cur.position;
                     endSel = cur.anchorPosition;
                 }
-                if (pos >= startSel && pos <= endSel) {
+                if (pos >= startSel && pos < endSel) {
                     colorPair++;
                     // colorPair = color_pair_e::SELECTED;
                 }
