@@ -240,16 +240,17 @@ int main(int argc, char** argv)
         // get input
         //-----------------
         curs_set(1);
+        int usec = 50;
         while (true) {
             if (commandBuffer.length()) {
                 break;
             }
-            if (kbhit()) {
+            if (kbhit(usec)) {
                 ch = editor_read_key();
                 break;
             } else {
                 bool refresh = false;
-                if (statusbar.tick()) {
+                if (statusbar.tick(usec)) {
                     renderStatus(statusbar, editor);
                     refresh = true;
                 }
@@ -284,7 +285,7 @@ int main(int argc, char** argv)
         }
 
         sprintf(keyName, "%s", keyname(ch));
-        statusbar.setStatus(keyName, 2);
+        statusbar.setStatus(keyName, 2000);
 
         //-----------------
         // app commands
@@ -297,7 +298,7 @@ int main(int argc, char** argv)
             break;
         case CTRL_KEY('s'):
             doc->save();
-            statusbar.setStatus("saved");
+            statusbar.setStatus("saved", 2000);
             ch = 0;
             break;
         case CTRL_KEY('q'):
@@ -322,7 +323,7 @@ int main(int argc, char** argv)
             currentEditor->clipBoard = cursor.selectedText();
             ch = 0;
             if (currentEditor->clipBoard.length()) {
-                statusbar.setStatus("text copied", 2);
+                statusbar.setStatus("text copied", 2000);
             }
             break;
         
@@ -333,7 +334,7 @@ int main(int argc, char** argv)
             
         case CTRL_KEY('d'):
             if (cursor.hasSelection()) {
-                statusbar.setStatus(cursor.selectedText(), 2);
+                statusbar.setStatus(cursor.selectedText(), 2000);
             } else {
                 cursorSelectWord(&cursor);
                 doc->setCursor(cursor);

@@ -158,7 +158,7 @@ void cursorSelectWord(struct cursor_t* cursor)
     for(auto i : search_results) {
         if (i.begin <= relativePosition && relativePosition < i.end) {
             cursor->anchorPosition = block.position + i.begin;
-            cursor->position = block.position + i.end - 1;
+            cursor->position = block.position + i.end;
             break;
         }
     }

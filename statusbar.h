@@ -21,13 +21,13 @@ public:
     std::vector<std::string> end;
 
     void setText(std::string text, int pos = 0);
-    void setStatus(std::string status, int frames = 2);
+    void setStatus(std::string status, int frames = 2000);
 
     void render();
     void renderLine(const char* line, int offsetX = 0);
-    bool tick();
+    bool tick(int tick);
 
-    int frames; // x seconds from last kbhit (corresponds to kbhit timeout)
+    int frames; // x mseconds from last kbhit (corresponds to kbhit timeout)
 
     int viewX;
     int viewY;

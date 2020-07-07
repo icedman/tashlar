@@ -29,7 +29,7 @@ void statusbar_t::setText(std::string text, int pos)
 void statusbar_t::setStatus(std::string s, int f)
 {
     status = s;
-    frames = f + 1;
+    frames = f + 500;
 }
 
 void statusbar_t::render()
@@ -74,14 +74,13 @@ void statusbar_t::renderLine(const char* line, int offsetX)
     }
 }
 
-bool statusbar_t::tick()
+bool statusbar_t::tick(int tick)
 {
-    if (frames == 0) {
+    if (frames < 0) {
         return false;
     }
 
-    frames--;
-    if (frames == 1) {
+    if (frames < 500) {
         status = "";
     }
 
