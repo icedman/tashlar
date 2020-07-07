@@ -17,7 +17,8 @@ std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blo
     return it;
 }
 
-void history_t::mark() {
+void history_t::mark()
+{
     if (editBatch.size()) {
         edits.push_back(editBatch);
         editBatch.clear();
@@ -28,23 +29,20 @@ void history_t::addInsert(struct cursor_t& cur, std::string t)
 {
     editBatch.push_back({ .cursor = cur,
         .text = t,
-        .edit = cursor_edit_e::EDIT_INSERT
-    });
+        .edit = cursor_edit_e::EDIT_INSERT });
 }
 
 void history_t::addDelete(struct cursor_t& cur, int c)
 {
     editBatch.push_back({ .cursor = cur,
         .count = c,
-        .edit = cursor_edit_e::EDIT_DELETE
-    });
+        .edit = cursor_edit_e::EDIT_DELETE });
 }
 
 void history_t::addSplit(struct cursor_t& cur)
 {
     editBatch.push_back({ .cursor = cur,
-        .edit = cursor_edit_e::EDIT_SPLIT
-    });
+        .edit = cursor_edit_e::EDIT_SPLIT });
 }
 
 void history_t::replay()
@@ -52,14 +50,14 @@ void history_t::replay()
     if (!edits.size()) {
         return;
     }
-    
+
     edit_batch_t last = edits.back();
     edits.pop_back();
-    
+
     for (auto batch : edits) {
-        for(auto e : batch) {
-            switch (e.edit) {           
-                
+        for (auto e : batch) {
+            switch (e.edit) {
+
             case cursor_edit_e::EDIT_INSERT:
                 cursorInsertText(&e.cursor, e.text);
                 break;
@@ -75,7 +73,7 @@ void history_t::replay()
         }
     }
 
-    for(auto e : last) {
+    for (auto e : last) {
         e.cursor.document->setCursor(e.cursor);
         break;
     }
@@ -130,16 +128,17 @@ void document_t::undo()
     if (!history.edits.size()) {
         return;
     }
-    
+
     cursorBlockCache.clear();
     clearCursors();
-      
+
     blocks = history.initialState;
     update();
 
     history.replay();
-
     update();
+
+    clearSelections();
 }
 
 void document_t::close()
@@ -159,7 +158,7 @@ void document_t::save()
 }
 
 struct cursor_t document_t::cursor()
-{        
+{
     return cursors[0];
 }
 
@@ -175,7 +174,7 @@ void document_t::setCursor(struct cursor_t& cursor)
 
 void document_t::updateCursor(struct cursor_t& cursor)
 {
-    for(auto &c : cursors) {
+    for (auto& c : cursors) {
         if (c.uid == cursor.uid) {
             c.position = cursor.position;
             c.anchorPosition = cursor.anchorPosition;
@@ -183,7 +182,7 @@ void document_t::updateCursor(struct cursor_t& cursor)
         }
     }
 }
-    
+
 void document_t::addCursor(struct cursor_t& cursor)
 {
     struct cursor_t cur = cursor;
@@ -198,11 +197,16 @@ void document_t::clearCursors()
         return;
     }
 
-    
-    
     struct cursor_t cursor = cursors[0];
     cursors.clear();
     cursors.push_back(cursor);
+}
+
+void document_t::clearSelections()
+{
+    for(auto &c : cursors) {
+        c.anchorPosition = c.position;
+    }
 }
     
 void document_t::update()
@@ -242,7 +246,7 @@ struct block_t& document_t::block(struct cursor_t& cursor, bool skipCache)
         return nullBlock;
     }
 
-    std::map<size_t, struct block_t &>::iterator it = cursorBlockCache.find(cursor.position);
+    std::map<size_t, struct block_t&>::iterator it = cursorBlockCache.find(cursor.position);
     if (!skipCache && it != cursorBlockCache.end()) {
         return it->second;
     }
@@ -253,11 +257,15 @@ struct block_t& document_t::block(struct cursor_t& cursor, bool skipCache)
     while (bit != blocks.end()) {
         auto& b = *bit;
         if (b.length == 0 && cursor.position == b.position) {
-            if (!skipCache) { cursorBlockCache.emplace(cursor.position, b); }
+            if (!skipCache) {
+                cursorBlockCache.emplace(cursor.position, b);
+            }
             return b;
         }
         if (b.position <= cursor.position && cursor.position < b.position + b.length) {
-            if (!skipCache) { cursorBlockCache.emplace(cursor.position, b); }
+            if (!skipCache) {
+                cursorBlockCache.emplace(cursor.position, b);
+            }
             return b;
         }
         idx++;

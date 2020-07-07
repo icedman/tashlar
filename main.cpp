@@ -12,6 +12,7 @@
 #include "cursor.h"
 #include "document.h"
 #include "editor.h"
+#include "statusbar.h"
 #include "util.h"
 
 #include "extension.h"
@@ -30,6 +31,7 @@ void setupColors(theme_ptr theme)
     theme->theme_color("editor.foreground", clr);
     if (!clr.is_blank()) {
         fg = clr.index;
+        selFg = fg;
     }
     theme->theme_color("editor.selectionBackground", clr);
     if (!clr.is_blank()) {
@@ -119,30 +121,43 @@ void renderEditor(struct editor_t& editor)
     }
 }
 
-void renderStatus(WINDOW* win, struct editor_t& editor)
+void renderStatus(struct statusbar_t& statusbar, struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
 
-    int sel = cursor.anchorPosition - cursor.position;
-    if (sel < 0) {
-        sel *= -1;
-    }
-    wmove(win, 0, 0);
-    wclrtoeol(win);
-    char tmp[512];
-    sprintf(tmp, "%s   Line: %d Col: %d   %s",
-        doc->fileName.c_str(),
-        1 + (int)(block.lineNumber),
-        1 + (int)(cursor.position - block.position),
-        editor.status.c_str());
+    //-----------------
+    // calculate view
+    //-----------------
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
-    char c;
-    int idx = 0;
-    while (c = tmp[idx++]) {
-        waddch(win, c);
+    statusbar.viewX = 0;
+    statusbar.viewY = w.ws_row - 1;
+    statusbar.viewWidth = w.ws_col;
+    statusbar.viewHeight = 1;
+
+    if (!statusbar.win) {
+        statusbar.win = newwin(statusbar.viewHeight, statusbar.viewWidth, 0, 0);
     }
+
+    mvwin(statusbar.win, statusbar.viewY, statusbar.viewX);
+    wresize(statusbar.win, statusbar.viewHeight, statusbar.viewWidth);
+
+    char tmp[512];
+    sprintf(tmp, "Line: %d Col: %d",
+        1 + (int)(block.lineNumber),
+        1 + (int)(cursor.position - block.position));
+
+    statusbar.setText(doc->fileName, 0);
+    statusbar.setText(tmp, -2);
+    if (editor.lang) {
+        statusbar.setText(editor.lang->id, -1);
+    } else {
+        statusbar.setText("", -1);
+    }
+    statusbar.render();
 }
 
 void renderCursor(struct editor_t& editor)
@@ -163,10 +178,11 @@ void renderCursor(struct editor_t& editor)
 int main(int argc, char** argv)
 {
     struct editor_t editor;
-
+    struct statusbar_t statusbar;
+    
     std::vector<struct extension_t> extensions;
     load_extensions("/opt/visual-studio-code/resources/app/extensions/", extensions);
-    load_extensions("/home/iceman/.ashlar/extensions/", extensions);
+    load_extensions("~/.ashlar/extensions/", extensions);
 
     char* filename = 0;
     char* theme = "Dracula";
@@ -184,6 +200,7 @@ int main(int argc, char** argv)
 
     editor.lang = language_from_file(filename, extensions);
     editor.theme = theme_from_name(theme, extensions);
+    statusbar.theme = editor.theme;
 
     editor.document.open(filename);
 
@@ -206,20 +223,31 @@ int main(int argc, char** argv)
         curs_set(0);
 
         renderEditor(editor);
+        renderStatus(statusbar, editor);
         renderCursor(editor);
-        wrefresh(editor.win);
 
-        // renderStatus(statusWin, editor);
-        // wrefresh(statusWin);
+        wrefresh(statusbar.win);
+        wrefresh(editor.win);
 
         //-----------------
         // get input
         //-----------------
         curs_set(1);
         while (true) {
-            ch = editor_read_key();
-            if (ch != -1) {
+            if (kbhit()) {
+                ch = editor_read_key();
                 break;
+            } else {
+                bool refresh = false;
+                if (statusbar.tick()) {
+                    renderStatus(statusbar, editor);
+                    refresh = true;
+                }
+                if (refresh) {
+                    renderCursor(editor);
+                    wrefresh(statusbar.win);
+                    wrefresh(editor.win);
+                }
             }
         }
         curs_set(0);
@@ -227,29 +255,30 @@ int main(int argc, char** argv)
         std::string s;
         s += (char)ch;
 
+        if (ch == -1) {
+            s = "";
+        }
+
         sprintf(keyName, "%s", keyname(ch));
-        std::string k = keyName;
- 
+        statusbar.setStatus(keyName, 2);
+
         struct editor_t* currentEditor = &editor;
         struct document_t* doc = &editor.document;
         struct cursor_t cursor = doc->cursor();
         struct block_t block = doc->block(cursor);
-        
+
         //-----------------
         // app commands
         //-----------------
-        
-            int i = 0;
         switch (ch) {
         case ESC:
             doc->clearCursors();
+            getch();
             ch = 0;
             break;
         case CTRL_KEY('s'):
-            // doc->save();
-            for(auto c : doc->cursors) {    
-                std::cout << "c" << (i++) << ": " << c.position << std::endl;
-            }
+            doc->save();
+            statusbar.setStatus("saved");
             ch = 0;
             break;
         case CTRL_KEY('q'):
@@ -263,7 +292,7 @@ int main(int argc, char** argv)
         //-----------------
         // main cursor
         bool didAddCursor = false;
-        
+
         switch (ch) {
         case CTRL_KEY('z'):
             doc->undo();
@@ -271,6 +300,12 @@ int main(int argc, char** argv)
             break;
         case CTRL_KEY('c'):
             currentEditor->clipBoard = cursor.selectedText().c_str();
+            ch = 0;
+            break;
+        case CTRL_KEY('d'):
+            cursorSelectWord(&cursor);
+            doc->setCursor(cursor);
+            doc->history.mark();
             ch = 0;
             break;
         case CTRL_ALT_UP:
@@ -310,18 +345,18 @@ int main(int argc, char** argv)
         }
 
         std::vector<struct cursor_t> cursors = doc->cursors;
-        
+
         // multi-cursor
-        for(int i=0; i<cursors.size(); i++) {
+        for (int i = 0; i < cursors.size(); i++) {
             if (ch == 0) {
                 break;
             }
-            
-            struct cursor_t &cur = cursors[i];
+
+            struct cursor_t& cur = cursors[i];
 
             int advance = 0;
             bool update = false;
-            
+
             switch (ch) {
             case CTRL_SHIFT_LEFT:
             case CTRL_LEFT:
@@ -373,27 +408,46 @@ int main(int argc, char** argv)
             //---------------
             // these go to undo history
             //---------------
+            // case CTRL_KEY('d'):
+                // if (cursorMovePosition(&cur, cursor_t::Move::StartOfLine)) {
+                    // doc->history.addDelete(cur, cur.block->length);
+                    // cursorEraseText(&cur, cur.block->length);
+                // }
+                // doc->history.mark();
+                // update = true;
+                // break;
             case CTRL_KEY('v'):
                 doc->history.addInsert(cur, currentEditor->clipBoard);
                 cursorInsertText(&cur, currentEditor->clipBoard);
                 cursorMovePosition(&cur, cursor_t::Right, false, currentEditor->clipBoard.length());
                 doc->history.mark();
                 update = true;
-                ch = 0;
                 break;
             case KEY_DC:
-                doc->history.addDelete(cur, 1);
-                cursorEraseText(&cur, 1);
-                advance--;
-                update = true;
-                break;
-
-            case BACKSPACE:
-            case KEY_BACKSPACE:
-                if (cursorMovePosition(&cur, cursor_t::Left)) {
+                if (cur.hasSelection()) {
+                    advance -= cursorDeleteSelection(&cur);
+                } else { 
                     doc->history.addDelete(cur, 1);
                     cursorEraseText(&cur, 1);
                     advance--;
+                }
+                update = true;
+                break;
+
+            case CTRL_UP:
+            case CTRL_DOWN:
+                break;
+                
+            case BACKSPACE:
+            case KEY_BACKSPACE:
+                if (cur.hasSelection()) {
+                    advance -= cursorDeleteSelection(&cur);
+                } else {
+                    if (cursorMovePosition(&cur, cursor_t::Left)) {
+                        doc->history.addDelete(cur, 1);
+                        cursorEraseText(&cur, 1);
+                        advance--;
+                    }
                 }
                 update = true;
                 break;
@@ -408,14 +462,19 @@ int main(int argc, char** argv)
                 break;
 
             default:
-                doc->history.addInsert(cur, s);
-                cursorInsertText(&cur, s);
-                cursorMovePosition(&cur, cursor_t::Right, false, s.length());
-                if (s == " " || s == "\t") {
-                    doc->history.mark();
+                if (s.length() == 1) {
+                    doc->history.addInsert(cur, s);
+                    if (cur.hasSelection()) {
+                        advance -= cursorDeleteSelection(&cur);
+                    }
+                    cursorInsertText(&cur, s);
+                    cursorMovePosition(&cur, cursor_t::Right, false, s.length());
+                    if (s == " " || s == "\t") {
+                        doc->history.mark();
+                    }
+                    advance += s.length();
+                    update = true;
                 }
-                advance+=s.length();
-                update = true;
                 break;
             }
 
@@ -426,9 +485,9 @@ int main(int argc, char** argv)
             if (update) {
                 doc->update();
 
-                for(int j=0; j<cursors.size(); j++) {
-                    struct cursor_t &c = cursors[j];
-                    if (c.position> 0 && c.position + advance > cur.position && c.uid != cur.uid) {
+                for (int j = 0; j < cursors.size(); j++) {
+                    struct cursor_t& c = cursors[j];
+                    if (c.position > 0 && c.position + advance > cur.position && c.uid != cur.uid) {
                         c.position += advance;
                         c.anchorPosition += advance;
                         // std::cout << advance << std::endl;

@@ -30,7 +30,8 @@ public:
         , block(0)
         , position(0)
         , anchorPosition(0)
-    {}
+    {
+    }
 
     struct document_t* document;
     struct block_t* block;
@@ -55,6 +56,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
 void cursorInsertText(struct cursor_t* cursor, std::string t);
 void cursorEraseText(struct cursor_t* cursor, int c);
 void cursorSplitBlock(struct cursor_t* cursor);
-void cursorEraseLine(struct cursor_t* cursor);
+void cursorSelectWord(struct cursor_t* cursor);
+int cursorDeleteSelection(struct cursor_t* cursor);
 
 #endif // CURSOR_H

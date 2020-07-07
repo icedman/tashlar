@@ -49,8 +49,6 @@ public:
     language_info_ptr lang;
     theme_ptr theme;
 
-    std::string status;
-
     WINDOW* win;
 };
 

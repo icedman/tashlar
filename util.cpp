@@ -1,3 +1,10 @@
+#define _POSIX_C_SOURCE 200809L
+#include <ctype.h>
+#include <stdbool.h>
+#include <string.h>
+#include <strings.h>
+#include <wordexp.h>
+
 #include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,21 +77,87 @@ std::vector<std::string> enumerate_dir(const std::string path)
     return res;
 }
 
+char* join_args(char** argv, int argc)
+{
+    // if (!sway_assert(argc > 0, "argc should be positive")) {
+    //     return NULL;
+    // }
+    int len = 0, i;
+    for (i = 0; i < argc; ++i) {
+        len += strlen(argv[i]) + 1;
+    }
+    char* res = (char*)malloc(len);
+    len = 0;
+    for (i = 0; i < argc; ++i) {
+        strcpy(res + len, argv[i]);
+        len += strlen(argv[i]);
+        res[len++] = ' ';
+    }
+    res[len - 1] = '\0';
+    return res;
+}
+
+bool expand_path(char** path)
+{
+    wordexp_t p = { 0 };
+    while (strstr(*path, "  ")) {
+        *path = (char*)realloc(*path, strlen(*path) + 2);
+        char* ptr = strstr(*path, "  ") + 1;
+        memmove(ptr + 1, ptr, strlen(ptr) + 1);
+        *ptr = '\\';
+    }
+    if (wordexp(*path, &p, 0) != 0 || p.we_wordv[0] == NULL) {
+        wordfree(&p);
+        return false;
+    }
+    free(*path);
+    *path = join_args(p.we_wordv, p.we_wordc);
+    wordfree(&p);
+    return true;
+}
+
+
+// if != 0, then there is data to be read on stdin
+int kbhit()
+{
+    // timeout structure passed into select
+    struct timeval tv;
+    // fd_set passed into select
+    fd_set fds;
+    // Set up the timeout.  here we can wait for 1 second
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+
+    // Zero out the fd_set - make sure it's pristine
+    FD_ZERO(&fds);
+    // Set the FD that we want to read
+    FD_SET(STDIN_FILENO, &fds); //STDIN_FILENO is 0
+    // select takes the last file descriptor value + 1 in the fdset to check,
+    // the fdset for reads, writes, and errors.  We are only passing in reads.
+    // the last parameter is the timeout.  select will return if an FD is ready or
+    // the timeout has occurred
+    select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
+    // return 0 if STDIN is not ready to be read.
+
+    return FD_ISSET(STDIN_FILENO, &fds);
+}
+
 int editor_read_key()
 {
     int fd = STDIN_FILENO;
 
-    char c;
+    int c;
     if (read(STDIN_FILENO, &c, 1) != 1) {
         return -1;
     }
 
     if (c == ESC) {
         char seq[3];
+
         if (read(STDIN_FILENO, &seq[0], 1) != 1)
-            return '\x1b';
+            return ESC;
         if (read(STDIN_FILENO, &seq[1], 1) != 1)
-            return '\x1b';
+            return ESC;
 
         /* ESC [ sequences. */
         if (seq[0] == '[') {
@@ -92,11 +165,11 @@ int editor_read_key()
             if (seq[1] >= '0' && seq[1] <= '9') {
 
                 // std::cout << seq[0] << seq[1] << std::endl;
-                
+
                 /* Extended escape, read additional byte. */
-                if (read(fd, &seq[2], 1) == 0)
+                if (read(fd, &seq[2], 1) != 1)
                     return ESC;
-                
+
                 if (seq[2] == '~') {
                     switch (seq[1]) {
                     case '3':
@@ -110,9 +183,9 @@ int editor_read_key()
 
                 if (seq[2] == ';') {
                     if (read(STDIN_FILENO, &seq[0], 1) != 1)
-                        return '\x1b';
+                        return ESC;
                     if (read(STDIN_FILENO, &seq[1], 1) != 1)
-                        return '\x1b';
+                        return ESC;
 
                     // std::cout << seq[0] << seq[1] << std::endl;
 
@@ -134,9 +207,9 @@ int editor_read_key()
                     if (seq[0] == '5') {
                         switch (seq[1]) {
                         case 'A':
-                            return KEY_UP;
+                            return CTRL_UP;
                         case 'B':
-                            return KEY_DOWN;
+                            return CTRL_DOWN;
                         case 'C':
                             return CTRL_RIGHT;
                         case 'D':
@@ -190,13 +263,17 @@ int editor_read_key()
             } else {
                 switch (seq[1]) {
                 case 'A':
-                    return KEY_UP;;
+                    return KEY_UP;
+                    ;
                 case 'B':
-                    return KEY_DOWN;;
+                    return KEY_DOWN;
+                    ;
                 case 'C':
-                    return KEY_RIGHT;;
+                    return KEY_RIGHT;
+                    ;
                 case 'D':
-                    return KEY_LEFT;;
+                    return KEY_LEFT;
+                    ;
                 case 'H':
                     return HOME_KEY;
                 case 'F':

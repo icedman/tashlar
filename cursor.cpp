@@ -1,14 +1,18 @@
 #include "cursor.h"
 #include "document.h"
 #include "util.h"
+#include "search.h"
 
 #include <algorithm>
+
+
+static struct search_t search;
 
 void cursor_t::update()
 {
     block = &document->block(*this);
 }
-    
+
 std::string cursor_t::selectedText()
 {
     if (!hasSelection()) {
@@ -30,21 +34,13 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         return false;
     }
 
-    // word end
-    static std::set<char> delims;
-    if (!delims.size()) {
-        std::string eow = " \t~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-=";
-        for(auto c : eow) {
-            delims.insert(c);
-        }
-    }
-
     count--;
     size_t relativePosition = cursor->position - block.position;
+    
+    std::vector<search_result_t> search_results;
+    bool extractWords = false;
 
-    std::vector<size_t> indices;
-    if (move == cursor_t::Move::WordLeft ||
-        move == cursor_t::Move::WordRight) {
+    if (move == cursor_t::Move::WordLeft || move == cursor_t::Move::WordRight) {
 
         if (move == cursor_t::Move::WordLeft && relativePosition == 0) {
             if (cursorMovePosition(cursor, cursor_t::Move::Up, keepAnchor)) {
@@ -58,24 +54,28 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
             }
             return true;
         }
-        
-        indices = split_path_to_indices(block.text(), delims);
+
+        extractWords = true;
     }
-        
+
+    if (extractWords) {    
+        search_results = search.findWords(block.text());
+    }
+
     switch (move) {
     case cursor_t::Move::StartOfLine:
         cursor->position = block.position;
         break;
     case cursor_t::Move::EndOfLine:
-        cursor->position = block.position + (block.length-1);
+        cursor->position = block.position + (block.length - 1);
         break;
-    
+
     case cursor_t::Move::WordLeft: {
         bool found = false;
-        std::reverse(std::begin(indices), std::end(indices));
-        for(auto i : indices) {
-            cursor->position = block.position + i;
-            if (i + 1 < relativePosition) {
+        std::reverse(std::begin(search_results), std::end(search_results));
+        for (auto i : search_results) {
+            cursor->position = block.position + i.begin;
+            if (i.begin + 1 < relativePosition) {
                 found = true;
                 break;
             }
@@ -85,21 +85,23 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         }
         break;
     }
+    
     case cursor_t::Move::WordRight: {
         bool found = false;
-        for(auto i : indices) {
-            cursor->position = block.position + i;
-            if (i > relativePosition) {
+        for (auto i : search_results) {
+            cursor->position = block.position + i.begin;
+            if (i.begin > relativePosition) {
                 found = true;
                 break;
             }
         }
-        
+
         if (!found) {
             cursor->position = block.position + (block.length - 1);
         }
         break;
     }
+    
     case cursor_t::Move::Up:
         if (!block.previous) {
             return false;
@@ -140,6 +142,25 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     return !cursor->isNull();
 }
 
+void cursorSelectWord(struct cursor_t* cursor)
+{
+    struct block_t& block = cursor->document->block(*cursor);
+    if (!block.isValid()) {
+        return;
+    }
+
+    size_t relativePosition = cursor->position - block.position;
+    
+    std::vector<search_result_t> search_results = search.findWords(block.text());
+    for(auto i : search_results) {
+        if (i.begin <= relativePosition && relativePosition < i.end) {
+            cursor->anchorPosition = block.position + i.begin;
+            cursor->position = block.position + i.end - 1;
+            break;
+        }
+    }
+}
+    
 void cursorInsertText(struct cursor_t* cursor, std::string t)
 {
     struct block_t& block = cursor->document->block(*cursor);
@@ -202,12 +223,31 @@ void cursorSplitBlock(struct cursor_t* cursor)
     cursor->document->update();
 }
 
-void cursorEraseLine(struct cursor_t* cursor)
+int cursorDeleteSelection(struct cursor_t* cursor)
 {
-    struct block_t& block = cursor->document->block(*cursor);
-    if (!block.isValid()) {
-        return;
+    if (!cursor->hasSelection()) {
+        return 0;
     }
-    cursorMovePosition(cursor, cursor_t::Move::StartOfLine);
-    cursorEraseText(cursor, block.length);
+
+    size_t start;
+    size_t end;
+    if (cursor->position > cursor->anchorPosition) {
+        start = cursor->anchorPosition;
+        end = cursor->position;
+    } else {
+        start = cursor->position;
+        end = cursor->anchorPosition;
+    }
+
+    struct cursor_t cur = *cursor;
+    cur.position = start;
+    int count = end-start+1;
+    for(int i=0; i<count;i++) {
+        cursorEraseText(&cur, 1);
+    }
+
+    cursor->position = cur.position;
+    cursor->anchorPosition = cur.anchorPosition;
+
+    return count;
 }

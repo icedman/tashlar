@@ -13,6 +13,7 @@ tashlar_files = [
     'editor.cpp',
     'extension.cpp',
     'statusbar.cpp',
+    'search.cpp',
     'util.cpp'
 ]
 

@@ -21,46 +21,51 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
             continue;
         }
 
+        if (c == '\t') {
+            c = ' ';
+        }
+        
         int colorPair = color_pair_e::NORMAL;
 
         if (block && cursors) {
             int rpos = idx - 1;
             int pos = block->position + idx - 1;
-            std::vector<struct cursor_t>::iterator it = cursors->begin();
+
+            // syntax here
+            if (block && block->data) {
+                struct blockdata_t* blockData = block->data;
+                for (auto span : blockData->spans) {
+                    if (rpos >= span.start && rpos < span.start + span.length) {
+                        colorPair = span.colorIndex;
+                        break;
+                    }
+                }
+            }
+
+            colorPair = !(colorPair % 2) ? colorPair : colorPair - 1;
+
+            // selection
             bool firstCursor = true;
-            while (it != cursors->end()) {
-                struct cursor_t& cur = *it++;
-
-                // syntax here
-                if (block && block->data) {
-                    struct blockdata_t* blockData = block->data;
-                    for (auto span : blockData->spans) {
-                        if (rpos >= span.start && rpos < span.start + span.length) {
-                            colorPair = span.colorIndex;
-                            break;
-                        }
-                    }
-                }
-
-                colorPair = !(colorPair % 2) ? colorPair : colorPair - 1;
-
-                // selection
-                if (cur.hasSelection()) {
-                    size_t startSel = cur.anchorPosition;
-                    size_t endSel = cur.position;
-                    if (startSel > endSel) {
-                        startSel = cur.position;
-                        endSel = cur.anchorPosition;
-                    }
-                    if (pos >= startSel && pos <= endSel) {
-                        colorPair++;
-                        // colorPair = color_pair_e::SELECTED;
-                    }
-                }
-                
-                if (pos == cur.position) {
-                    // colorPair++;
+            for (auto cur : *cursors) {
+                if (pos == cur.position && !firstCursor) {
+                    wattron(win, A_REVERSE);
                     colorPair = color_pair_e::SELECTED;
+                    colorPair++;
+                }
+                firstCursor = false;
+
+                if (!cur.hasSelection()) {
+                    continue;
+                }
+                size_t startSel = cur.anchorPosition;
+                size_t endSel = cur.position;
+                if (startSel > endSel) {
+                    startSel = cur.position;
+                    endSel = cur.anchorPosition;
+                }
+                if (pos >= startSel && pos <= endSel) {
+                    colorPair++;
+                    // colorPair = color_pair_e::SELECTED;
                 }
             }
         }
@@ -69,6 +74,7 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
         // mvwaddch(win, sy, sx++, c);
         waddch(win, c);
         wattroff(win, COLOR_PAIR(colorPair));
+        wattroff(win, A_REVERSE);
     }
 }
 

@@ -44,7 +44,7 @@ public:
         : dirty(true)
     {
     }
-    
+
     std::vector<span_info_t> spans;
     parse::stack_ptr parser_state;
     std::map<size_t, scope::scope_t> scopes;
@@ -135,18 +135,17 @@ struct cursor_edit_t {
 };
 
 typedef std::vector<cursor_edit_t> edit_batch_t;
-    
+
 struct history_t {
 public:
-    
     std::vector<struct block_t> initialState;
     // std::vector<struct cursor_edit_t> edits;
-    
+
     std::vector<edit_batch_t> edits;
     edit_batch_t editBatch;
 
     void mark();
-    
+
     void addInsert(struct cursor_t& c, std::string text);
     void addDelete(struct cursor_t& c, int count);
     void addSplit(struct cursor_t& c);
@@ -185,7 +184,8 @@ public:
     void updateCursor(struct cursor_t& cursor);
     void addCursor(struct cursor_t& cursor);
     void clearCursors();
-    
+    void clearSelections();
+
     void undo();
     void update();
     struct block_t& block(struct cursor_t& cursor, bool skipCache = false);
@@ -195,7 +195,7 @@ public:
     std::string tmpPath;
     std::string fileName;
 
-    std::map<size_t, struct block_t &> cursorBlockCache;
+    std::map<size_t, struct block_t&> cursorBlockCache;
     struct history_t history;
 };
 
