@@ -20,7 +20,6 @@ std::vector<search_result_t> search_t::findWords(std::string str)
     char *end = start + str.length();
     
     for( ;start<end; ) {
-        // std::cout << start << "??";
         regexp::match_t m = regexp::search(words, start, end);
         if (!m.did_match()) {
             break;
@@ -34,8 +33,6 @@ std::vector<search_result_t> search_t::findWords(std::string str)
             .text = o
         };
 
-        // std::cout << o << ":" << o.length() << "  ";
-        
         result.emplace_back(res);
         
         start += m.begin() + o.length();
@@ -43,4 +40,14 @@ std::vector<search_result_t> search_t::findWords(std::string str)
     }
 
     return result;
+}
+
+search_result_t search_t::find(struct cursor_t *cursor, std::string str)
+{
+    search_result_t res = {
+        .begin = 0,
+        .end = 0
+    };
+    
+    return res;
 }

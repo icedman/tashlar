@@ -218,8 +218,15 @@ int main(int argc, char** argv)
 
     char keyName[32] = "";
 
-    while (!end) {
+    std::string simulatedBuffer;
 
+    while (!end) {
+        
+        struct editor_t* currentEditor = &editor;
+        struct document_t* doc = &editor.document;
+        struct cursor_t cursor = doc->cursor();
+        struct block_t block = doc->block(cursor);
+        
         curs_set(0);
 
         renderEditor(editor);
@@ -234,6 +241,9 @@ int main(int argc, char** argv)
         //-----------------
         curs_set(1);
         while (true) {
+            if (simulatedBuffer.length()) {
+                break;
+            }
             if (kbhit()) {
                 ch = editor_read_key();
                 break;
@@ -252,6 +262,16 @@ int main(int argc, char** argv)
         }
         curs_set(0);
 
+        doc->history.paused = simulatedBuffer.length();
+        if (simulatedBuffer.length()) {
+            ch = simulatedBuffer[0];
+            if (ch == '\n') {
+                ch = ENTER;
+            }
+            
+            simulatedBuffer.erase(0,1);
+        }
+        
         std::string s;
         s += (char)ch;
 
@@ -261,11 +281,6 @@ int main(int argc, char** argv)
 
         sprintf(keyName, "%s", keyname(ch));
         statusbar.setStatus(keyName, 2);
-
-        struct editor_t* currentEditor = &editor;
-        struct document_t* doc = &editor.document;
-        struct cursor_t cursor = doc->cursor();
-        struct block_t block = doc->block(cursor);
 
         //-----------------
         // app commands
@@ -298,14 +313,27 @@ int main(int argc, char** argv)
             doc->undo();
             ch = 0; // consume the key
             break;
+            
         case CTRL_KEY('c'):
-            currentEditor->clipBoard = cursor.selectedText().c_str();
+            currentEditor->clipBoard = cursor.selectedText();
+            ch = 0;
+            statusbar.setStatus("copy", 2);
+            break;
+        
+        case CTRL_KEY('v'):
+            statusbar.setStatus("paste", 2);
+            simulatedBuffer = currentEditor->clipBoard;
             ch = 0;
             break;
+            
         case CTRL_KEY('d'):
-            cursorSelectWord(&cursor);
-            doc->setCursor(cursor);
-            doc->history.mark();
+            if (cursor.hasSelection()) {
+                statusbar.setStatus(cursor.selectedText(), 2);
+            } else {
+                cursorSelectWord(&cursor);
+                doc->setCursor(cursor);
+                doc->history.mark();
+            }
             ch = 0;
             break;
         case CTRL_ALT_UP:
@@ -343,7 +371,7 @@ int main(int argc, char** argv)
             ch = 0;
             break;
         }
-
+        
         std::vector<struct cursor_t> cursors = doc->cursors;
 
         // multi-cursor
@@ -408,6 +436,7 @@ int main(int argc, char** argv)
             //---------------
             // these go to undo history
             //---------------
+            
             // case CTRL_KEY('d'):
                 // if (cursorMovePosition(&cur, cursor_t::Move::StartOfLine)) {
                     // doc->history.addDelete(cur, cur.block->length);
@@ -416,13 +445,7 @@ int main(int argc, char** argv)
                 // doc->history.mark();
                 // update = true;
                 // break;
-            case CTRL_KEY('v'):
-                doc->history.addInsert(cur, currentEditor->clipBoard);
-                cursorInsertText(&cur, currentEditor->clipBoard);
-                cursorMovePosition(&cur, cursor_t::Right, false, currentEditor->clipBoard.length());
-                doc->history.mark();
-                update = true;
-                break;
+                
             case KEY_DC:
                 if (cur.hasSelection()) {
                     advance -= cursorDeleteSelection(&cur);
@@ -462,6 +485,7 @@ int main(int argc, char** argv)
                 break;
 
             default:
+                
                 if (s.length() == 1) {
                     doc->history.addInsert(cur, s);
                     if (cur.hasSelection()) {

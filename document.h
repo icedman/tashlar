@@ -62,6 +62,8 @@ public:
         , position(0)
         , data(0)
         , dirty(false)
+        , next(0)
+        , previous()
     {
     }
 
@@ -138,6 +140,8 @@ typedef std::vector<cursor_edit_t> edit_batch_t;
 
 struct history_t {
 public:
+    history_t() : frames(0), paused(false) {}
+    
     std::vector<struct block_t> initialState;
     // std::vector<struct cursor_edit_t> edits;
 
@@ -152,6 +156,7 @@ public:
     void replay();
 
     int frames;
+    bool paused;
 };
 
 struct document_t {

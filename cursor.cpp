@@ -13,15 +13,6 @@ void cursor_t::update()
     block = &document->block(*this);
 }
 
-std::string cursor_t::selectedText()
-{
-    if (!hasSelection()) {
-        return "";
-    }
-    // todo!
-    return "";
-}
-
 bool cursor_t::isNull()
 {
     return document == 0 || block == 0 || !block->isValid();
@@ -161,16 +152,18 @@ void cursorSelectWord(struct cursor_t* cursor)
     }
 }
     
-void cursorInsertText(struct cursor_t* cursor, std::string t)
+int cursorInsertText(struct cursor_t* cursor, std::string t)
 {
     struct block_t& block = cursor->document->block(*cursor);
     if (!block.isValid()) {
-        return;
+        return 0;
     }
 
     std::string blockText = block.text();
     blockText.insert(cursor->position - block.position, t);
     block.setText(blockText);
+
+    return blockText.length();
 }
 
 void cursorEraseText(struct cursor_t* cursor, int c)
@@ -251,3 +244,57 @@ int cursorDeleteSelection(struct cursor_t* cursor)
 
     return count;
 }
+
+std::string cursor_t::selectedText()
+{
+    if (!hasSelection()) {
+        return "";
+    }
+
+    size_t start;
+    size_t end;
+    if (position > anchorPosition) {
+        start = anchorPosition;
+        end = position;
+    } else {
+        start = position;
+        end = anchorPosition;
+    }
+
+    struct cursor_t cursor = *this;
+    cursor.position = start;
+    struct block_t block = document->block(cursor);
+    if (!block.isValid()) {
+        return "";
+    }
+
+    std::string res = "";
+    std::string text = block.text();
+    
+    int count = end-start+1;
+    
+    for(int i=0; i<count;i++) {
+        size_t idx = start + i;
+        int blockIdx = idx - block.position;
+  
+        char c = text[blockIdx];
+        if (c == 0) {
+
+            if (!block.next) {
+                return res;
+            }
+            block = *block.next;
+            if (!block.isValid()) {
+                return res;
+            }
+            text = block.text();
+            
+            res += "\n";
+            continue;
+        }
+        res += c;
+    }
+
+    return res;
+}
+

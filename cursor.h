@@ -53,7 +53,7 @@ public:
 };
 
 bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool keepAnchor = false, int count = 1);
-void cursorInsertText(struct cursor_t* cursor, std::string t);
+int cursorInsertText(struct cursor_t* cursor, std::string t);
 void cursorEraseText(struct cursor_t* cursor, int c);
 void cursorSplitBlock(struct cursor_t* cursor);
 void cursorSelectWord(struct cursor_t* cursor);

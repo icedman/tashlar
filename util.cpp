@@ -118,15 +118,15 @@ bool expand_path(char** path)
 
 
 // if != 0, then there is data to be read on stdin
-int kbhit()
+int kbhit(int timeout)
 {
     // timeout structure passed into select
     struct timeval tv;
     // fd_set passed into select
     fd_set fds;
     // Set up the timeout.  here we can wait for 1 second
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
+    tv.tv_sec = 0;
+    tv.tv_usec = timeout;
 
     // Zero out the fd_set - make sure it's pristine
     FD_ZERO(&fds);
