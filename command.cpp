@@ -3,7 +3,7 @@
 #include "document.h"
 #include "statusbar.h"
 
-bool processCommand(command_e cmd, struct app_t *app)
+bool processCommand(command_e cmd, struct app_t *app, char ch)
 {
     struct editor_t* editor = app->currentEditor;
     struct document_t* doc = &editor->document;
@@ -109,6 +109,7 @@ bool processCommand(command_e cmd, struct app_t *app)
     // multi cursor updates
     //-----------------
     bool handled = false;
+    bool markHistory = false;
     std::vector<struct cursor_t> cursors = doc->cursors;
 
     for (int i = 0; i < cursors.size(); i++) {
@@ -117,12 +118,138 @@ bool processCommand(command_e cmd, struct app_t *app)
         bool update = false;
 
         switch(cmd) {
+
+        //-----------
+        // navigation
+        //-----------
+        case CMD_MOVE_CURSOR_PREVIOUS_WORD:
+        case CMD_MOVE_CURSOR_PREVIOUS_WORD_ANCHORED:
+            cursorMovePosition(&cur, cursor_t::WordLeft, cmd == CMD_MOVE_CURSOR_PREVIOUS_WORD_ANCHORED);
+            doc->history.mark();
+            handled = true;
+            break;
+            
+        case CMD_MOVE_CURSOR_NEXT_WORD:
+        case CMD_MOVE_CURSOR_NEXT_WORD_ANCHORED:
+            cursorMovePosition(&cur, cursor_t::WordRight, cmd == CMD_MOVE_CURSOR_NEXT_WORD_ANCHORED);
+            doc->history.mark();
+            handled = true;
+            break;
+
+        case CMD_MOVE_CURSOR_START_OF_LINE:
+        case CMD_MOVE_CURSOR_START_OF_LINE_ANCHORED:
+            cursorMovePosition(&cur, cursor_t::StartOfLine, cmd == CMD_MOVE_CURSOR_START_OF_LINE_ANCHORED);
+            doc->history.mark();
+            handled = true;
+            break;
+            
+        case CMD_MOVE_CURSOR_END_OF_LINE:
+        case CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED:
+            cursorMovePosition(&cur, cursor_t::EndOfLine, cmd == CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED);
+            doc->history.mark();
+            handled = true;
+            break;
+
+        case CMD_MOVE_CURSOR_UP:
+        case CMD_MOVE_CURSOR_UP_ANCHORED:
+            cursorMovePosition(&cur, cursor_t::Up, cmd == CMD_MOVE_CURSOR_UP_ANCHORED);
+            doc->history.mark();
+            handled = true;
+            break;
+            
+        case CMD_MOVE_CURSOR_DOWN:
+        case CMD_MOVE_CURSOR_DOWN_ANCHORED:
+            cursorMovePosition(&cur, cursor_t::Down, cmd == CMD_MOVE_CURSOR_DOWN_ANCHORED);
+            doc->history.mark();
+            handled = true;
+            break;
+            
+        case CMD_MOVE_CURSOR_LEFT:
+        case CMD_MOVE_CURSOR_LEFT_ANCHORED:
+            cursorMovePosition(&cur, cursor_t::Left, cmd == CMD_MOVE_CURSOR_LEFT_ANCHORED);
+            handled = true;
+            doc->history.mark();
+            break;
+            
+        case CMD_MOVE_CURSOR_RIGHT:
+        case CMD_MOVE_CURSOR_RIGHT_ANCHORED:
+            cursorMovePosition(&cur, cursor_t::Right, cmd == CMD_MOVE_CURSOR_RIGHT_ANCHORED);
+            doc->history.mark();
+            handled = true;
+            break;
+
         case CMD_SELECT_LINE:
             cursorMovePosition(&cur, cursor_t::StartOfLine, false);
             cursorMovePosition(&cur, cursor_t::EndOfLine, true);
             handled = true;
             break;
-            
+
+
+        //-----------
+        // document edits
+        //-----------            
+        case CMD_CUT:
+            app->clipBoard = cur.selectedText();
+            if (app->clipBoard.length()) {
+                app->statusbar->setStatus("text copied", 2000);
+            }
+            if (cur.hasSelection()) {
+                int count = cursorDeleteSelection(&cur);
+                if (count) {
+                    doc->history.addDelete(cur, count);
+                }
+                advance -= count;
+                update = true;
+            }
+            handled = true;
+            break;
+
+        case CMD_DELETE:
+            if (cur.hasSelection()) {
+                advance -= cursorDeleteSelection(&cur);
+            } else { 
+                doc->history.addDelete(cur, 1);
+                cursorEraseText(&cur, 1);
+                advance--;
+            }
+            update = true;
+            handled = true;
+            break;
+
+        case CMD_BACKSPACE:
+            if (cur.hasSelection()) {
+                advance -= cursorDeleteSelection(&cur);
+            } else {
+                if (cursorMovePosition(&cur, cursor_t::Left)) {
+                    doc->history.addDelete(cur, 1);
+                    cursorEraseText(&cur, 1);
+                    advance--;
+                }
+            }
+            update = true;
+            handled = true;
+            break;
+
+        case 10:
+        case CMD_ENTER:
+            doc->history.addSplit(cur);
+            cursorSplitBlock(&cur);
+            cursorMovePosition(&cur, cursor_t::Right);
+            advance++;
+            update = true;
+            handled = true;
+            markHistory = true;
+            break;
+
+        // case CMD_DELETE_LINE:
+            // if (cursorMovePosition(&cur, cursor_t::Move::StartOfLine)) {
+                // doc->history.addDelete(cur, cur.block->length);
+                // cursorEraseText(&cur, cur.block->length);
+            // }
+            // doc->history.mark();
+            // update = true;
+            // break;
+
         default:
             break;
         }
@@ -143,6 +270,10 @@ bool processCommand(command_e cmd, struct app_t *app)
             }
         }
     }
-        
+
+    if (markHistory) {
+        doc->history.mark();
+    }
+            
     return handled;
 }

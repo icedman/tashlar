@@ -14,9 +14,12 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
 
     std::vector<struct cursor_t>* cursors = &document.cursors;
 
+    int colorPair = color_pair_e::NORMAL;
+        
     char c;
     int idx = 0;
     while (c = line[idx++]) {
+        
         if (offsetX-- > 0) {
             continue;
         }
@@ -25,14 +28,13 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
             c = ' ';
         }
         
-        int colorPair = color_pair_e::NORMAL;
-
         if (block && cursors) {
             int rpos = idx - 1;
             int pos = block->position + idx - 1;
 
             // syntax here
             if (block && block->data) {
+                colorPair = color_pair_e::NORMAL;
                 struct blockdata_t* blockData = block->data;
                 for (auto span : blockData->spans) {
                     if (rpos >= span.start && rpos < span.start + span.length) {
@@ -45,12 +47,9 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
             colorPair = !(colorPair % 2) ? colorPair : colorPair - 1;
 
             // selection
-            // bool firstCursor = true;
             for (auto cur : *cursors) {
                 if (pos == cur.position) {
                     wattron(win, A_REVERSE);
-                    // wattron(win, A_BLINK);
-                    // colorPair = color_pair_e::SELECTED;
                     colorPair++;
                 }
                 // firstCursor = false;
@@ -66,17 +65,14 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
                 }
                 if (pos >= startSel && pos < endSel) {
                     colorPair++;
-                    // colorPair = color_pair_e::SELECTED;
                 }
             }
         }
 
         wattron(win, COLOR_PAIR(colorPair));
-        // mvwaddch(win, sy, sx++, c);
         waddch(win, c);
         wattroff(win, COLOR_PAIR(colorPair));
         wattroff(win, A_REVERSE);
-        // wattroff(win, A_BLINK);
     }
 }
 

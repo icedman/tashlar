@@ -21,18 +21,25 @@
 
 void setupColors(theme_ptr theme)
 {
+    style_t s = theme->styles_for_scope("comment");
+
     int bg = -1;
-    int fg = COLOR_GREEN;
-    int selBg = COLOR_GREEN;
+    int fg = COLOR_WHITE;
+    int selBg = COLOR_WHITE;
     int selFg = -1;
     color_info_t clr;
     theme->theme_color("editor.background", clr);
     if (!clr.is_blank()) {
         // bg = clr.index;
     }
+    
     theme->theme_color("editor.foreground", clr);
     if (!clr.is_blank()) {
         fg = clr.index;
+        selFg = fg;
+    }
+    if (!s.foreground.is_blank()) {
+        fg = s.foreground.index;
         selFg = fg;
     }
     theme->theme_color("editor.selectionBackground", clr);
@@ -147,7 +154,7 @@ void renderStatus(struct statusbar_t& statusbar, struct editor_t& editor)
     mvwin(statusbar.win, statusbar.viewY, statusbar.viewX);
     wresize(statusbar.win, statusbar.viewHeight, statusbar.viewWidth);
 
-    char tmp[512];
+    static char tmp[512];
     sprintf(tmp, "Line: %d Col: %d",
         1 + (int)(block.lineNumber),
         1 + (int)(cursor.position - block.position));
@@ -227,8 +234,11 @@ int main(int argc, char** argv)
     
     setupColors(editor.theme);
 
+    // endwin();
+    // return 0;
+    
     clear();
-
+    
     editor.document.open(filename);
 
     int ch = 0;
@@ -284,7 +294,7 @@ int main(int argc, char** argv)
         }
 
         app.currentEditor = &editor;
-        if (processCommand(cmd, &app)) {
+        if (processCommand(cmd, &app, ch)) {
             continue;
         }
 
@@ -323,116 +333,7 @@ int main(int argc, char** argv)
             bool update = false;
 
             switch (ch) {
-            
-            case CTRL_SHIFT_LEFT:
-            case CTRL_LEFT:
-                cursorMovePosition(&cur, cursor_t::WordLeft, ch == CTRL_SHIFT_LEFT);
-                doc->history.mark();
-                break;
-            case CTRL_SHIFT_RIGHT:
-            case CTRL_RIGHT:
-                cursorMovePosition(&cur, cursor_t::WordRight, ch == CTRL_SHIFT_RIGHT);
-                doc->history.mark();
-                break;
-            case CTRL_SHIFT_ALT_LEFT:
-            case CTRL_ALT_LEFT:
-                cursorMovePosition(&cur, cursor_t::StartOfLine, ch == CTRL_SHIFT_ALT_LEFT);
-                doc->history.mark();
-                break;
-            case CTRL_SHIFT_ALT_RIGHT:
-            case CTRL_ALT_RIGHT:
-                cursorMovePosition(&cur, cursor_t::EndOfLine, ch == CTRL_SHIFT_ALT_RIGHT);
-                doc->history.mark();
-                break;
-            case CTRL_SHIFT_UP:
-            case KEY_SR:
-            case KEY_UP:
-                cursorMovePosition(&cur, cursor_t::Up, (ch == KEY_SR || ch == CTRL_SHIFT_UP));
-                doc->history.mark();
-                break;
-            case CTRL_SHIFT_DOWN:
-            case KEY_SF:
-            case KEY_DOWN:
-                cursorMovePosition(&cur, cursor_t::Down, (ch == KEY_SF || ch == CTRL_SHIFT_DOWN));
-                doc->history.mark();
-                break;
-            case KEY_SLEFT:
-            case KEY_LEFT:
-                cursorMovePosition(&cur, cursor_t::Left, ch == KEY_SLEFT);
-                doc->history.mark();
-                break;
-            case KEY_SRIGHT:
-            case KEY_RIGHT:
-                cursorMovePosition(&cur, cursor_t::Right, ch == KEY_SRIGHT);
-                doc->history.mark();
-                break;
-
-            case KEY_RESIZE:
-                clear();
-                break;
-
-            //---------------
-            // these go to undo history
-            //---------------
-            
-            // case CTRL_KEY('d'):
-                // if (cursorMovePosition(&cur, cursor_t::Move::StartOfLine)) {
-                    // doc->history.addDelete(cur, cur.block->length);
-                    // cursorEraseText(&cur, cur.block->length);
-                // }
-                // doc->history.mark();
-                // update = true;
-                // break;
-
-            case CTRL_KEY('x'):
-                if (cur.hasSelection()) {
-                    int count = cursorDeleteSelection(&cur);
-                    if (count) {
-                        doc->history.addDelete(cur, count);
-                    }
-                    advance -= count;
-                    update = true;
-                }
-                break;
                 
-            case KEY_DC:
-                if (cur.hasSelection()) {
-                    advance -= cursorDeleteSelection(&cur);
-                } else { 
-                    doc->history.addDelete(cur, 1);
-                    cursorEraseText(&cur, 1);
-                    advance--;
-                }
-                update = true;
-                break;
-
-            case CTRL_UP:
-            case CTRL_DOWN:
-                break;
-                
-            case BACKSPACE:
-            case KEY_BACKSPACE:
-                if (cur.hasSelection()) {
-                    advance -= cursorDeleteSelection(&cur);
-                } else {
-                    if (cursorMovePosition(&cur, cursor_t::Left)) {
-                        doc->history.addDelete(cur, 1);
-                        cursorEraseText(&cur, 1);
-                        advance--;
-                    }
-                }
-                update = true;
-                break;
-            case 10: // newline
-            case ENTER:
-                doc->history.addSplit(cur);
-                cursorSplitBlock(&cur);
-                cursorMovePosition(&cur, cursor_t::Right);
-                doc->history.mark();
-                advance++;
-                update = true;
-                break;
-
             default:
                 
                 if (s.length() == 1) {

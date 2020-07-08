@@ -11,6 +11,58 @@
 
 static std::map<std::string, command_e> keybindings;
 
+void bindDefaults()
+{
+    bindKeySequence("ctrl+s",           CMD_SAVE);
+    
+    bindKeySequence("ctrl+c",           CMD_COPY);
+    bindKeySequence("ctrl+x",           CMD_CUT);
+    bindKeySequence("ctrl+v",           CMD_PASTE);
+    bindKeySequence("ctrl+z",           CMD_UNDO);
+    
+    bindKeySequence("ctrl+l",           CMD_SELECT_LINE);
+    // bindKeySequence("ctrl+shift+d",     CMD_DUPLICATE_LINE);
+    
+    bindKeySequence("ctrl+d",           CMD_ADD_CURSOR_FOR_SELECTED_WORD);
+    bindKeySequence("ctrl+alt+up",      CMD_ADD_CURSOR_AND_MOVE_UP);
+    bindKeySequence("ctrl+alt+down",    CMD_ADD_CURSOR_AND_MOVE_DOWN);
+    
+    bindKeySequence("ctrl+left",        CMD_MOVE_CURSOR_PREVIOUS_WORD);
+    bindKeySequence("ctrl+right",       CMD_MOVE_CURSOR_NEXT_WORD);
+    bindKeySequence("ctrl+shift+left",  CMD_MOVE_CURSOR_PREVIOUS_WORD_ANCHORED);
+    bindKeySequence("ctrl+shift+right", CMD_MOVE_CURSOR_NEXT_WORD_ANCHORED);
+    
+    bindKeySequence("left",             CMD_MOVE_CURSOR_LEFT);
+    bindKeySequence("right",            CMD_MOVE_CURSOR_RIGHT);
+    bindKeySequence("down",             CMD_MOVE_CURSOR_DOWN);
+    bindKeySequence("up",               CMD_MOVE_CURSOR_UP);
+    
+    // bindKeySequence("ctrl+up",               CMD_MOVE_LINE_DOWN);
+    // bindKeySequence("ctrl+down",             CMD_MOVE_LINE_UP);
+
+    bindKeySequence("shift+left",       CMD_MOVE_CURSOR_LEFT_ANCHORED);
+    bindKeySequence("shift+right",      CMD_MOVE_CURSOR_RIGHT_ANCHORED);
+    bindKeySequence("shift+down",       CMD_MOVE_CURSOR_DOWN_ANCHORED);
+    bindKeySequence("shift+up",         CMD_MOVE_CURSOR_UP_ANCHORED);
+    
+    bindKeySequence("ctrl+alt+right",   CMD_MOVE_CURSOR_END_OF_LINE);
+    bindKeySequence("ctrl+shift+alt+left",    CMD_MOVE_CURSOR_START_OF_LINE_ANCHORED);
+    bindKeySequence("ctrl+shift+alt+right",   CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED);
+    
+    // bindKeySequence("ctrl+shift+z",     CMD_REDO);
+    
+    // bindKeySequence("home",             CMD_MOVE_CURSOR_START_OF_DOCUMENT);
+    // bindKeySequence("end",              CMD_MOVE_CURSOR_END_OF_DOCUMENT);
+    
+    bindKeySequence("pageup",           CMD_MOVE_CURSOR_PREVIOUS_PAGE);
+    bindKeySequence("pagedown",         CMD_MOVE_CURSOR_NEXT_PAGE);
+    
+    bindKeySequence("enter",            CMD_ENTER);
+    bindKeySequence("delete",           CMD_DELETE);
+    bindKeySequence("backspace",        CMD_BACKSPACE);
+}
+
+
 // if != 0, then there is data to be read on stdin
 int kbhit(int timeout)
 {
@@ -235,8 +287,9 @@ int readKey(std::string& keySequence)
                 }
             } if (CTRL_KEY(c) == c) {
 
-                // enter (this eats up ctrl+k & ctrl+m)
-                if (c == 10 || c == 13) {
+                // enter (this eats up ctrl+m)
+                if (c == ENTER) {
+                    keySequence = "enter";
                     return c;
                 }
                 
@@ -244,6 +297,16 @@ int readKey(std::string& keySequence)
                 keySequence += 'a' + (c - 1);
                 // std::cout << keySequence << std::endl;
                 return c;
+            }
+
+            switch (c) {
+            case ENTER:
+                keySequence = "enter";
+                break;
+            case BACKSPACE:
+            case KEY_BACKSPACE:
+                keySequence = "backspace";
+                break;
             }
 
             return c;
@@ -267,27 +330,4 @@ command_e commandKorKeys(std::string keys)
     }
     
     return command_e::CMD_UNKNOWN;
-}
-
-void bindDefaults()
-{
-    bindKeySequence("ctrl+s",           CMD_SAVE);
-    
-    bindKeySequence("ctrl+c",           CMD_COPY);
-    // bindKeySequence("ctrl+x",           CMD_CUT);
-    bindKeySequence("ctrl+v",           CMD_PASTE);
-    bindKeySequence("ctrl+z",           CMD_UNDO);
-    
-    bindKeySequence("ctrl+l",           CMD_SELECT_LINE);
-    
-    bindKeySequence("ctrl+d",           CMD_ADD_CURSOR_FOR_SELECTED_WORD);
-    bindKeySequence("ctrl+alt+up",      CMD_ADD_CURSOR_AND_MOVE_UP);
-    bindKeySequence("ctrl+alt+down",    CMD_ADD_CURSOR_AND_MOVE_DOWN);
-    
-    // bindKeySequence("ctrl+shift+z",     CMD_);
-    
-    // bindKeySequence("home",             CMD_MOVE_);
-    // bindKeySequence("end",              CMD_MOVE_);
-    bindKeySequence("pageup",           CMD_MOVE_CURSOR_PREVIOUS_PAGE);
-    bindKeySequence("pagedown",         CMD_MOVE_CURSOR_NEXT_PAGE);
 }
