@@ -34,7 +34,12 @@ void statusbar_t::setStatus(std::string s, int f)
 
 void statusbar_t::render()
 {
-    int colorPair = color_pair_e::SELECTED;
+    if (colorPair == 0) {
+        style_t s = theme->styles_for_scope("comment");
+        colorPair = s.foreground.index;
+        colorPair = !(colorPair % 2) ? colorPair : colorPair - 1;
+    }
+    
     wattron(win, COLOR_PAIR(colorPair));
     wmove(win, 0, 0);
 

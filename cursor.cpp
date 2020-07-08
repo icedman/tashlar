@@ -28,7 +28,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     count--;
     size_t relativePosition = cursor->position - block.position;
 
-    if (cursor->preferredRelativePosition != 0) {
+    if ((move == cursor_t::Move::Up || move == cursor_t::Move::Down) && cursor->preferredRelativePosition != 0) {
         relativePosition = cursor->preferredRelativePosition;
     }
     
@@ -53,7 +53,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         extractWords = true;
     }
 
-    if (move == cursor_t::Move::Left || move == cursor_t::Move::Right) {
+    if (!(move == cursor_t::Move::Up || move == cursor_t::Move::Down)) {
         cursor->preferredRelativePosition = 0;
     } else {
         if (cursor->preferredRelativePosition == 0) {
@@ -130,6 +130,9 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         break;
     case cursor_t::Move::Right:
         cursor->position++;
+        if (cursor->position >= block.position + block.length && !block.next) {
+            cursor->position--;
+        }
         break;
     }
 
@@ -341,8 +344,8 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t)
             if (found.isValid()) {
                 cursor->anchorPosition = block.position + found.begin;
                 cursor->position = block.position + found.end - 1;
-                // std::cout << found.begin << ":" << relativePosition <<std::endl;
                 return true;
+                // std::cout << found.begin << ":" << relativePosition <<std::endl;
             }
             
         }

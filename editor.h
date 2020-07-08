@@ -5,6 +5,7 @@
 #include <string>
 
 #include "document.h"
+#include "command.h"
 
 // syntax highlighter
 #include "grammar.h"
@@ -53,4 +54,19 @@ public:
     WINDOW* win;
 };
 
+struct statusbar_t;
+    
+struct app_t
+{
+    struct editor_t *currentEditor;
+    struct statusbar_t *statusbar;
+
+    std::vector<command_e> commandBuffer;
+    std::string inputBuffer;
+    
+    std::string clipBoard;   
+ 
+    theme_ptr theme; 
+};
+    
 #endif // EDITOR_H

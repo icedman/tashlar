@@ -13,6 +13,8 @@
 #include "document.h"
 #include "editor.h"
 #include "statusbar.h"
+#include "keybinding.h"
+#include "command.h"
 #include "util.h"
 
 #include "extension.h"
@@ -179,7 +181,13 @@ int main(int argc, char** argv)
 {
     struct editor_t editor;
     struct statusbar_t statusbar;
+
+    struct app_t app;
+    app.statusbar = &statusbar;
     
+    //-------------------
+    // initialize extensions
+    //-------------------
     std::vector<struct extension_t> extensions;
     load_extensions("/opt/visual-studio-code/resources/app/extensions/", extensions);
     load_extensions("~/.ashlar/extensions/", extensions);
@@ -197,29 +205,34 @@ int main(int argc, char** argv)
             theme = argv[i + 1];
         }
     }
-
+    
     editor.lang = language_from_file(filename, extensions);
-    editor.theme = theme_from_name(theme, extensions);
-    statusbar.theme = editor.theme;
 
-    editor.document.open(filename);
-
-    /* initialize curses */
+    app.theme = theme_from_name(theme, extensions);
+    editor.theme = app.theme;
+    statusbar.theme = app.theme;
+    
+    //-------------------
+    // keybinding
+    //-------------------
+    bindDefaults();
+    
+    //-------------------
+    // ncurses
+    //-------------------
     initscr();
     // cbreak();
     raw();
     noecho();
+    
     setupColors(editor.theme);
 
-        
     clear();
+
+    editor.document.open(filename);
 
     int ch = 0;
     bool end = false;
-
-    char keyName[64] = "";
-
-    std::string commandBuffer;
 
     while (!end) {
         
@@ -240,40 +253,41 @@ int main(int argc, char** argv)
         //-----------------
         // get input
         //-----------------
-        int usec = 50;
-        while (true) {
-            if (commandBuffer.length()) {
+        command_e cmd = command_e::CMD_UNKNOWN;
+        std::string keySequence;
+        while(true) {
+            if (app.inputBuffer.length()) {
                 break;
             }
-            if (kbhit(usec)) {
-                ch = editor_read_key();
+            ch = readKey(keySequence);
+            if (keySequence.length()) {
+                statusbar.setStatus(keySequence, 2000);
+                cmd = commandKorKeys(keySequence);
+                keySequence = ""; // always consume
+            }
+            if (ch != -1) {
                 break;
-            } else {
-                bool refresh = false;
-                if (statusbar.tick(usec)) {
-                    renderStatus(statusbar, editor);
-                    refresh = true;
-                }
-                if (refresh) {
-                    wrefresh(statusbar.win);
-                    wrefresh(editor.win);
-                }
             }
         }
 
-        doc->history.paused = commandBuffer.length();
-        if (commandBuffer.length()) {
-            ch = commandBuffer[0];
+        doc->history.paused = app.inputBuffer.length();
+        if (app.inputBuffer.length()) {
+            ch = app.inputBuffer[0];
             if (ch == '\n') {
                 ch = ENTER;
             }
             
-            commandBuffer.erase(0,1);
-            if (!commandBuffer.length()) {
+            app.inputBuffer.erase(0,1);
+            if (!app.inputBuffer.length()) {
                 doc->history.end();
             }
         }
-        
+
+        app.currentEditor = &editor;
+        if (processCommand(cmd, &app)) {
+            continue;
+        }
+
         std::string s;
         s += (char)ch;
 
@@ -281,111 +295,23 @@ int main(int argc, char** argv)
             s = "";
         }
 
-        sprintf(keyName, "%s", keyname(ch));
-        statusbar.setStatus(keyName, 2000);
-
         //-----------------
         // app commands
         //-----------------
         switch (ch) {
         case ESC:
             doc->clearCursors();
-            getch();
-            ch = 0;
-            break;
-        case CTRL_KEY('s'):
-            doc->save();
-            statusbar.setStatus("saved", 2000);
-            ch = 0;
-            break;
+            continue;
         case CTRL_KEY('q'):
             end = true;
-            ch = 0;
-            break;
+            continue;
         }
 
-        //-----------------
-        // process keys (for editor)
-        //-----------------
-        // main cursor
-        bool didAddCursor = false;
-
-        switch (ch) {
-        case CTRL_KEY('z'):
-            doc->undo();
-            ch = 0; // consume the key
-            break;
-
-        case CTRL_KEY('c'):
-        case CTRL_KEY('x'):
-            currentEditor->clipBoard = cursor.selectedText();
-            if (currentEditor->clipBoard.length()) {
-                statusbar.setStatus("text copied", 2000);
-            }
-            if (ch == CTRL_KEY('c')) {
-                ch = 0;
-            }
-            break;
-        
-        case CTRL_KEY('v'):
-            commandBuffer = currentEditor->clipBoard;
-            ch = 0;
-            break;
-            
-        case CTRL_KEY('d'):
-            if (cursor.hasSelection()) {
-                statusbar.setStatus(cursor.selectedText(), 2000);
-                struct cursor_t c = cursor;
-                if (cursorFindWord(&cursor, cursor.selectedText())) {
-                    doc->addCursor(c);
-                    doc->setCursor(cursor);
-                }
-            } else {
-                cursorSelectWord(&cursor);
-                doc->setCursor(cursor);
-                doc->history.mark();
-            }
-            ch = 0;
-            break;
-        case CTRL_ALT_UP:
-            doc->addCursor(cursor);
-            didAddCursor = true;
-            ch = KEY_UP;
-            break;
-        case CTRL_ALT_DOWN:
-            doc->addCursor(cursor);
-            didAddCursor = true;
-            ch = KEY_DOWN;
-            break;
-        case PAGE_UP:
-            doc->clearCursors();
-            for (int i = 0; i < currentEditor->viewHeight + 1; i++) {
-                if (cursorMovePosition(&cursor, cursor_t::Up, ch == KEY_SR)) {
-                    currentEditor->highlightBlock(doc->block(cursor));
-                    doc->setCursor(cursor);
-                } else {
-                    break;
-                }
-            }
-            ch = 0;
-            break;
-        case PAGE_DOWN:
-            doc->clearCursors();
-            for (int i = 0; i < currentEditor->viewHeight + 1; i++) {
-                if (cursorMovePosition(&cursor, cursor_t::Down, ch == KEY_SF)) {
-                    currentEditor->highlightBlock(doc->block(cursor));
-                    doc->setCursor(cursor);
-                } else {
-                    break;
-                }
-            }
-            ch = 0;
-            break;
-        }
-        
         std::vector<struct cursor_t> cursors = doc->cursors;
 
-        // multi-cursor
+        //-------------------
+        // update cursors
+        //-------------------
         for (int i = 0; i < cursors.size(); i++) {
             if (ch == 0) {
                 break;
@@ -397,10 +323,6 @@ int main(int argc, char** argv)
             bool update = false;
 
             switch (ch) {
-            case CTRL_KEY('l'):
-                cursorMovePosition(&cur, cursor_t::StartOfLine, false);
-                cursorMovePosition(&cur, cursor_t::EndOfLine, true);
-                break;
             
             case CTRL_SHIFT_LEFT:
             case CTRL_LEFT:
@@ -464,9 +386,12 @@ int main(int argc, char** argv)
 
             case CTRL_KEY('x'):
                 if (cur.hasSelection()) {
-                    advance -= cursorDeleteSelection(&cur);
+                    int count = cursorDeleteSelection(&cur);
+                    if (count) {
+                        doc->history.addDelete(cur, count);
+                    }
+                    advance -= count;
                     update = true;
-                    doc->history.mark();
                 }
                 break;
                 
@@ -526,9 +451,7 @@ int main(int argc, char** argv)
                 break;
             }
 
-            if (!didAddCursor || i == 0) {
-                doc->updateCursor(cur);
-            }
+            doc->updateCursor(cur);
 
             if (update) {
                 doc->update();

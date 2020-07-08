@@ -4,8 +4,8 @@
 
 search_t::search_t()
 {
-    words = regexp::pattern_t("\\w+", "is");
-    // words = regexp::pattern_t("[a-zA-Z0-9]+", "is");
+    // words = regexp::pattern_t("\\w+", "is");
+    words = regexp::pattern_t("[a-zA-Z0-9_']+", "is");
 }
 
 search_t::~search_t()

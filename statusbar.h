@@ -13,6 +13,7 @@ public:
     statusbar_t()
         : win(0)
         , frames(0)
+        , colorPair(0)
     {
     }
 
@@ -38,6 +39,8 @@ public:
     WINDOW* win;
 
     theme_ptr theme;
+
+    int colorPair;
 };
 
 #endif // STATUSBAR_H

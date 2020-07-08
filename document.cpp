@@ -182,6 +182,7 @@ void document_t::setCursor(struct cursor_t& cursor)
     if (!cursors[0].uid) {
         cursors[0].uid = cursor_uid++;
     }
+    
     cursors[0].position = cursor.position;
     cursors[0].anchorPosition = cursor.anchorPosition;
     cursors[0].preferredRelativePosition = cursor.preferredRelativePosition;
@@ -215,6 +216,7 @@ void document_t::clearCursors()
     }
 
     struct cursor_t cursor = cursors[0];
+    cursor.clearSelection();
     cursors.clear();
     cursors.push_back(cursor);
 }

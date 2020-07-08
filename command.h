@@ -14,10 +14,15 @@ enum command_e {
     CMD_PASTE,
     CMD_SELECT_WORD,
     CMD_SELECT_LINE,
+    CMD_DUPLICATE_LINE,
+    CMD_DELETE_LINE,
     CMD_CLEAR_SELECTION,
-    CMD_ADD_CURSOR_ABOVE,
-    CMD_ADD_CURSOR_BELOW,
-    CMD_ADD_CURSOR_SELECTED_WORD,
+    CMD_DUPLICATE_SELECTION,
+    CMD_DELETE_SELECTION,
+    CMD_ADD_CURSOR_AND_MOVE_UP,
+    CMD_ADD_CURSOR_AND_MOVE_DOWN,
+    CMD_ADD_CURSOR_FOR_SELECTED_WORD,
+    CMD_CLEAR_CURSORS,
     CMD_MOVE_CURSOR_LEFT,
     CMD_MOVE_CURSOR_RIGHT,
     CMD_MOVE_CURSOR_UP,
@@ -39,6 +44,6 @@ enum command_e {
     CMD_INSERT
 };
 
-void processCommand(struct editor_t *editor, command_e cmd, std::string args);
+bool processCommand(command_e cmd, struct app_t *app);
 
 #endif // COMMAND_H

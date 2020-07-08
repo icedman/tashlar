@@ -51,6 +51,7 @@ public:
     bool isNull();
 
     void update();
+    void clearSelection() { anchorPosition = position; }
 
     std::string selectedText();
 };
