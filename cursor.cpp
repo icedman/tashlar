@@ -158,7 +158,7 @@ void cursorSelectWord(struct cursor_t* cursor)
     for(auto i : search_results) {
         if (i.begin <= relativePosition && relativePosition < i.end) {
             cursor->anchorPosition = block.position + i.begin;
-            cursor->position = block.position + i.end;
+            cursor->position = block.position + i.end - 1;
             break;
         }
     }
@@ -283,7 +283,7 @@ std::string cursor_t::selectedText()
     std::string res = "";
     std::string text = block.text();
     
-    int count = end-start;
+    int count = end-start+1;
     
     for(int i=0; i<count;i++) {
         size_t idx = start + i;
@@ -308,5 +308,53 @@ std::string cursor_t::selectedText()
     }
 
     return res;
+}
+
+bool cursorFindWord(struct cursor_t* cursor, std::string t)
+{
+    bool firstCursor = true;
+    struct cursor_t cur = *cursor;
+    
+    for(;;) {                
+        struct block_t& block = cur.document->block(cur);
+        if (!block.isValid()) {
+            return false;
+        }
+        size_t relativePosition = cur.position - block.position;
+    
+        std::string text = block.text();
+        std::vector<search_result_t> res = search.find(text, t);
+        if (res.size()) {
+            search_result_t found;
+            if (firstCursor) {
+                for(auto &r : res) {
+                    if (r.end <= relativePosition || r.begin <= relativePosition) {
+                        continue;
+                    }
+                    found = r;
+                    break;
+                }
+            } else {
+                found = res[0];
+            }
+
+            if (found.isValid()) {
+                cursor->anchorPosition = block.position + found.begin;
+                cursor->position = block.position + found.end - 1;
+                // std::cout << found.begin << ":" << relativePosition <<std::endl;
+                return true;
+            }
+            
+        }
+
+        if (!cursorMovePosition(&cur, cursor_t::Move::Down)) {
+            return false;
+        }
+        
+        cursorMovePosition(&cur, cursor_t::Move::StartOfLine);
+        firstCursor = false;
+    }
+
+    return true;
 }
 

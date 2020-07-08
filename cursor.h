@@ -60,6 +60,7 @@ int cursorInsertText(struct cursor_t* cursor, std::string t);
 void cursorEraseText(struct cursor_t* cursor, int c);
 void cursorSplitBlock(struct cursor_t* cursor);
 void cursorSelectWord(struct cursor_t* cursor);
+bool cursorFindWord(struct cursor_t* cursor, std::string t);
 int cursorDeleteSelection(struct cursor_t* cursor);
 
 #endif // CURSOR_H

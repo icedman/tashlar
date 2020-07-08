@@ -148,6 +148,8 @@ public:
     std::vector<edit_batch_t> edits;
     edit_batch_t editBatch;
 
+    void begin();
+    void end();
     void mark();
 
     void addInsert(struct cursor_t& c, std::string text);

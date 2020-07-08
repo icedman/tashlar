@@ -11,8 +11,12 @@ search_t::search_t()
 search_t::~search_t()
 {}
 
-std::vector<search_result_t> search_t::findWords(std::string str)
+std::vector<search_result_t> search_t::findWords(std::string str, regexp::pattern_t *pattern)
 {
+    if (!pattern) {
+        pattern = &words;
+    }
+    
     std::vector<search_result_t> result;
 
     char *cstr = (char*)str.c_str();
@@ -20,18 +24,17 @@ std::vector<search_result_t> search_t::findWords(std::string str)
     char *end = start + str.length();
     
     for( ;start<end; ) {
-        regexp::match_t m = regexp::search(words, start, end);
+        regexp::match_t m = regexp::search(*pattern, start, end);
         if (!m.did_match()) {
             break;
         }
 
         std::string o(start+m.begin(), m.end()-m.begin());
 
-        search_result_t res = {
-            .begin = (start + m.begin() - cstr),
-            .end = (start + m.end() - cstr),
-            .text = o
-        };
+        search_result_t res;
+        res.begin = (start + m.begin() - cstr);
+        res.end = (start + m.end() - cstr);
+        res.text = o;
 
         result.emplace_back(res);
         
@@ -42,12 +45,12 @@ std::vector<search_result_t> search_t::findWords(std::string str)
     return result;
 }
 
-search_result_t search_t::find(struct cursor_t *cursor, std::string str)
+std::vector<search_result_t> search_t::find(std::string str, std::string pat)
 {
-    search_result_t res = {
-        .begin = 0,
-        .end = 0
-    };
-    
-    return res;
+    if (lastWord != pat) {
+        lastWord = pat;
+        word = regexp::pattern_t(pat, "is");
+    }
+
+    return findWords(str, &word);
 }

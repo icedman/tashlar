@@ -211,6 +211,7 @@ int main(int argc, char** argv)
     noecho();
     setupColors(editor.theme);
 
+        
     clear();
 
     int ch = 0;
@@ -226,20 +227,19 @@ int main(int argc, char** argv)
         struct document_t* doc = &editor.document;
         struct cursor_t cursor = doc->cursor();
         struct block_t block = doc->block(cursor);
-        
-        curs_set(0);
-
+    
         renderEditor(editor);
         renderStatus(statusbar, editor);
         renderCursor(editor);
 
+        curs_set(0);
         wrefresh(statusbar.win);
         wrefresh(editor.win);
-
+        curs_set(1);
+        
         //-----------------
         // get input
         //-----------------
-        curs_set(1);
         int usec = 50;
         while (true) {
             if (commandBuffer.length()) {
@@ -255,13 +255,11 @@ int main(int argc, char** argv)
                     refresh = true;
                 }
                 if (refresh) {
-                    renderCursor(editor);
                     wrefresh(statusbar.win);
                     wrefresh(editor.win);
                 }
             }
         }
-        curs_set(0);
 
         doc->history.paused = commandBuffer.length();
         if (commandBuffer.length()) {
@@ -272,8 +270,7 @@ int main(int argc, char** argv)
             
             commandBuffer.erase(0,1);
             if (!commandBuffer.length()) {
-                doc->history.paused = false;
-                doc->history.mark();
+                doc->history.end();
             }
         }
         
@@ -318,12 +315,15 @@ int main(int argc, char** argv)
             doc->undo();
             ch = 0; // consume the key
             break;
-            
+
         case CTRL_KEY('c'):
+        case CTRL_KEY('x'):
             currentEditor->clipBoard = cursor.selectedText();
-            ch = 0;
             if (currentEditor->clipBoard.length()) {
                 statusbar.setStatus("text copied", 2000);
+            }
+            if (ch == CTRL_KEY('c')) {
+                ch = 0;
             }
             break;
         
@@ -335,6 +335,11 @@ int main(int argc, char** argv)
         case CTRL_KEY('d'):
             if (cursor.hasSelection()) {
                 statusbar.setStatus(cursor.selectedText(), 2000);
+                struct cursor_t c = cursor;
+                if (cursorFindWord(&cursor, cursor.selectedText())) {
+                    doc->addCursor(c);
+                    doc->setCursor(cursor);
+                }
             } else {
                 cursorSelectWord(&cursor);
                 doc->setCursor(cursor);

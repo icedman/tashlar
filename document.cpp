@@ -17,8 +17,23 @@ std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blo
     return it;
 }
 
+void history_t::begin()
+{
+    paused = true;
+}
+    
+void history_t::end()
+{
+    paused = false;
+    mark();
+}
+    
 void history_t::mark()
 {
+    if (paused) {
+        return;
+    }
+    
     if (editBatch.size()) {
         edits.push_back(editBatch);
         editBatch.clear();
@@ -27,9 +42,6 @@ void history_t::mark()
 
 void history_t::addInsert(struct cursor_t& cur, std::string t)
 {
-    if (paused) {
-        return;
-    }
     editBatch.push_back({ .cursor = cur,
         .text = t,
         .edit = cursor_edit_e::EDIT_INSERT });
@@ -37,9 +49,6 @@ void history_t::addInsert(struct cursor_t& cur, std::string t)
 
 void history_t::addDelete(struct cursor_t& cur, int c)
 {
-    if (paused) {
-        return;
-    }
     editBatch.push_back({ .cursor = cur,
         .count = c,
         .edit = cursor_edit_e::EDIT_DELETE });
@@ -47,9 +56,6 @@ void history_t::addDelete(struct cursor_t& cur, int c)
 
 void history_t::addSplit(struct cursor_t& cur)
 {
-    if (paused) {
-        return;
-    }
     editBatch.push_back({ .cursor = cur,
         .edit = cursor_edit_e::EDIT_SPLIT });
 }

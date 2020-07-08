@@ -28,7 +28,8 @@ public:
     bool tick(int tick);
 
     int frames; // x mseconds from last kbhit (corresponds to kbhit timeout)
-
+    std::string prevStatus;
+    
     int viewX;
     int viewY;
     int viewWidth;
