@@ -66,7 +66,9 @@ struct app_t
     
     std::string clipBoard;   
  
-    theme_ptr theme; 
+    theme_ptr theme;
+
+    static void log(const char* format, ...);
 };
     
 #endif // EDITOR_H

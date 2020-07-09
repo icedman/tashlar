@@ -14,7 +14,12 @@ enum KEY_ACTION {
     BACKSPACE = 127, /* Backspace */
     /* The following are just soft codes, not really reported by the
          * terminal directly. */
-    CTRL_UP = 1000,
+    ALT_ = 1000,
+    CTRL_,
+    CTRL_ALT_,
+    CTRL_SHIFT_,
+    CTRL_SHIFT_ALT_,
+    CTRL_UP,
     CTRL_DOWN,
     CTRL_LEFT,
     CTRL_RIGHT,

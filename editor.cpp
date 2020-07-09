@@ -3,9 +3,35 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdarg.h>
+#include <string.h>
 
 #include "editor.h"
 
+void app_t::log(const char* format, ...)
+{
+    char string[512] = "";
+ 
+    va_list args;
+    va_start(args, format);
+    vsnprintf(string, 255, format, args);
+    va_end(args);
+ 
+    FILE *console_file = fopen("/tmp/ashlar.log", "a");
+    if (!console_file) {
+        return;
+ 
+    }
+    char* token = strtok(string, "\n");
+    while (token != NULL) {
+        fprintf(console_file, token);
+        fprintf(console_file, "\n");
+ 
+        token = strtok(NULL, "\n");
+    }
+    fclose(console_file);
+}
+    
 void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
 {
     if (!line) {
@@ -47,12 +73,17 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
             // colorPair = !(colorPair % 2) ? colorPair : colorPair - 1;
 
             // selection
+            bool firstCursor = true;
             for (auto cur : *cursors) {
                 if (pos == cur.position) {
-                    wattron(win, A_REVERSE);
-                    // colorPair++;
-                    colorPair = color_pair_e::SELECTED;
+                    if (firstCursor) {
+                        wattron(win, A_REVERSE);
+                    }
+                        // colorPair++;
+                        // wattron(win, A_BLINK);
+                    // colorPair = color_pair_e::SELECTED;
                 }
+                firstCursor = true;
 
                 if (!cur.hasSelection()) {
                     continue;
@@ -74,6 +105,7 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
         waddch(win, c);
         wattroff(win, COLOR_PAIR(colorPair));
         wattroff(win, A_REVERSE);
+        wattroff(win, A_BLINK);
     }
 }
 

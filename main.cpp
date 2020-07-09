@@ -246,6 +246,7 @@ int main(int argc, char** argv)
     int ch = 0;
     bool end = false;
 
+    std::string previousKeySequence;        
     while (!end) {
         
         struct editor_t* currentEditor = &editor;
@@ -269,7 +270,7 @@ int main(int argc, char** argv)
         //-----------------
         // get input
         //-----------------
-        command_e cmd = command_e::CMD_UNKNOWN;
+        command_e cmd = CMD_UNKNOWN;
         std::string keySequence;
         while(true) {
             if (app.inputBuffer.length()) {
@@ -285,9 +286,21 @@ int main(int argc, char** argv)
             if (keySequence.length()) {
                 statusbar.setStatus(keySequence, 2000);
                 cmd = commandKorKeys(keySequence);
+
+                if (cmd == CMD_UNKNOWN && previousKeySequence.length()) {
+                    cmd = commandKorKeys(previousKeySequence + "+" + keySequence);
+                }
+
+                if (cmd != CMD_UNKNOWN) {
+                    previousKeySequence = "";
+                } else {
+                    previousKeySequence = keySequence;
+                }
+                
                 keySequence = ""; // always consume
                 ch = 0;
             }
+            
             if (ch != -1) {
                 break;
             }
@@ -313,10 +326,19 @@ int main(int argc, char** argv)
             cmd = CMD_SPLIT_LINE;
         }
 
+        
+        if ((cmd == CMD_UNKNOWN || cmd == CMD_CANCEL) && ch >= ALT_ && ch <= CTRL_SHIFT_ALT_) {
+            // drop unhandled;
+            continue;
+        }
+
         //-----------------
         // app commands
         //-----------------
         switch (cmd) {
+        case CMD_CANCEL:
+            continue;
+            
         case CMD_QUIT:
             end = true;
             break;

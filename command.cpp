@@ -14,6 +14,9 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
     // global
     //-----------------
     switch(cmd) {
+    case CMD_CANCEL:
+        return true;
+        
     case CMD_SAVE:
         doc->save();
         app->statusbar->setStatus("saved", 2000);

@@ -1,4 +1,5 @@
 #include "keybinding.h"
+#include "editor.h"
 
 #include <curses.h>
 #include <stdio.h>
@@ -22,8 +23,11 @@ void bindDefaults()
     bindKeySequence("ctrl+z",           CMD_UNDO);
     
     bindKeySequence("ctrl+l",           CMD_SELECT_LINE);
-    bindKeySequence("ctrl+x",     CMD_DUPLICATE_LINE);
-    // bindKeySequence("ctrl+???",           CMD_DELETE_LINE);
+    
+    // bindKeySequence("ctrl+shift+d",     CMD_DUPLICATE_LINE);
+    // bindKeySequence("ctrl+shift+k",     CMD_DELETE_LINE);
+    bindKeySequence("alt+shift+d",     CMD_DUPLICATE_LINE);
+    bindKeySequence("alt+shift+k",     CMD_DELETE_LINE);
     
     bindKeySequence("ctrl+d",           CMD_ADD_CURSOR_FOR_SELECTED_WORD);
     bindKeySequence("ctrl+alt+up",      CMD_ADD_CURSOR_AND_MOVE_UP);
@@ -47,7 +51,8 @@ void bindDefaults()
     bindKeySequence("shift+down",       CMD_MOVE_CURSOR_DOWN_ANCHORED);
     bindKeySequence("shift+up",         CMD_MOVE_CURSOR_UP_ANCHORED);
     
-    bindKeySequence("ctrl+alt+right",   CMD_MOVE_CURSOR_END_OF_LINE);
+    bindKeySequence("ctrl+alt+left",        CMD_MOVE_CURSOR_START_OF_LINE);
+    bindKeySequence("ctrl+alt+right",       CMD_MOVE_CURSOR_END_OF_LINE);
     bindKeySequence("ctrl+shift+alt+left",    CMD_MOVE_CURSOR_START_OF_LINE_ANCHORED);
     bindKeySequence("ctrl+shift+alt+right",   CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED);
     
@@ -90,6 +95,33 @@ int kbhit(int timeout)
     return FD_ISSET(STDIN_FILENO, &fds);
 }
 
+int other_escape_sequence(int c, std::string &keySequence)
+{
+    char tmp[32];
+
+    if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z')) {
+        sprintf(tmp, "alt+%c", c);
+        keySequence = tmp;
+        return ALT_;
+    }
+
+    if (c >= 'A' && c <= 'Z') {
+        sprintf(tmp, "alt+shift+%c", (c + 'a' - 'A'));
+        keySequence = tmp;
+        return ALT_;
+    }
+
+    if ((c + 'a' - 1) >= 'a' && (c + 'a' - 1) <= 'z') {
+        sprintf(tmp, "ctrl+alt+%c", (c + 'a' - 1));
+        keySequence = tmp;
+        return CTRL_ALT_;
+    }
+
+    app_t::log("escape+%d a:%d A:%d 0:%d 9:%d\n", c, 'a', 'A', '0', '9');
+    
+    return ESC;
+}
+    
 int read_key_sequence(std::string &keySequence)
 {
     keySequence = "";
@@ -103,9 +135,9 @@ int read_key_sequence(std::string &keySequence)
         return ESC;
     }
     read(STDIN_FILENO, &seq[0], 1);
-
+    
     if (!kbhit(wait)) {
-        return ESC;
+        return other_escape_sequence(seq[0], keySequence);
     }
     read(STDIN_FILENO, &seq[1], 1);
 
@@ -145,6 +177,7 @@ int read_key_sequence(std::string &keySequence)
 
                 sequence = "shift+";
                 if (seq[0] == '2') {
+                    // app_t::log("shift+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -163,6 +196,7 @@ int read_key_sequence(std::string &keySequence)
                 
                 sequence = "ctrl+";
                 if (seq[0] == '5') {
+                    // app_t::log("ctrl+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -181,6 +215,7 @@ int read_key_sequence(std::string &keySequence)
 
                 sequence = "ctrl+shift+";
                 if (seq[0] == '6') {
+                    // app_t::log("ctrl+shift+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -199,6 +234,7 @@ int read_key_sequence(std::string &keySequence)
 
                 sequence = "ctrl+alt+";
                 if (seq[0] == '7') {
+                    // app_t::log("ctrl+alt+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -217,6 +253,7 @@ int read_key_sequence(std::string &keySequence)
 
                 sequence = "ctrl+shift+alt+";
                 if (seq[0] == '8') {
+                    // app_t::log("ctrl+shift+alt+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -237,6 +274,7 @@ int read_key_sequence(std::string &keySequence)
             }
 
         } else {
+            // app_t::log("escape+[+%d\n", seq[1]);
             switch (seq[1]) {
             case 'A':
                 keySequence = "up";
@@ -264,6 +302,7 @@ int read_key_sequence(std::string &keySequence)
 
     /* ESC O sequences. */
     else if (seq[0] == 'O') {
+        // app_t::log("escap+O+%d\n", seq[1]);
         switch (seq[1]) {
         case 'H':
             return HOME_KEY;
@@ -280,13 +319,12 @@ int readKey(std::string& keySequence)
     if (kbhit(50) != 0) {
         int c;
         if (read(STDIN_FILENO, &c, 1) != 0) {
+
+            // app_t::log("key:%d\n", c);
+            
             if (c == ESC) {
                 keySequence = "";
-                c = read_key_sequence(keySequence);
-                if (c != ESC) {
-                    // std::cout << keySequence << std::endl;
-                    return c;
-                }
+                return read_key_sequence(keySequence);
             }
 
             switch (c) {
@@ -297,12 +335,21 @@ int readKey(std::string& keySequence)
             case KEY_BACKSPACE:
                 keySequence = "backspace";
                 return c;
+            case KEY_RESIZE:
+                keySequence = "resize";
+                return c;
             }
 
             if (CTRL_KEY(c) == c) {
                 keySequence = "ctrl+";
-                keySequence += 'a' + (c - 1);
-                // std::cout << keySequence << std::endl;
+                c = 'a' + (c - 1);
+                if (c >= 'a' && c <= 'z') {
+                    keySequence += c;
+                    return c; 
+                } else {
+                    keySequence += '?';
+                }
+                
                 return c;
             }
 
@@ -325,6 +372,8 @@ command_e commandKorKeys(std::string keys)
     if (keybindings.find(keys) != keybindings.end()) {
         return keybindings[keys];
     }
+
+    app_t::log(keys.c_str());
     
     return command_e::CMD_UNKNOWN;
 }
