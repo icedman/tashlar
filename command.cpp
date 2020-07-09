@@ -100,7 +100,20 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
             }
         }
         return true;
-        
+
+    // some macros
+    case CMD_DUPLICATE_LINE:
+        app->commandBuffer.push_back(CMD_SELECT_LINE);
+        app->commandBuffer.push_back(CMD_COPY);
+        app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
+        app->commandBuffer.push_back(CMD_PASTE);
+        return true;
+
+    case CMD_DELETE_LINE:
+        app->commandBuffer.push_back(CMD_SELECT_LINE);
+        app->commandBuffer.push_back(CMD_DELETE);
+        return true;
+                
     default:
         break;
     }
@@ -230,9 +243,11 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
             handled = true;
             break;
 
-        case 10:
-        case CMD_ENTER:
+        case CMD_SPLIT_LINE:
             doc->history.addSplit(cur);
+            if (cur.hasSelection()) {
+                advance -= cursorDeleteSelection(&cur); 
+            }
             cursorSplitBlock(&cur);
             cursorMovePosition(&cur, cursor_t::Right);
             advance++;
@@ -240,15 +255,6 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
             handled = true;
             markHistory = true;
             break;
-
-        // case CMD_DELETE_LINE:
-            // if (cursorMovePosition(&cur, cursor_t::Move::StartOfLine)) {
-                // doc->history.addDelete(cur, cur.block->length);
-                // cursorEraseText(&cur, cur.block->length);
-            // }
-            // doc->history.mark();
-            // update = true;
-            // break;
 
         default:
             break;

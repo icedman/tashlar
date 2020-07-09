@@ -44,15 +44,15 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
                 }
             }
 
-            colorPair = !(colorPair % 2) ? colorPair : colorPair - 1;
+            // colorPair = !(colorPair % 2) ? colorPair : colorPair - 1;
 
             // selection
             for (auto cur : *cursors) {
                 if (pos == cur.position) {
                     wattron(win, A_REVERSE);
-                    colorPair++;
+                    // colorPair++;
+                    colorPair = color_pair_e::SELECTED;
                 }
-                // firstCursor = false;
 
                 if (!cur.hasSelection()) {
                     continue;
@@ -60,11 +60,12 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
                 size_t startSel = cur.anchorPosition;
                 size_t endSel = cur.position;
                 if (startSel > endSel) {
-                    startSel = cur.position;
-                    endSel = cur.anchorPosition;
+                    startSel = cur.position + 1;
+                    endSel = cur.anchorPosition + 1;
                 }
                 if (pos >= startSel && pos < endSel) {
-                    colorPair++;
+                    // colorPair++;
+                    colorPair = color_pair_e::SELECTED;
                 }
             }
         }

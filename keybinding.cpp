@@ -14,6 +14,7 @@ static std::map<std::string, command_e> keybindings;
 void bindDefaults()
 {
     bindKeySequence("ctrl+s",           CMD_SAVE);
+    bindKeySequence("ctrl+q",           CMD_QUIT);
     
     bindKeySequence("ctrl+c",           CMD_COPY);
     bindKeySequence("ctrl+x",           CMD_CUT);
@@ -21,7 +22,8 @@ void bindDefaults()
     bindKeySequence("ctrl+z",           CMD_UNDO);
     
     bindKeySequence("ctrl+l",           CMD_SELECT_LINE);
-    // bindKeySequence("ctrl+shift+d",     CMD_DUPLICATE_LINE);
+    bindKeySequence("ctrl+x",     CMD_DUPLICATE_LINE);
+    // bindKeySequence("ctrl+???",           CMD_DELETE_LINE);
     
     bindKeySequence("ctrl+d",           CMD_ADD_CURSOR_FOR_SELECTED_WORD);
     bindKeySequence("ctrl+alt+up",      CMD_ADD_CURSOR_AND_MOVE_UP);
@@ -95,7 +97,7 @@ int read_key_sequence(std::string &keySequence)
     std::string sequence = "";
     
     char seq[4];
-    int wait = 1000;
+    int wait = 500;
     
     if (!kbhit(wait)) {
         return ESC;
@@ -285,28 +287,23 @@ int readKey(std::string& keySequence)
                     // std::cout << keySequence << std::endl;
                     return c;
                 }
-            } if (CTRL_KEY(c) == c) {
-
-                // enter (this eats up ctrl+m)
-                if (c == ENTER) {
-                    keySequence = "enter";
-                    return c;
-                }
-                
-                keySequence = "ctrl+";
-                keySequence += 'a' + (c - 1);
-                // std::cout << keySequence << std::endl;
-                return c;
             }
 
             switch (c) {
             case ENTER:
                 keySequence = "enter";
-                break;
+                return c;
             case BACKSPACE:
             case KEY_BACKSPACE:
                 keySequence = "backspace";
-                break;
+                return c;
+            }
+
+            if (CTRL_KEY(c) == c) {
+                keySequence = "ctrl+";
+                keySequence += 'a' + (c - 1);
+                // std::cout << keySequence << std::endl;
+                return c;
             }
 
             return c;

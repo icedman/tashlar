@@ -12,6 +12,7 @@ tashlar_files = [
     'cursor.cpp',
     'document.cpp',
     'editor.cpp',
+				'explorer.cpp',
     'extension.cpp',
     'keybinding.cpp',
     'search.cpp',

@@ -19,14 +19,16 @@
 
 #include "extension.h"
 
+// todo ... find colors used by theme.. and pair each with selection backgound
 void setupColors(theme_ptr theme)
 {
     style_t s = theme->styles_for_scope("comment");
+    std::cout << theme->colorIndices.size() << std::endl;
 
     int bg = -1;
     int fg = COLOR_WHITE;
     int selBg = COLOR_WHITE;
-    int selFg = -1;
+    int selFg = COLOR_BLACK;
     color_info_t clr;
     theme->theme_color("editor.background", clr);
     if (!clr.is_blank()) {
@@ -36,22 +38,22 @@ void setupColors(theme_ptr theme)
     theme->theme_color("editor.foreground", clr);
     if (!clr.is_blank()) {
         fg = clr.index;
-        selFg = fg;
+        // selFg = fg;
     }
     if (!s.foreground.is_blank()) {
         fg = s.foreground.index;
-        selFg = fg;
+        // selFg = fg;
     }
     theme->theme_color("editor.selectionBackground", clr);
     if (!clr.is_blank()) {
-        selBg = clr.index;
+        // selBg = clr.index;
     }
 
     use_default_colors();
     start_color();
     for (int i = 0; i < 255; i++) {
-        init_pair(i, i, !(i % 2) ? bg : selBg);
-        // init_pair(i, i, bg);
+        // init_pair(i, i, !(i % 2) ? bg : selBg);
+        init_pair(i, i, bg);
     }
 
     init_pair(color_pair_e::SELECTED, selFg, selBg);
@@ -250,15 +252,19 @@ int main(int argc, char** argv)
         struct document_t* doc = &editor.document;
         struct cursor_t cursor = doc->cursor();
         struct block_t block = doc->block(cursor);
-    
-        renderEditor(editor);
-        renderStatus(statusbar, editor);
-        renderCursor(editor);
 
-        curs_set(0);
-        wrefresh(statusbar.win);
-        wrefresh(editor.win);
-        curs_set(1);
+        bool disableRefresh = app.commandBuffer.size() || app.inputBuffer.length();
+        
+        if (!disableRefresh) {    
+            renderEditor(editor);
+            renderStatus(statusbar, editor);
+            renderCursor(editor);
+    
+            curs_set(0);
+            wrefresh(statusbar.win);
+            wrefresh(editor.win);
+            curs_set(1);
+        }
         
         //-----------------
         // get input
@@ -269,11 +275,18 @@ int main(int argc, char** argv)
             if (app.inputBuffer.length()) {
                 break;
             }
+            if (app.commandBuffer.size()) {
+                cmd = app.commandBuffer.front();
+                app.commandBuffer.erase(app.commandBuffer.begin());
+                break;
+            }
+            
             ch = readKey(keySequence);
             if (keySequence.length()) {
                 statusbar.setStatus(keySequence, 2000);
                 cmd = commandKorKeys(keySequence);
                 keySequence = ""; // always consume
+                ch = 0;
             }
             if (ch != -1) {
                 break;
@@ -293,79 +306,71 @@ int main(int argc, char** argv)
             }
         }
 
-        app.currentEditor = &editor;
-        if (processCommand(cmd, &app, ch)) {
-            continue;
-        }
-
         std::string s;
         s += (char)ch;
-
-        if (ch == -1) {
-            s = "";
+								
+        if (cmd == CMD_ENTER || ch == ENTER || s == "\n") {
+            cmd = CMD_SPLIT_LINE;
         }
 
         //-----------------
         // app commands
         //-----------------
+        switch (cmd) {
+        case CMD_QUIT:
+            end = true;
+            break;
+        }
+
+        app.currentEditor = &editor;
+        if (processCommand(cmd, &app, ch)) {
+            continue;
+        }
+
+        if (ch < 1) {
+            continue;
+        }
+
         switch (ch) {
         case ESC:
             doc->clearCursors();
             continue;
-        case CTRL_KEY('q'):
-            end = true;
+        }
+
+        //-------------------
+        // update keystrokes on cursors 
+        //-------------------        
+        if (s.length() != 1) {
             continue;
         }
 
         std::vector<struct cursor_t> cursors = doc->cursors;
-
-        //-------------------
-        // update cursors
-        //-------------------
         for (int i = 0; i < cursors.size(); i++) {
-            if (ch == 0) {
-                break;
-            }
-
             struct cursor_t& cur = cursors[i];
-
+            
             int advance = 0;
-            bool update = false;
 
-            switch (ch) {
-                
-            default:
-                
-                if (s.length() == 1) {
-                    doc->history.addInsert(cur, s);
-                    if (cur.hasSelection()) {
-                        advance -= cursorDeleteSelection(&cur);
-                    }
-                    cursorInsertText(&cur, s);
-                    cursorMovePosition(&cur, cursor_t::Right, false, s.length());
-                    if (s == " " || s == "\t") {
-                        doc->history.mark();
-                    }
-                    advance += s.length();
-                    update = true;
-                }
-                break;
+            doc->history.addInsert(cur, s);
+            if (cur.hasSelection()) {
+                advance -= cursorDeleteSelection(&cur);
             }
+            cursorInsertText(&cur, s);
+            cursorMovePosition(&cur, cursor_t::Right, false, s.length());
+            if (s == " " || s == "\t") {
+                doc->history.mark();
+            }
+            advance += s.length();
 
             doc->updateCursor(cur);
+            doc->update();
 
-            if (update) {
-                doc->update();
-
-                for (int j = 0; j < cursors.size(); j++) {
-                    struct cursor_t& c = cursors[j];
-                    if (c.position > 0 && c.position + advance > cur.position && c.uid != cur.uid) {
-                        c.position += advance;
-                        c.anchorPosition += advance;
-                        // std::cout << advance << std::endl;
-                    }
-                    doc->updateCursor(c);
+            for (int j = 0; j < cursors.size(); j++) {
+                struct cursor_t& c = cursors[j];
+                if (c.position > 0 && c.position + advance > cur.position && c.uid != cur.uid) {
+                    c.position += advance;
+                    c.anchorPosition += advance;
                 }
+                doc->updateCursor(c);
             }
         }
     }

@@ -125,6 +125,15 @@ bool document_t::open(const char* path)
 
     tmp.close();
 
+			 if (!blocks.size()) {
+        struct block_t b;
+        b.document = this;
+        b.position = 0;
+        b.filePosition = 0;
+        b.length = 1;
+        blocks.emplace_back(b);
+    }
+
     // reopen from tmp
     file = std::ifstream(tmpPath, std::ifstream::in);
     update();
