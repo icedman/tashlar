@@ -13,12 +13,12 @@ enum command_e {
     CMD_COPY,
     CMD_PASTE,
     CMD_SELECT_WORD,
-    
+
     CMD_SELECT_LINE,
     CMD_DUPLICATE_LINE,
-    CMD_DELETE_LINE,    
+    CMD_DELETE_LINE,
     CMD_SPLIT_LINE, // ENTER
-    
+
     CMD_CLEAR_SELECTION,
     CMD_DUPLICATE_SELECTION,
     CMD_DELETE_SELECTION,
@@ -64,6 +64,6 @@ enum command_e {
     CMD_INSERT
 };
 
-bool processCommand(command_e cmd, struct app_t *app, char ch);
+bool processCommand(command_e cmd, struct app_t* app, char ch);
 
 #endif // COMMAND_H

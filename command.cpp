@@ -1,9 +1,9 @@
 #include "command.h"
-#include "editor.h"
 #include "document.h"
+#include "editor.h"
 #include "statusbar.h"
 
-bool processCommand(command_e cmd, struct app_t *app, char ch)
+bool processCommand(command_e cmd, struct app_t* app, char ch)
 {
     struct editor_t* editor = app->currentEditor;
     struct document_t* doc = &editor->document;
@@ -13,15 +13,15 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
     //-----------------
     // global
     //-----------------
-    switch(cmd) {
+    switch (cmd) {
     case CMD_CANCEL:
         return true;
-        
+
     case CMD_SAVE:
         doc->save();
         app->statusbar->setStatus("saved", 2000);
         return true;
-    
+
     case CMD_PASTE:
         app->inputBuffer = app->clipBoard;
         return true;
@@ -29,15 +29,15 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
     case CMD_UNDO:
         doc->undo();
         return true;
-        
+
     default:
         break;
     }
-    
+
     //-----------------
     // main cursor
     //-----------------
-    switch(cmd) {
+    switch (cmd) {
 
     case CMD_ADD_CURSOR_AND_MOVE_UP:
         doc->addCursor(cursor);
@@ -45,21 +45,21 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
         doc->setCursor(cursor);
         doc->history.mark();
         return true;
-        
+
     case CMD_ADD_CURSOR_AND_MOVE_DOWN:
         doc->addCursor(cursor);
         cursorMovePosition(&cursor, cursor_t::Down);
         doc->setCursor(cursor);
         doc->history.mark();
-        return true;    
-    
+        return true;
+
     case CMD_COPY:
         app->clipBoard = cursor.selectedText();
         if (app->clipBoard.length()) {
             app->statusbar->setStatus("text copied", 2000);
         }
         return true;
-            
+
     case CMD_SELECT_WORD:
     case CMD_ADD_CURSOR_FOR_SELECTED_WORD:
 
@@ -77,9 +77,9 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
             doc->setCursor(cursor);
             doc->history.mark();
         }
-        
+
         return true;
-    
+
     case CMD_MOVE_CURSOR_PREVIOUS_PAGE:
         doc->clearCursors();
         for (int i = 0; i < editor->viewHeight + 1; i++) {
@@ -91,7 +91,7 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
             }
         }
         return true;
-        
+
     case CMD_MOVE_CURSOR_NEXT_PAGE:
         doc->clearCursors();
         for (int i = 0; i < editor->viewHeight + 1; i++) {
@@ -116,7 +116,7 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
         app->commandBuffer.push_back(CMD_SELECT_LINE);
         app->commandBuffer.push_back(CMD_DELETE);
         return true;
-                
+
     default:
         break;
     }
@@ -133,7 +133,7 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
         int advance = 0;
         bool update = false;
 
-        switch(cmd) {
+        switch (cmd) {
 
         //-----------
         // navigation
@@ -144,7 +144,7 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
             doc->history.mark();
             handled = true;
             break;
-            
+
         case CMD_MOVE_CURSOR_NEXT_WORD:
         case CMD_MOVE_CURSOR_NEXT_WORD_ANCHORED:
             cursorMovePosition(&cur, cursor_t::WordRight, cmd == CMD_MOVE_CURSOR_NEXT_WORD_ANCHORED);
@@ -158,7 +158,7 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
             doc->history.mark();
             handled = true;
             break;
-            
+
         case CMD_MOVE_CURSOR_END_OF_LINE:
         case CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED:
             cursorMovePosition(&cur, cursor_t::EndOfLine, cmd == CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED);
@@ -172,21 +172,21 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
             doc->history.mark();
             handled = true;
             break;
-            
+
         case CMD_MOVE_CURSOR_DOWN:
         case CMD_MOVE_CURSOR_DOWN_ANCHORED:
             cursorMovePosition(&cur, cursor_t::Down, cmd == CMD_MOVE_CURSOR_DOWN_ANCHORED);
             doc->history.mark();
             handled = true;
             break;
-            
+
         case CMD_MOVE_CURSOR_LEFT:
         case CMD_MOVE_CURSOR_LEFT_ANCHORED:
             cursorMovePosition(&cur, cursor_t::Left, cmd == CMD_MOVE_CURSOR_LEFT_ANCHORED);
             handled = true;
             doc->history.mark();
             break;
-            
+
         case CMD_MOVE_CURSOR_RIGHT:
         case CMD_MOVE_CURSOR_RIGHT_ANCHORED:
             cursorMovePosition(&cur, cursor_t::Right, cmd == CMD_MOVE_CURSOR_RIGHT_ANCHORED);
@@ -200,10 +200,9 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
             handled = true;
             break;
 
-
         //-----------
         // document edits
-        //-----------            
+        //-----------
         case CMD_CUT:
             app->clipBoard = cur.selectedText();
             if (app->clipBoard.length()) {
@@ -214,8 +213,10 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
                 if (count) {
                     doc->history.addDelete(cur, count);
                 }
+                cur.clearSelection();
                 advance -= count;
                 update = true;
+                doc->history.mark();
             }
             handled = true;
             break;
@@ -223,7 +224,8 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
         case CMD_DELETE:
             if (cur.hasSelection()) {
                 advance -= cursorDeleteSelection(&cur);
-            } else { 
+                cur.clearSelection();
+            } else {
                 doc->history.addDelete(cur, 1);
                 cursorEraseText(&cur, 1);
                 advance--;
@@ -235,6 +237,7 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
         case CMD_BACKSPACE:
             if (cur.hasSelection()) {
                 advance -= cursorDeleteSelection(&cur);
+                cur.clearSelection();
             } else {
                 if (cursorMovePosition(&cur, cursor_t::Left)) {
                     doc->history.addDelete(cur, 1);
@@ -249,7 +252,8 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
         case CMD_SPLIT_LINE:
             doc->history.addSplit(cur);
             if (cur.hasSelection()) {
-                advance -= cursorDeleteSelection(&cur); 
+                advance -= cursorDeleteSelection(&cur);
+                cur.clearSelection();
             }
             cursorSplitBlock(&cur);
             cursorMovePosition(&cur, cursor_t::Right);
@@ -262,7 +266,7 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
         default:
             break;
         }
-            
+
         doc->updateCursor(cur);
 
         if (update) {
@@ -283,6 +287,6 @@ bool processCommand(command_e cmd, struct app_t *app, char ch)
     if (markHistory) {
         doc->history.mark();
     }
-            
+
     return handled;
 }

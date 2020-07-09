@@ -1,38 +1,45 @@
 #include <curses.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <stdarg.h>
-#include <string.h>
 
 #include "editor.h"
+
+int pairForColor(int idx, bool selected);
+
+void app_t::iniLog()
+{
+    FILE* log_file = fopen("/tmp/ashlar.log", "w");
+    fclose(log_file);
+}
 
 void app_t::log(const char* format, ...)
 {
     char string[512] = "";
- 
+
     va_list args;
     va_start(args, format);
     vsnprintf(string, 255, format, args);
     va_end(args);
- 
-    FILE *console_file = fopen("/tmp/ashlar.log", "a");
-    if (!console_file) {
+
+    FILE* log_file = fopen("/tmp/ashlar.log", "a");
+    if (!log_file) {
         return;
- 
     }
     char* token = strtok(string, "\n");
     while (token != NULL) {
-        fprintf(console_file, token);
-        fprintf(console_file, "\n");
- 
+        fprintf(log_file, token);
+        fprintf(log_file, "\n");
+
         token = strtok(NULL, "\n");
     }
-    fclose(console_file);
+    fclose(log_file);
 }
-    
-void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
+
+void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct block_t* block)
 {
     if (!line) {
         return;
@@ -41,36 +48,42 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
     std::vector<struct cursor_t>* cursors = &document.cursors;
 
     int colorPair = color_pair_e::NORMAL;
-        
+    int colorPairSelected = color_pair_e::SELECTED;
+
+    int skip = offsetX;
+
     char c;
     int idx = 0;
     while (c = line[idx++]) {
-        
-        if (offsetX-- > 0) {
+
+        if (skip-- > 0) {
             continue;
         }
+
+        colorPair = color_pair_e::NORMAL;
+        colorPairSelected = color_pair_e::SELECTED;
 
         if (c == '\t') {
             c = ' ';
         }
-        
+
         if (block && cursors) {
             int rpos = idx - 1;
             int pos = block->position + idx - 1;
 
+            int colorIdx = -1;
+
             // syntax here
             if (block && block->data) {
-                colorPair = color_pair_e::NORMAL;
                 struct blockdata_t* blockData = block->data;
                 for (auto span : blockData->spans) {
                     if (rpos >= span.start && rpos < span.start + span.length) {
-                        colorPair = span.colorIndex;
+                        colorPair = pairForColor(span.colorIndex, false);
+                        // colorPairSelected = pairForColor(span.colorIndex, true);
                         break;
                     }
                 }
             }
-
-            // colorPair = !(colorPair % 2) ? colorPair : colorPair - 1;
 
             // selection
             bool firstCursor = true;
@@ -79,11 +92,13 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
                     if (firstCursor) {
                         wattron(win, A_REVERSE);
                     }
-                        // colorPair++;
-                        // wattron(win, A_BLINK);
-                    // colorPair = color_pair_e::SELECTED;
+                    if (colorIdx != -1) {
+                        colorPair = 0;
+                    }
+                    // wattron(win, A_BLINK);
+                    colorPair = colorPairSelected;
                 }
-                firstCursor = true;
+                firstCursor = false;
 
                 if (!cur.hasSelection()) {
                     continue;
@@ -95,8 +110,7 @@ void editor_t::renderLine(const char* line, int offsetX, struct block_t* block)
                     endSel = cur.anchorPosition + 1;
                 }
                 if (pos >= startSel && pos < endSel) {
-                    // colorPair++;
-                    colorPair = color_pair_e::SELECTED;
+                    colorPair = colorPairSelected;
                 }
             }
         }
@@ -232,13 +246,6 @@ void editor_t::highlightBlock(struct block_t& block)
         size_t endComment = text.find(lang->blockCommentEnd);
         style_t s = theme->styles_for_scope("comment");
 
-        if (beginComment != std::string::npos) {
-            // format = QSyntaxHighlighter::format(beginComment);
-            // if (format.intProperty(SCOPE_PROPERTY_ID) != SCOPE_COMMENT) {
-            // beginComment = std::string::npos;
-            // }
-        }
-
         if (endComment == std::string::npos && (beginComment != std::string::npos || previousBlockState == BLOCK_STATE_COMMENT)) {
             blockData->state = BLOCK_STATE_COMMENT;
             int b = beginComment != std::string::npos ? beginComment : 0;
@@ -270,11 +277,11 @@ void editor_t::highlightBlock(struct block_t& block)
     }
 }
 
-void editor_t::renderBlock(struct block_t& block, int offsetX)
+void editor_t::renderBlock(struct block_t& block, int offsetX, int offsetY)
 {
     std::string t = block.text();
     if (!t.length()) {
         t = " ";
     }
-    renderLine(t.c_str(), offsetX, &block);
+    renderLine(t.c_str(), offsetX, offsetY, &block);
 }

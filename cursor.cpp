@@ -1,10 +1,9 @@
 #include "cursor.h"
 #include "document.h"
-#include "util.h"
 #include "search.h"
+#include "util.h"
 
 #include <algorithm>
-
 
 static struct search_t search;
 
@@ -31,7 +30,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     if ((move == cursor_t::Move::Up || move == cursor_t::Move::Down) && cursor->preferredRelativePosition != 0) {
         relativePosition = cursor->preferredRelativePosition;
     }
-    
+
     std::vector<search_result_t> search_results;
     bool extractWords = false;
 
@@ -61,7 +60,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         }
     }
 
-    if (extractWords) {    
+    if (extractWords) {
         search_results = search.findWords(block.text());
     }
 
@@ -88,7 +87,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         }
         break;
     }
-    
+
     case cursor_t::Move::WordRight: {
         bool found = false;
         for (auto i : search_results) {
@@ -104,7 +103,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         }
         break;
     }
-    
+
     case cursor_t::Move::Up:
         if (!block.previous) {
             return false;
@@ -156,9 +155,9 @@ void cursorSelectWord(struct cursor_t* cursor)
     }
 
     size_t relativePosition = cursor->position - block.position;
-    
+
     std::vector<search_result_t> search_results = search.findWords(block.text());
-    for(auto i : search_results) {
+    for (auto i : search_results) {
         if (i.begin <= relativePosition && relativePosition < i.end) {
             cursor->anchorPosition = block.position + i.begin;
             cursor->position = block.position + i.end - 1;
@@ -166,7 +165,7 @@ void cursorSelectWord(struct cursor_t* cursor)
         }
     }
 }
-    
+
 int cursorInsertText(struct cursor_t* cursor, std::string t)
 {
     struct block_t& block = cursor->document->block(*cursor);
@@ -249,8 +248,8 @@ int cursorDeleteSelection(struct cursor_t* cursor)
 
     struct cursor_t cur = *cursor;
     cur.position = start;
-    int count = end-start+1;
-    for(int i=0; i<count;i++) {
+    int count = end - start + 1;
+    for (int i = 0; i < count; i++) {
         cursorEraseText(&cur, 1);
     }
 
@@ -285,13 +284,13 @@ std::string cursor_t::selectedText()
 
     std::string res = "";
     std::string text = block.text();
-    
-    int count = end-start+1;
-    
-    for(int i=0; i<count;i++) {
+
+    int count = end - start + 1;
+
+    for (int i = 0; i < count; i++) {
         size_t idx = start + i;
         int blockIdx = idx - block.position;
-  
+
         char c = text[blockIdx];
         if (c == 0) {
 
@@ -303,7 +302,7 @@ std::string cursor_t::selectedText()
                 return res;
             }
             text = block.text();
-            
+
             res += "\n";
             continue;
         }
@@ -317,20 +316,20 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t)
 {
     bool firstCursor = true;
     struct cursor_t cur = *cursor;
-    
-    for(;;) {                
+
+    for (;;) {
         struct block_t& block = cur.document->block(cur);
         if (!block.isValid()) {
             return false;
         }
         size_t relativePosition = cur.position - block.position;
-    
+
         std::string text = block.text();
         std::vector<search_result_t> res = search.find(text, t);
         if (res.size()) {
             search_result_t found;
             if (firstCursor) {
-                for(auto &r : res) {
+                for (auto& r : res) {
                     if (r.end <= relativePosition || r.begin <= relativePosition) {
                         continue;
                     }
@@ -347,17 +346,15 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t)
                 return true;
                 // std::cout << found.begin << ":" << relativePosition <<std::endl;
             }
-            
         }
 
         if (!cursorMovePosition(&cur, cursor_t::Move::Down)) {
             return false;
         }
-        
+
         cursorMovePosition(&cur, cursor_t::Move::StartOfLine);
         firstCursor = false;
     }
 
     return true;
 }
-

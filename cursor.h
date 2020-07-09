@@ -9,7 +9,6 @@ struct block_t;
 struct cursor_t;
 
 struct cursor_t {
-public:
     enum Move {
         NoMove,
         Up,
@@ -42,7 +41,7 @@ public:
     size_t uid;
 
     size_t preferredRelativePosition;
-    
+
     bool hasSelection()
     {
         return anchorPosition != position;

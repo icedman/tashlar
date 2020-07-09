@@ -1,5 +1,6 @@
 #include "document.h"
 #include "cursor.h"
+#include "editor.h"
 #include "util.h"
 
 static size_t cursor_uid = 1;
@@ -21,19 +22,19 @@ void history_t::begin()
 {
     paused = true;
 }
-    
+
 void history_t::end()
 {
     paused = false;
     mark();
 }
-    
+
 void history_t::mark()
 {
     if (paused) {
         return;
     }
-    
+
     if (editBatch.size()) {
         edits.push_back(editBatch);
         editBatch.clear();
@@ -125,7 +126,7 @@ bool document_t::open(const char* path)
 
     tmp.close();
 
-			 if (!blocks.size()) {
+    if (!blocks.size()) {
         struct block_t b;
         b.document = this;
         b.position = 0;
@@ -191,7 +192,7 @@ void document_t::setCursor(struct cursor_t& cursor)
     if (!cursors[0].uid) {
         cursors[0].uid = cursor_uid++;
     }
-    
+
     cursors[0].position = cursor.position;
     cursors[0].anchorPosition = cursor.anchorPosition;
     cursors[0].preferredRelativePosition = cursor.preferredRelativePosition;
@@ -232,11 +233,11 @@ void document_t::clearCursors()
 
 void document_t::clearSelections()
 {
-    for(auto &c : cursors) {
+    for (auto& c : cursors) {
         c.anchorPosition = c.position;
     }
 }
-    
+
 void document_t::update()
 {
     if (!cursors.size()) {

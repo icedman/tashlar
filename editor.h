@@ -4,8 +4,8 @@
 #include <curses.h>
 #include <string>
 
-#include "document.h"
 #include "command.h"
+#include "document.h"
 
 // syntax highlighter
 #include "grammar.h"
@@ -16,12 +16,11 @@
 #include "extension.h"
 
 enum color_pair_e {
-    NORMAL = 250,
+    NORMAL = 0,
     SELECTED
 };
 
 struct editor_t {
-public:
     editor_t()
         : viewX(0)
         , viewY(0)
@@ -44,8 +43,8 @@ public:
     struct document_t document;
 
     void highlightBlock(struct block_t& block);
-    void renderBlock(struct block_t& block, int offsetX);
-    void renderLine(const char* line, int offsetX = 0, struct block_t* block = 0);
+    void renderBlock(struct block_t& block, int offsetX, int offsetY);
+    void renderLine(const char* line, int offsetX = 0, int offsetY = 0, struct block_t* block = 0);
 
     std::string clipBoard;
     language_info_ptr lang;
@@ -55,20 +54,21 @@ public:
 };
 
 struct statusbar_t;
-    
-struct app_t
-{
-    struct editor_t *currentEditor;
-    struct statusbar_t *statusbar;
+
+struct app_t {
+    struct editor_t* currentEditor;
+    struct statusbar_t* statusbar;
 
     std::vector<command_e> commandBuffer;
     std::string inputBuffer;
-    
-    std::string clipBoard;   
- 
+
+    std::string clipBoard;
+
     theme_ptr theme;
 
+    // log
+    static void iniLog();
     static void log(const char* format, ...);
 };
-    
+
 #endif // EDITOR_H

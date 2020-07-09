@@ -42,8 +42,8 @@ enum KEY_ACTION {
 int kbhit(int timeout = 500);
 
 int readKey(std::string& keySequence);
-void bindDefaults();    
+void bindDefaults();
 void bindKeySequence(std::string keys, command_e command);
 command_e commandKorKeys(std::string keys);
-    
+
 #endif // KEYBINDING_H

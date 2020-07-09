@@ -27,7 +27,8 @@ struct span_info_t {
 
 enum block_state_e {
     BLOCK_STATE_UNKNOWN = 0,
-    BLOCK_STATE_COMMENT = 1 << 1
+    BLOCK_STATE_COMMENT = 1 << 1,
+    BLOCK_STATE_STRING = 1 << 2
 };
 
 enum cursor_edit_e {
@@ -39,7 +40,6 @@ enum cursor_edit_e {
 };
 
 struct blockdata_t {
-public:
     blockdata_t()
         : dirty(true)
     {
@@ -55,7 +55,6 @@ public:
 };
 
 struct block_t {
-public:
     block_t()
         : document(0)
         , file(0)
@@ -139,9 +138,12 @@ struct cursor_edit_t {
 typedef std::vector<cursor_edit_t> edit_batch_t;
 
 struct history_t {
-public:
-    history_t() : frames(0), paused(false) {}
-    
+    history_t()
+        : frames(0)
+        , paused(false)
+    {
+    }
+
     std::vector<struct block_t> initialState;
     // std::vector<struct cursor_edit_t> edits;
 
@@ -162,7 +164,6 @@ public:
 };
 
 struct document_t {
-public:
     document_t()
         : file(0)
     {

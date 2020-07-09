@@ -9,13 +9,13 @@
 
 void load_extensions(const std::string _path, std::vector<struct extension_t>& extensions)
 {
-    char *cpath = (char*)malloc(_path.length()+1 * sizeof(char));
+    char* cpath = (char*)malloc(_path.length() + 1 * sizeof(char));
     strcpy(cpath, _path.c_str());
     expand_path((char**)(&cpath));
-    
+
     const std::string path(cpath);
     free(cpath);
-    
+
     // Json::Value contribs;
 
     std::vector<std::string> filter = { "themes", "iconThemes", "languages" };

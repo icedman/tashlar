@@ -9,55 +9,72 @@
 #include <string>
 #include <vector>
 
+#include "command.h"
 #include "cursor.h"
 #include "document.h"
 #include "editor.h"
-#include "statusbar.h"
 #include "keybinding.h"
-#include "command.h"
+#include "statusbar.h"
 #include "util.h"
 
 #include "extension.h"
 
-// todo ... find colors used by theme.. and pair each with selection backgound
+static std::map<int, int> colorMap;
+
+int pairForColor(int colorIdx, bool selected)
+{
+    return colorMap[colorIdx + (selected ? 1000 : 0)];
+    return colorMap[colorIdx];
+}
+
 void setupColors(theme_ptr theme)
 {
-    style_t s = theme->styles_for_scope("comment");
+    colorMap.clear();
+
+    // style_t s = theme->styles_for_scope("default");
     std::cout << theme->colorIndices.size() << std::endl;
 
     int bg = -1;
-    int fg = COLOR_WHITE;
-    int selBg = COLOR_WHITE;
-    int selFg = COLOR_BLACK;
+    int fg = color_info_t::nearest_color_index(250, 250, 250);
+    int selBg = color_info_t::nearest_color_index(250, 250, 250);
+    int selFg = color_info_t::nearest_color_index(50, 50, 50);
     color_info_t clr;
     theme->theme_color("editor.background", clr);
     if (!clr.is_blank()) {
         // bg = clr.index;
     }
-    
+
     theme->theme_color("editor.foreground", clr);
     if (!clr.is_blank()) {
         fg = clr.index;
-        // selFg = fg;
     }
-    if (!s.foreground.is_blank()) {
-        fg = s.foreground.index;
-        // selFg = fg;
-    }
+    // if (!s.foreground.is_blank()) {
+    // fg = s.foreground.index;
+    // }
     theme->theme_color("editor.selectionBackground", clr);
     if (!clr.is_blank()) {
-        // selBg = clr.index;
+        selBg = clr.index;
     }
 
     use_default_colors();
     start_color();
-    for (int i = 0; i < 255; i++) {
-        // init_pair(i, i, !(i % 2) ? bg : selBg);
-        init_pair(i, i, bg);
-    }
 
-    init_pair(color_pair_e::SELECTED, selFg, selBg);
+    int idx = 32;
     init_pair(color_pair_e::NORMAL, fg, bg);
+    init_pair(color_pair_e::SELECTED, selFg, selBg);
+
+    auto it = theme->colorIndices.begin();
+    while (it != theme->colorIndices.end()) {
+        it++;
+        colorMap[it->first] = idx;
+        init_pair(idx++, it->first, bg);
+    }
+    it = theme->colorIndices.begin();
+    while (it != theme->colorIndices.end()) {
+        it++;
+        colorMap[it->first + 1000] = idx;
+        init_pair(idx++, it->first, selBg);
+    }
 }
 
 void renderEditor(struct editor_t& editor)
@@ -90,7 +107,8 @@ void renderEditor(struct editor_t& editor)
     editor.cursorScreenX = 0;
     editor.cursorScreenY = 0;
 
-    // scroll
+    // todo::improve to viewport style
+    // todo::compute cursor position on screen
     while (block.lineNumber + 1 - editor.scrollY > editor.viewHeight) {
         editor.scrollY++;
     }
@@ -98,6 +116,10 @@ void renderEditor(struct editor_t& editor)
         editor.scrollY--;
     }
     while (cursor.position - block.position + 1 - editor.scrollX > editor.viewWidth) {
+        if (editor.scrollX + 1 >= block.length) {
+            editor.scrollX = 0;
+            break;
+        }
         editor.scrollX++;
     }
     while (editor.scrollX > 0 && cursor.position - block.position - editor.scrollX <= 0) {
@@ -121,7 +143,7 @@ void renderEditor(struct editor_t& editor)
         wmove(editor.win, y++, 0);
         wclrtoeol(editor.win);
         editor.highlightBlock(b);
-        editor.renderBlock(b, offsetX);
+        editor.renderBlock(b, offsetX, y - 1);
         if (y >= editor.viewHeight) {
             break;
         }
@@ -188,12 +210,16 @@ void renderCursor(struct editor_t& editor)
 
 int main(int argc, char** argv)
 {
+    // printf("%d\n", sizeof(short));
+    // printf("%d\n", sizeof(char));
+    // return 0;
+
     struct editor_t editor;
     struct statusbar_t statusbar;
 
     struct app_t app;
     app.statusbar = &statusbar;
-    
+
     //-------------------
     // initialize extensions
     //-------------------
@@ -214,18 +240,18 @@ int main(int argc, char** argv)
             theme = argv[i + 1];
         }
     }
-    
+
     editor.lang = language_from_file(filename, extensions);
 
     app.theme = theme_from_name(theme, extensions);
     editor.theme = app.theme;
     statusbar.theme = app.theme;
-    
+
     //-------------------
     // keybinding
     //-------------------
     bindDefaults();
-    
+
     //-------------------
     // ncurses
     //-------------------
@@ -233,46 +259,47 @@ int main(int argc, char** argv)
     // cbreak();
     raw();
     noecho();
-    
+
     setupColors(editor.theme);
 
     // endwin();
     // return 0;
-    
+
     clear();
-    
+
     editor.document.open(filename);
 
     int ch = 0;
     bool end = false;
 
-    std::string previousKeySequence;        
+    std::string previousKeySequence;
     while (!end) {
-        
+
         struct editor_t* currentEditor = &editor;
         struct document_t* doc = &editor.document;
         struct cursor_t cursor = doc->cursor();
         struct block_t block = doc->block(cursor);
 
         bool disableRefresh = app.commandBuffer.size() || app.inputBuffer.length();
-        
-        if (!disableRefresh) {    
+
+        if (!disableRefresh) {
             renderEditor(editor);
             renderStatus(statusbar, editor);
             renderCursor(editor);
-    
+
             curs_set(0);
             wrefresh(statusbar.win);
             wrefresh(editor.win);
             curs_set(1);
         }
-        
+
         //-----------------
         // get input
         //-----------------
         command_e cmd = CMD_UNKNOWN;
         std::string keySequence;
-        while(true) {
+        std::string expandedSequence;
+        while (true) {
             if (app.inputBuffer.length()) {
                 break;
             }
@@ -281,26 +308,29 @@ int main(int argc, char** argv)
                 app.commandBuffer.erase(app.commandBuffer.begin());
                 break;
             }
-            
+
             ch = readKey(keySequence);
             if (keySequence.length()) {
                 statusbar.setStatus(keySequence, 2000);
                 cmd = commandKorKeys(keySequence);
 
                 if (cmd == CMD_UNKNOWN && previousKeySequence.length()) {
-                    cmd = commandKorKeys(previousKeySequence + "+" + keySequence);
+                    expandedSequence = previousKeySequence + "+" + keySequence;
+                    cmd = commandKorKeys(expandedSequence);
+                    statusbar.setStatus(expandedSequence, 2000);
+                    previousKeySequence = "";
                 }
 
-                if (cmd != CMD_UNKNOWN) {
+                if (cmd != CMD_UNKNOWN || expandedSequence.length()) {
                     previousKeySequence = "";
                 } else {
                     previousKeySequence = keySequence;
                 }
-                
+
                 keySequence = ""; // always consume
                 ch = 0;
             }
-            
+
             if (ch != -1) {
                 break;
             }
@@ -312,8 +342,8 @@ int main(int argc, char** argv)
             if (ch == '\n') {
                 ch = ENTER;
             }
-            
-            app.inputBuffer.erase(0,1);
+
+            app.inputBuffer.erase(0, 1);
             if (!app.inputBuffer.length()) {
                 doc->history.end();
             }
@@ -321,12 +351,11 @@ int main(int argc, char** argv)
 
         std::string s;
         s += (char)ch;
-								
+
         if (cmd == CMD_ENTER || ch == ENTER || s == "\n") {
             cmd = CMD_SPLIT_LINE;
         }
 
-        
         if ((cmd == CMD_UNKNOWN || cmd == CMD_CANCEL) && ch >= ALT_ && ch <= CTRL_SHIFT_ALT_) {
             // drop unhandled;
             continue;
@@ -338,7 +367,7 @@ int main(int argc, char** argv)
         switch (cmd) {
         case CMD_CANCEL:
             continue;
-            
+
         case CMD_QUIT:
             end = true;
             break;
@@ -360,8 +389,8 @@ int main(int argc, char** argv)
         }
 
         //-------------------
-        // update keystrokes on cursors 
-        //-------------------        
+        // update keystrokes on cursors
+        //-------------------
         if (s.length() != 1) {
             continue;
         }
@@ -369,7 +398,7 @@ int main(int argc, char** argv)
         std::vector<struct cursor_t> cursors = doc->cursors;
         for (int i = 0; i < cursors.size(); i++) {
             struct cursor_t& cur = cursors[i];
-            
+
             int advance = 0;
 
             doc->history.addInsert(cur, s);

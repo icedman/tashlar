@@ -9,7 +9,6 @@
 #include "theme.h"
 
 struct statusbar_t {
-public:
     statusbar_t()
         : win(0)
         , frames(0)
@@ -30,7 +29,7 @@ public:
 
     int frames; // x mseconds from last kbhit (corresponds to kbhit timeout)
     std::string prevStatus;
-    
+
     int viewX;
     int viewY;
     int viewWidth;

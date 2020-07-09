@@ -7,7 +7,6 @@
 #include "theme.h"
 
 struct extension_t {
-public:
     std::string name;
     std::string path;
     Json::Value package;

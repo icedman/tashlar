@@ -9,6 +9,8 @@
 
 #define STATUS_ITEMS 4
 
+int pairForColor(int idx, bool selected);
+
 void statusbar_t::setText(std::string text, int pos)
 {
     if (!start.size()) {
@@ -36,10 +38,9 @@ void statusbar_t::render()
 {
     if (colorPair == 0) {
         style_t s = theme->styles_for_scope("comment");
-        colorPair = s.foreground.index;
-        colorPair = !(colorPair % 2) ? colorPair : colorPair - 1;
+        colorPair = pairForColor(s.foreground.index, false);
     }
-    
+
     wattron(win, COLOR_PAIR(colorPair));
     wmove(win, 0, 0);
 

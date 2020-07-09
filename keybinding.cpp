@@ -14,61 +14,60 @@ static std::map<std::string, command_e> keybindings;
 
 void bindDefaults()
 {
-    bindKeySequence("ctrl+s",           CMD_SAVE);
-    bindKeySequence("ctrl+q",           CMD_QUIT);
-    
-    bindKeySequence("ctrl+c",           CMD_COPY);
-    bindKeySequence("ctrl+x",           CMD_CUT);
-    bindKeySequence("ctrl+v",           CMD_PASTE);
-    bindKeySequence("ctrl+z",           CMD_UNDO);
-    
-    bindKeySequence("ctrl+l",           CMD_SELECT_LINE);
-    
+    bindKeySequence("ctrl+s", CMD_SAVE);
+    bindKeySequence("ctrl+q", CMD_QUIT);
+
+    bindKeySequence("ctrl+c", CMD_COPY);
+    bindKeySequence("ctrl+x", CMD_CUT);
+    bindKeySequence("ctrl+v", CMD_PASTE);
+    bindKeySequence("ctrl+z", CMD_UNDO);
+
+    bindKeySequence("ctrl+l", CMD_SELECT_LINE);
+
     // bindKeySequence("ctrl+shift+d",     CMD_DUPLICATE_LINE);
     // bindKeySequence("ctrl+shift+k",     CMD_DELETE_LINE);
-    bindKeySequence("alt+shift+d",     CMD_DUPLICATE_LINE);
-    bindKeySequence("alt+shift+k",     CMD_DELETE_LINE);
-    
-    bindKeySequence("ctrl+d",           CMD_ADD_CURSOR_FOR_SELECTED_WORD);
-    bindKeySequence("ctrl+alt+up",      CMD_ADD_CURSOR_AND_MOVE_UP);
-    bindKeySequence("ctrl+alt+down",    CMD_ADD_CURSOR_AND_MOVE_DOWN);
-    
-    bindKeySequence("ctrl+left",        CMD_MOVE_CURSOR_PREVIOUS_WORD);
-    bindKeySequence("ctrl+right",       CMD_MOVE_CURSOR_NEXT_WORD);
-    bindKeySequence("ctrl+shift+left",  CMD_MOVE_CURSOR_PREVIOUS_WORD_ANCHORED);
+    bindKeySequence("alt+shift+d", CMD_DUPLICATE_LINE);
+    bindKeySequence("alt+shift+k", CMD_DELETE_LINE);
+
+    bindKeySequence("ctrl+d", CMD_ADD_CURSOR_FOR_SELECTED_WORD);
+    bindKeySequence("ctrl+alt+up", CMD_ADD_CURSOR_AND_MOVE_UP);
+    bindKeySequence("ctrl+alt+down", CMD_ADD_CURSOR_AND_MOVE_DOWN);
+
+    bindKeySequence("ctrl+left", CMD_MOVE_CURSOR_PREVIOUS_WORD);
+    bindKeySequence("ctrl+right", CMD_MOVE_CURSOR_NEXT_WORD);
+    bindKeySequence("ctrl+shift+left", CMD_MOVE_CURSOR_PREVIOUS_WORD_ANCHORED);
     bindKeySequence("ctrl+shift+right", CMD_MOVE_CURSOR_NEXT_WORD_ANCHORED);
-    
-    bindKeySequence("left",             CMD_MOVE_CURSOR_LEFT);
-    bindKeySequence("right",            CMD_MOVE_CURSOR_RIGHT);
-    bindKeySequence("down",             CMD_MOVE_CURSOR_DOWN);
-    bindKeySequence("up",               CMD_MOVE_CURSOR_UP);
-    
+
+    bindKeySequence("left", CMD_MOVE_CURSOR_LEFT);
+    bindKeySequence("right", CMD_MOVE_CURSOR_RIGHT);
+    bindKeySequence("down", CMD_MOVE_CURSOR_DOWN);
+    bindKeySequence("up", CMD_MOVE_CURSOR_UP);
+
     // bindKeySequence("ctrl+up",               CMD_MOVE_LINE_DOWN);
     // bindKeySequence("ctrl+down",             CMD_MOVE_LINE_UP);
 
-    bindKeySequence("shift+left",       CMD_MOVE_CURSOR_LEFT_ANCHORED);
-    bindKeySequence("shift+right",      CMD_MOVE_CURSOR_RIGHT_ANCHORED);
-    bindKeySequence("shift+down",       CMD_MOVE_CURSOR_DOWN_ANCHORED);
-    bindKeySequence("shift+up",         CMD_MOVE_CURSOR_UP_ANCHORED);
-    
-    bindKeySequence("ctrl+alt+left",        CMD_MOVE_CURSOR_START_OF_LINE);
-    bindKeySequence("ctrl+alt+right",       CMD_MOVE_CURSOR_END_OF_LINE);
-    bindKeySequence("ctrl+shift+alt+left",    CMD_MOVE_CURSOR_START_OF_LINE_ANCHORED);
-    bindKeySequence("ctrl+shift+alt+right",   CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED);
-    
+    bindKeySequence("shift+left", CMD_MOVE_CURSOR_LEFT_ANCHORED);
+    bindKeySequence("shift+right", CMD_MOVE_CURSOR_RIGHT_ANCHORED);
+    bindKeySequence("shift+down", CMD_MOVE_CURSOR_DOWN_ANCHORED);
+    bindKeySequence("shift+up", CMD_MOVE_CURSOR_UP_ANCHORED);
+
+    bindKeySequence("ctrl+alt+left", CMD_MOVE_CURSOR_START_OF_LINE);
+    bindKeySequence("ctrl+alt+right", CMD_MOVE_CURSOR_END_OF_LINE);
+    bindKeySequence("ctrl+shift+alt+left", CMD_MOVE_CURSOR_START_OF_LINE_ANCHORED);
+    bindKeySequence("ctrl+shift+alt+right", CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED);
+
     // bindKeySequence("ctrl+shift+z",     CMD_REDO);
-    
+
     // bindKeySequence("home",             CMD_MOVE_CURSOR_START_OF_DOCUMENT);
     // bindKeySequence("end",              CMD_MOVE_CURSOR_END_OF_DOCUMENT);
-    
-    bindKeySequence("pageup",           CMD_MOVE_CURSOR_PREVIOUS_PAGE);
-    bindKeySequence("pagedown",         CMD_MOVE_CURSOR_NEXT_PAGE);
-    
-    bindKeySequence("enter",            CMD_ENTER);
-    bindKeySequence("delete",           CMD_DELETE);
-    bindKeySequence("backspace",        CMD_BACKSPACE);
-}
 
+    bindKeySequence("pageup", CMD_MOVE_CURSOR_PREVIOUS_PAGE);
+    bindKeySequence("pagedown", CMD_MOVE_CURSOR_NEXT_PAGE);
+
+    bindKeySequence("enter", CMD_ENTER);
+    bindKeySequence("delete", CMD_DELETE);
+    bindKeySequence("backspace", CMD_BACKSPACE);
+}
 
 // if != 0, then there is data to be read on stdin
 int kbhit(int timeout)
@@ -95,7 +94,7 @@ int kbhit(int timeout)
     return FD_ISSET(STDIN_FILENO, &fds);
 }
 
-int other_escape_sequence(int c, std::string &keySequence)
+int other_escape_sequence(int c, std::string& keySequence)
 {
     char tmp[32];
 
@@ -118,33 +117,33 @@ int other_escape_sequence(int c, std::string &keySequence)
     }
 
     app_t::log("escape+%d a:%d A:%d 0:%d 9:%d\n", c, 'a', 'A', '0', '9');
-    
+
     return ESC;
 }
-    
-int read_key_sequence(std::string &keySequence)
+
+int read_key_sequence(std::string& keySequence)
 {
     keySequence = "";
-    
+
     std::string sequence = "";
-    
+
     char seq[4];
     int wait = 500;
-    
+
     if (!kbhit(wait)) {
         return ESC;
     }
     read(STDIN_FILENO, &seq[0], 1);
-    
+
     if (!kbhit(wait)) {
         return other_escape_sequence(seq[0], keySequence);
     }
     read(STDIN_FILENO, &seq[1], 1);
 
     /* ESC [ sequences. */
-    if (seq[0] == '[') {            
+    if (seq[0] == '[') {
         if (seq[1] >= '0' && seq[1] <= '9') {
-            
+
             /* Extended escape, read additional byte. */
             if (!kbhit(wait)) {
                 return ESC;
@@ -193,7 +192,7 @@ int read_key_sequence(std::string &keySequence)
                         return KEY_SLEFT;
                     }
                 }
-                
+
                 sequence = "ctrl+";
                 if (seq[0] == '5') {
                     // app_t::log("ctrl+%d\n", seq[1]);
@@ -313,7 +312,7 @@ int read_key_sequence(std::string &keySequence)
 
     return ESC;
 }
-    
+
 int readKey(std::string& keySequence)
 {
     if (kbhit(50) != 0) {
@@ -321,7 +320,7 @@ int readKey(std::string& keySequence)
         if (read(STDIN_FILENO, &c, 1) != 0) {
 
             // app_t::log("key:%d\n", c);
-            
+
             if (c == ESC) {
                 keySequence = "";
                 return read_key_sequence(keySequence);
@@ -345,16 +344,16 @@ int readKey(std::string& keySequence)
                 c = 'a' + (c - 1);
                 if (c >= 'a' && c <= 'z') {
                     keySequence += c;
-                    return c; 
+                    return c;
                 } else {
                     keySequence += '?';
                 }
-                
+
                 return c;
             }
 
             return c;
-        }    
+        }
     }
     return -1;
 }
@@ -362,7 +361,7 @@ int readKey(std::string& keySequence)
 void bindKeySequence(std::string keys, command_e command)
 {
     if (keybindings.find(keys) != keybindings.end()) {
-        keybindings.erase(keys);   
+        keybindings.erase(keys);
     }
     keybindings.emplace(keys, command);
 }
@@ -374,6 +373,6 @@ command_e commandKorKeys(std::string keys)
     }
 
     app_t::log(keys.c_str());
-    
+
     return command_e::CMD_UNKNOWN;
 }
