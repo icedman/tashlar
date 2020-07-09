@@ -79,7 +79,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
                 for (auto span : blockData->spans) {
                     if (rpos >= span.start && rpos < span.start + span.length) {
                         colorPair = pairForColor(span.colorIndex, false);
-                        // colorPairSelected = pairForColor(span.colorIndex, true);
+                        colorPairSelected = pairForColor(span.colorIndex, true);
                         break;
                     }
                 }
@@ -95,7 +95,6 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
                     if (colorIdx != -1) {
                         colorPair = 0;
                     }
-                    // wattron(win, A_BLINK);
                     colorPair = colorPairSelected;
                 }
                 firstCursor = false;
@@ -119,7 +118,6 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
         waddch(win, c);
         wattroff(win, COLOR_PAIR(colorPair));
         wattroff(win, A_REVERSE);
-        wattroff(win, A_BLINK);
     }
 }
 
@@ -225,6 +223,9 @@ void editor_t::highlightBlock(struct block_t& block)
         }
 
         prevScopeName = scopeName;
+        // if (prevScopeName.find("variable") != std::string::npos) {
+        //    prevScopeName = "parameter";
+        // }
         si = n;
     }
 

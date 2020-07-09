@@ -21,18 +21,22 @@
 
 static std::map<int, int> colorMap;
 
+#define SELECTED_OFFSET 1000
+
 int pairForColor(int colorIdx, bool selected)
 {
-    return colorMap[colorIdx + (selected ? 1000 : 0)];
-    return colorMap[colorIdx];
+    if (selected && colorIdx == color_pair_e::NORMAL) {
+        return color_pair_e::SELECTED;
+    }
+    return colorMap[colorIdx + (selected ? SELECTED_OFFSET : 0)];
 }
 
 void setupColors(theme_ptr theme)
 {
     colorMap.clear();
 
-    // style_t s = theme->styles_for_scope("default");
-    std::cout << theme->colorIndices.size() << std::endl;
+    style_t s = theme->styles_for_scope("default");
+    std::cout << theme->colorIndices.size() << " colors used" << std::endl;
 
     int bg = -1;
     int fg = color_info_t::nearest_color_index(250, 250, 250);
@@ -48,9 +52,9 @@ void setupColors(theme_ptr theme)
     if (!clr.is_blank()) {
         fg = clr.index;
     }
-    // if (!s.foreground.is_blank()) {
-    // fg = s.foreground.index;
-    // }
+    if (!s.foreground.is_blank()) {
+       fg = s.foreground.index;
+    }
     theme->theme_color("editor.selectionBackground", clr);
     if (!clr.is_blank()) {
         selBg = clr.index;
@@ -65,15 +69,16 @@ void setupColors(theme_ptr theme)
 
     auto it = theme->colorIndices.begin();
     while (it != theme->colorIndices.end()) {
-        it++;
         colorMap[it->first] = idx;
         init_pair(idx++, it->first, bg);
+        it++;
     }
+    
     it = theme->colorIndices.begin();
     while (it != theme->colorIndices.end()) {
-        it++;
-        colorMap[it->first + 1000] = idx;
+        colorMap[it->first + SELECTED_OFFSET] = idx;
         init_pair(idx++, it->first, selBg);
+        it++;
     }
 }
 
@@ -332,6 +337,10 @@ int main(int argc, char** argv)
             }
 
             if (ch != -1) {
+                break;
+            }
+
+            if (statusbar.tick(150)) {
                 break;
             }
         }
