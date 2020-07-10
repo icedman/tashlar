@@ -1,5 +1,5 @@
 #include "keybinding.h"
-#include "editor.h"
+#include "app.h"
 
 #include <curses.h>
 #include <stdio.h>
@@ -23,7 +23,9 @@ void bindDefaults()
     bindKeySequence("ctrl+z", CMD_UNDO);
 
     bindKeySequence("ctrl+l", CMD_SELECT_LINE);
-
+    bindKeySequence("ctrl+a", CMD_SELECT_ALL);
+    // bindKeySequence("ctrl+?", CMD_SELECT_WORD);
+    
     // bindKeySequence("ctrl+shift+d",     CMD_DUPLICATE_LINE);
     // bindKeySequence("ctrl+shift+k",     CMD_DELETE_LINE);
     bindKeySequence("alt+shift+d", CMD_DUPLICATE_LINE);

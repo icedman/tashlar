@@ -8,6 +8,7 @@ cc = meson.get_compiler('cpp')
 
 tashlar_files = [
     'main.cpp',
+    'app.cpp',
     'command.cpp',
     'cursor.cpp',
     'document.cpp',

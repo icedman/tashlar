@@ -13,6 +13,9 @@ std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blo
         if (&blk == &block) {
             return it;
         }
+        // if (blk.position == block.position) {
+            // return it;
+        // }
         it++;
     }
     return it;

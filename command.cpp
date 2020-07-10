@@ -1,5 +1,6 @@
 #include "command.h"
 #include "document.h"
+#include "app.h"
 #include "editor.h"
 #include "statusbar.h"
 
@@ -60,6 +61,12 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
         }
         return true;
 
+    case CMD_SELECT_ALL:
+        cursorMovePosition(&cursor, cursor_t::StartOfDocument);
+        cursorMovePosition(&cursor, cursor_t::EndOfDocument, true);
+        doc->setCursor(cursor);
+        return true;
+        
     case CMD_SELECT_WORD:
     case CMD_ADD_CURSOR_FOR_SELECTED_WORD:
 

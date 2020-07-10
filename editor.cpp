@@ -6,51 +6,10 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include "app.h"
 #include "editor.h"
 
 int pairForColor(int idx, bool selected);
-
-static struct app_t *appInstance = 0;
-
-app_t::app_t() 
-    : lineWrap(false)
-{
-    appInstance = this;
-}
-
-struct app_t* app_t::instance()
-{
-    return appInstance;
-}
-    
-void app_t::iniLog()
-{
-    FILE* log_file = fopen("/tmp/ashlar.log", "w");
-    fclose(log_file);
-}
-
-void app_t::log(const char* format, ...)
-{
-    char string[512] = "";
-
-    va_list args;
-    va_start(args, format);
-    vsnprintf(string, 255, format, args);
-    va_end(args);
-
-    FILE* log_file = fopen("/tmp/ashlar.log", "a");
-    if (!log_file) {
-        return;
-    }
-    char* token = strtok(string, "\n");
-    while (token != NULL) {
-        fprintf(log_file, token);
-        fprintf(log_file, "\n");
-
-        token = strtok(NULL, "\n");
-    }
-    fclose(log_file);
-}
 
 void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct block_t* block, int relativeLine)
 {
@@ -67,13 +26,10 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
     int skip = offsetX;        
     char c;
     int idx = 0;
+    int x = 0;
     while (c = line[idx++]) {
         if (skip-- > 0) {
             continue;
-        }
-
-        if (idx > viewWidth) {
-            break;
         }
 
         colorPair = color_pair_e::NORMAL;
@@ -103,6 +59,16 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
             // selection
             bool firstCursor = true;
             for (auto cur : *cursors) {
+                if (firstCursor) {
+                    if (pos + 1 == cur.position - wrapOffset) {
+                        cursorScreenX = x + 1;
+                        cursorScreenY = offsetY;
+                    }
+                    if (pos == cur.position - wrapOffset) {
+                        cursorScreenX = x;
+                        cursorScreenY = offsetY;
+                    }
+                }
                 if (pos == cur.position - wrapOffset) {
                     if (firstCursor) {
                         wattron(win, A_REVERSE);
@@ -133,6 +99,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
         waddch(win, c);
         wattroff(win, COLOR_PAIR(colorPair));
         wattroff(win, A_REVERSE);
+        x++;
     }
 }
 

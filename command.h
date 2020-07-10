@@ -14,6 +14,7 @@ enum command_e {
     CMD_PASTE,
     CMD_SELECT_WORD,
 
+    CMD_SELECT_ALL,
     CMD_SELECT_LINE,
     CMD_DUPLICATE_LINE,
     CMD_DELETE_LINE,

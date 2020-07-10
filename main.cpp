@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "app.h"
+
 #include "command.h"
 #include "cursor.h"
 #include "document.h"
@@ -18,69 +20,6 @@
 #include "util.h"
 
 #include "extension.h"
-
-static std::map<int, int> colorMap;
-
-#define SELECTED_OFFSET 1000
-
-int pairForColor(int colorIdx, bool selected)
-{
-    if (selected && colorIdx == color_pair_e::NORMAL) {
-        return color_pair_e::SELECTED;
-    }
-    return colorMap[colorIdx + (selected ? SELECTED_OFFSET : 0)];
-}
-
-void setupColors(theme_ptr theme)
-{
-    colorMap.clear();
-
-    style_t s = theme->styles_for_scope("default");
-    std::cout << theme->colorIndices.size() << " colors used" << std::endl;
-
-    int bg = -1;
-    int fg = color_info_t::nearest_color_index(250, 250, 250);
-    int selBg = color_info_t::nearest_color_index(250, 250, 250);
-    int selFg = color_info_t::nearest_color_index(50, 50, 50);
-    color_info_t clr;
-    theme->theme_color("editor.background", clr);
-    if (!clr.is_blank()) {
-        // bg = clr.index;
-    }
-
-    theme->theme_color("editor.foreground", clr);
-    if (!clr.is_blank()) {
-        fg = clr.index;
-    }
-    if (!s.foreground.is_blank()) {
-       fg = s.foreground.index;
-    }
-    theme->theme_color("editor.selectionBackground", clr);
-    if (!clr.is_blank()) {
-        selBg = clr.index;
-    }
-
-    use_default_colors();
-    start_color();
-
-    int idx = 32;
-    init_pair(color_pair_e::NORMAL, fg, bg);
-    init_pair(color_pair_e::SELECTED, selFg, selBg);
-
-    auto it = theme->colorIndices.begin();
-    while (it != theme->colorIndices.end()) {
-        colorMap[it->first] = idx;
-        init_pair(idx++, it->first, bg);
-        it++;
-    }
-    
-    it = theme->colorIndices.begin();
-    while (it != theme->colorIndices.end()) {
-        colorMap[it->first + SELECTED_OFFSET] = idx;
-        init_pair(idx++, it->first, selBg);
-        it++;
-    }
-}
 
 void renderStatus(struct statusbar_t& statusbar, struct editor_t& editor)
 {
@@ -107,9 +46,7 @@ void renderStatus(struct statusbar_t& statusbar, struct editor_t& editor)
     wresize(statusbar.win, statusbar.viewHeight, statusbar.viewWidth);
 
     static char tmp[512];
-    sprintf(tmp, "Scroll: %d ScreenLine: %d Line: %d Col: %d",
-        (int)(editor.scrollY),
-        (int)(block.screenLine),
+    sprintf(tmp, "Line: %d Col: %d",
         1 + (int)(block.lineNumber),
         1 + (int)(cursor.position - block.position));
 
@@ -137,7 +74,7 @@ void renderEditor(struct editor_t& editor)
 
     editor.viewX = 0;
     editor.viewY = 0;
-    editor.viewWidth =  50; // w.ws_col;
+    editor.viewWidth = w.ws_col;
     editor.viewHeight = w.ws_row - 1;
 
     if (!editor.win) {
@@ -151,12 +88,8 @@ void renderEditor(struct editor_t& editor)
     editor.cursorScreenX = 0;
     editor.cursorScreenY = 0;
 
-    static char tmp[512] = "";
-    // todo::improve to viewport style
-    // todo::compute cursor position on screen
-
     // layout blocks
-    // update block positions
+    // update block positions only when needed
     // todo!
     {
         struct block_t* prev = NULL;
@@ -201,9 +134,7 @@ void renderEditor(struct editor_t& editor)
         editor.scrollX--;
     }
 
-    editor.cursorScreenY = editor.scrollY;
     offsetY = editor.scrollY;
-    editor.cursorScreenX = editor.scrollX;
     offsetX = editor.scrollX;
 
     //-----------------
@@ -238,8 +169,7 @@ void renderCursor(struct editor_t& editor)
     struct block_t block = doc->block(cursor);
 
     if (block.isValid()) {
-        int cx = cursor.position - block.position;
-        wmove(editor.win, block.screenLine, cx - editor.cursorScreenX);
+        wmove(editor.win, editor.cursorScreenY, editor.cursorScreenX);
     } else {
         wmove(editor.win, 0, 0);
     }
@@ -247,10 +177,6 @@ void renderCursor(struct editor_t& editor)
 
 int main(int argc, char** argv)
 {
-    // printf("%d\n", sizeof(short));
-    // printf("%d\n", sizeof(char));
-    // return 0;
-
     struct editor_t editor;
     struct statusbar_t statusbar;
 
@@ -258,6 +184,8 @@ int main(int argc, char** argv)
     app.statusbar = &statusbar;
     app.lineWrap = true;
 
+    app.configure();
+    
     //-------------------
     // initialize extensions
     //-------------------
@@ -284,7 +212,7 @@ int main(int argc, char** argv)
     app.theme = theme_from_name(theme, extensions);
     editor.theme = app.theme;
     statusbar.theme = app.theme;
-
+    
     //-------------------
     // keybinding
     //-------------------
@@ -294,11 +222,10 @@ int main(int argc, char** argv)
     // ncurses
     //-------------------
     initscr();
-    // cbreak();
     raw();
     noecho();
 
-    setupColors(editor.theme);
+    app.setupColors();
 
     clear();
 
@@ -327,7 +254,7 @@ int main(int argc, char** argv)
             curs_set(0);
             wrefresh(statusbar.win);
             wrefresh(editor.win);
-            // curs_set(1);
+            curs_set(1);
         }
 
         //-----------------
@@ -385,9 +312,6 @@ int main(int argc, char** argv)
             }
 
             app.inputBuffer.erase(0, 1);
-            if (!app.inputBuffer.length()) {
-                doc->history.end();
-            }
         }
 
         std::string s;

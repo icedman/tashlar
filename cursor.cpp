@@ -2,6 +2,7 @@
 #include "document.h"
 #include "search.h"
 #include "util.h"
+#include "app.h"
 
 #include <algorithm>
 
@@ -71,6 +72,15 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     case cursor_t::Move::EndOfLine:
         cursor->position = block.position + (block.length - 1);
         break;
+        
+    case cursor_t::Move::StartOfDocument:
+        cursor->position = 0;
+        break;
+    case cursor_t::Move::EndOfDocument: {
+        struct block_t &end = cursor->document->blocks.back();
+        cursor->position = end.position + end.length - 1;
+        break;
+    }
 
     case cursor_t::Move::WordLeft: {
         bool found = false;
@@ -229,7 +239,8 @@ void cursorSplitBlock(struct cursor_t* cursor)
 
     cursor->document->update();
 }
-
+    
+// todo .. broken for selections spanning several lines, way too slow
 int cursorDeleteSelection(struct cursor_t* cursor)
 {
     if (!cursor->hasSelection()) {
@@ -247,14 +258,63 @@ int cursorDeleteSelection(struct cursor_t* cursor)
     }
 
     struct cursor_t cur = *cursor;
+    struct cursor_t curEnd = *cursor;
     cur.position = start;
+    curEnd.position = end;
+
+    // for selection spanning multiple blocks
+    struct block_t &startBlock = cursor->document->block(cur);
+    struct block_t &endBlock = cursor->document->block(curEnd);
+    if (startBlock.position != endBlock.position) {
+        int count = 0;
+
+        int d = curEnd.position - endBlock.position;
+        curEnd.position = endBlock.position;
+        cursorEraseText(&curEnd, d);
+        count += d;
+
+        d = startBlock.position + startBlock.length - cur.position;
+        cursorEraseText(&cur, d);
+        count += d;
+
+        cursor->document->update();
+
+        struct block_t *next = startBlock.next;
+        int linesToDelete = 0;
+        while(next && next != &endBlock) {
+            linesToDelete++;
+            next = next->next;
+        }
+
+        // delete blocks in-between
+        next = startBlock.next;
+        while(next && linesToDelete-- > 0) {
+            std::vector<struct block_t>::iterator it = findBlock(cursor->document->blocks, *next);
+            if (it != cursor->document->blocks.end()) {
+                cursor->document->blocks.erase(it);
+                count += next->length;
+                cursor->document->update();
+            }
+            next = startBlock.next;
+        }
+
+        // merge two block
+        cursor->document->update();
+        cursorEraseText(&cur, 1);
+        count ++;
+   
+        cursor->position = cur.position;
+        cursor->anchorPosition = cur.position;     
+        return count;
+    }
+
     int count = end - start + 1;
     for (int i = 0; i < count; i++) {
         cursorEraseText(&cur, 1);
     }
 
     cursor->position = cur.position;
-    cursor->anchorPosition = cur.anchorPosition;
+    cursor->anchorPosition = cur.position;
 
     return count;
 }
@@ -344,7 +404,6 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t)
                 cursor->anchorPosition = block.position + found.begin;
                 cursor->position = block.position + found.end - 1;
                 return true;
-                // std::cout << found.begin << ":" << relativePosition <<std::endl;
             }
         }
 
