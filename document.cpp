@@ -2,6 +2,7 @@
 #include "cursor.h"
 #include "editor.h"
 #include "util.h"
+#include "app.h"
 
 static size_t cursor_uid = 1;
 
@@ -103,10 +104,10 @@ bool document_t::open(const char* path)
     bool useStreamBuffer = true;
 
     filePath = path;
-    tmpPath = "/tmp/tmpfile.XXXXXX";
+    std::string tmpPath = "/tmp/tmpfile.XXXXXX";
     mkstemp((char*)tmpPath.c_str());
 
-    std::cout << tmpPath << std::endl;
+    app_t::instance()->log(tmpPath.c_str());
 
     file = std::ifstream(path, std::ifstream::in);
     std::ofstream tmp(tmpPath, std::ofstream::out);
@@ -123,8 +124,6 @@ bool document_t::open(const char* path)
         blocks.emplace_back(b);
         pos = file.tellg();
         tmp << line << std::endl;
-
-        b.setText(line);
     }
 
     tmp.close();
@@ -145,6 +144,8 @@ bool document_t::open(const char* path)
     std::set<char> delims = { '\\', '/' };
     std::vector<std::string> spath = split_path(filePath, delims);
     fileName = spath.back();
+
+    tmpPaths.push_back(tmpPath);
 
     history.initialState = blocks;
     return true;
@@ -172,8 +173,12 @@ void document_t::undo()
 void document_t::close()
 {
     file.close();
-    std::cout << "unlink " << tmpPath;
-    remove(tmpPath.c_str());
+
+    std::cout << "cleanup" << std::endl;
+    for(auto tmpPath : tmpPaths) {
+        std::cout << "unlink " << tmpPath << std::endl;
+        remove(tmpPath.c_str());
+    }
 }
 
 void document_t::save()
@@ -306,3 +311,46 @@ struct block_t& document_t::block(struct cursor_t& cursor, bool skipCache)
 
     return nullBlock;
 }
+
+void document_t::addBufferDocument(const std::string &largeText)
+{
+    std:: string tmpPath = "/tmp/tmpfile.paste.XXXXXX";
+    mkstemp((char*)tmpPath.c_str());
+
+    app_t::instance()->log(tmpPath.c_str());
+
+    std::ofstream tmp(tmpPath, std::ofstream::out);
+    tmp << largeText;
+    tmp.close();
+
+    std::shared_ptr<document_t> doc = std::make_shared<document_t>();
+    doc->open(tmpPath.c_str());
+    buffers.emplace_back(doc);
+
+    tmpPaths.push_back(tmpPath);
+    
+    // pasting larget text .. resets the history
+    // todo.. remove this limitation
+    history.edits.clear();
+    history.initialState = blocks;
+}
+
+void document_t::insertLastBuffer(struct cursor_t& cursor)
+{
+    std::shared_ptr<document_t> doc = buffers.back();
+    if (doc) {
+        for(auto bb : doc->blocks) {
+            struct block_t b;
+            b.document = doc.get();
+            b.file = &doc->file;
+            b.position = bb.position;
+            b.filePosition = bb.position;
+            b.length = bb.length;
+            blocks.emplace_back(b);
+        }
+    }
+
+    update();
+}
+    
+    

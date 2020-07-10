@@ -169,12 +169,7 @@ struct history_t {
 struct document_t {
     document_t()
         : file(0)
-    {
-        struct cursor_t cursor;
-        cursor.document = this;
-        cursor.position = 0;
-        cursors.emplace_back(cursor);
-    }
+    {}
 
     ~document_t()
     {
@@ -185,6 +180,7 @@ struct document_t {
     std::vector<struct cursor_t> cursors;
 
     std::ifstream file;
+    std::vector<std::shared_ptr<document_t>> buffers;
 
     bool open(const char* path);
     void close();
@@ -197,14 +193,18 @@ struct document_t {
     void clearCursors();
     void clearSelections();
 
+    void addBufferDocument(const std::string &largeText);
+    void insertLastBuffer(struct cursor_t& cursor);
+
     void undo();
     void update();
     struct block_t& block(struct cursor_t& cursor, bool skipCache = false);
 
     struct block_t nullBlock;
     std::string filePath;
-    std::string tmpPath;
     std::string fileName;
+
+    std::vector<std::string> tmpPaths;
 
     std::map<size_t, struct block_t&> cursorBlockCache;
     struct history_t history;

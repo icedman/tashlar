@@ -283,19 +283,18 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         int linesToDelete = 0;
         while(next && next != &endBlock) {
             linesToDelete++;
+                        count += next->length;
             next = next->next;
         }
 
         // delete blocks in-between
         next = startBlock.next;
-        while(next && linesToDelete-- > 0) {
+        if (next && linesToDelete-- > 0) {
             std::vector<struct block_t>::iterator it = findBlock(cursor->document->blocks, *next);
             if (it != cursor->document->blocks.end()) {
-                cursor->document->blocks.erase(it);
-                count += next->length;
+                cursor->document->blocks.erase(it, it + linesToDelete + 1);
                 cursor->document->update();
             }
-            next = startBlock.next;
         }
 
         // merge two block

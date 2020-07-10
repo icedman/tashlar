@@ -4,6 +4,8 @@
 #include "editor.h"
 #include "statusbar.h"
 
+#define SIMPLE_PASTE_THRESHOLD 1000
+
 bool processCommand(command_e cmd, struct app_t* app, char ch)
 {
     struct editor_t* editor = app->currentEditor;
@@ -24,7 +26,11 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
         return true;
 
     case CMD_PASTE:
-        app->inputBuffer = app->clipBoard;
+        if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
+            app->inputBuffer = app->clipBoard;
+        } else {            
+            break;
+        }
         return true;
 
     case CMD_UNDO:
@@ -39,6 +45,12 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
     // main cursor
     //-----------------
     switch (cmd) {
+
+    case CMD_PASTE:
+        // large buffer paste!
+        doc->addBufferDocument(app->clipBoard);
+        app->clipBoard = "";
+        break;
 
     case CMD_ADD_CURSOR_AND_MOVE_UP:
         doc->addCursor(cursor);
@@ -142,6 +154,12 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
 
         switch (cmd) {
 
+        case CMD_PASTE:
+            // large buffer paste!
+            doc->insertLastBuffer(cur);
+            handled = true;
+            break;
+            
         //-----------
         // navigation
         //-----------
