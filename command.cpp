@@ -168,6 +168,7 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
 
         case CMD_MOVE_CURSOR_UP:
         case CMD_MOVE_CURSOR_UP_ANCHORED:
+            // editor->scrollY--;
             cursorMovePosition(&cur, cursor_t::Up, cmd == CMD_MOVE_CURSOR_UP_ANCHORED);
             doc->history.mark();
             handled = true;
@@ -175,6 +176,7 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
 
         case CMD_MOVE_CURSOR_DOWN:
         case CMD_MOVE_CURSOR_DOWN_ANCHORED:
+            // editor->scrollY++;
             cursorMovePosition(&cur, cursor_t::Down, cmd == CMD_MOVE_CURSOR_DOWN_ANCHORED);
             doc->history.mark();
             handled = true;

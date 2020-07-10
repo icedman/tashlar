@@ -59,6 +59,7 @@ struct block_t {
         : document(0)
         , file(0)
         , position(0)
+        , screenLine(0)
         , data(0)
         , dirty(false)
         , next(0)
@@ -111,9 +112,11 @@ struct block_t {
     }
 
     int lineNumber;
-
+    int lineCount;
+    
     struct document_t* document;
     size_t position;
+    size_t screenLine;
 
     std::string content;
     size_t length;

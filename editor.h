@@ -43,8 +43,9 @@ struct editor_t {
     struct document_t document;
 
     void highlightBlock(struct block_t& block);
+    void layoutBlock(struct block_t& block);
     void renderBlock(struct block_t& block, int offsetX, int offsetY);
-    void renderLine(const char* line, int offsetX = 0, int offsetY = 0, struct block_t* block = 0);
+    void renderLine(const char* line, int offsetX = 0, int offsetY = 0, struct block_t* block = 0, int relativeLine = 0);
 
     std::string clipBoard;
     language_info_ptr lang;
@@ -56,6 +57,11 @@ struct editor_t {
 struct statusbar_t;
 
 struct app_t {
+
+    app_t();
+        
+    static app_t* instance();
+    
     struct editor_t* currentEditor;
     struct statusbar_t* statusbar;
 
@@ -65,6 +71,9 @@ struct app_t {
     std::string clipBoard;
 
     theme_ptr theme;
+
+    // settings
+    bool lineWrap;
 
     // log
     static void iniLog();

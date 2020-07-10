@@ -10,6 +10,19 @@
 
 int pairForColor(int idx, bool selected);
 
+static struct app_t *appInstance = 0;
+
+app_t::app_t() 
+    : lineWrap(false)
+{
+    appInstance = this;
+}
+
+struct app_t* app_t::instance()
+{
+    return appInstance;
+}
+    
 void app_t::iniLog()
 {
     FILE* log_file = fopen("/tmp/ashlar.log", "w");
@@ -39,7 +52,7 @@ void app_t::log(const char* format, ...)
     fclose(log_file);
 }
 
-void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct block_t* block)
+void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct block_t* block, int relativeLine)
 {
     if (!line) {
         return;
@@ -49,15 +62,18 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
 
     int colorPair = color_pair_e::NORMAL;
     int colorPairSelected = color_pair_e::SELECTED;
+    int wrapOffset = relativeLine * viewWidth;
 
-    int skip = offsetX;
-
+    int skip = offsetX;        
     char c;
     int idx = 0;
     while (c = line[idx++]) {
-
         if (skip-- > 0) {
             continue;
+        }
+
+        if (idx > viewWidth) {
+            break;
         }
 
         colorPair = color_pair_e::NORMAL;
@@ -70,14 +86,13 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
         if (block && cursors) {
             int rpos = idx - 1;
             int pos = block->position + idx - 1;
-
             int colorIdx = -1;
-
+                        
             // syntax here
             if (block && block->data) {
                 struct blockdata_t* blockData = block->data;
                 for (auto span : blockData->spans) {
-                    if (rpos >= span.start && rpos < span.start + span.length) {
+                    if (rpos + wrapOffset >= span.start && rpos + wrapOffset < span.start + span.length) {
                         colorPair = pairForColor(span.colorIndex, false);
                         colorPairSelected = pairForColor(span.colorIndex, true);
                         break;
@@ -88,7 +103,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
             // selection
             bool firstCursor = true;
             for (auto cur : *cursors) {
-                if (pos == cur.position) {
+                if (pos == cur.position - wrapOffset) {
                     if (firstCursor) {
                         wattron(win, A_REVERSE);
                     }
@@ -108,7 +123,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
                     startSel = cur.position + 1;
                     endSel = cur.anchorPosition + 1;
                 }
-                if (pos >= startSel && pos < endSel) {
+                if (pos >= startSel - wrapOffset && pos < endSel - wrapOffset) {
                     colorPair = colorPairSelected;
                 }
             }
@@ -278,11 +293,27 @@ void editor_t::highlightBlock(struct block_t& block)
     }
 }
 
+void editor_t::layoutBlock(struct block_t& block)
+{
+    block.lineCount = 1;
+    if (app_t::instance()->lineWrap) {
+        block.lineCount += block.length / viewWidth;
+    }
+}
+    
 void editor_t::renderBlock(struct block_t& block, int offsetX, int offsetY)
 {
     std::string t = block.text();
     if (!t.length()) {
         t = " ";
     }
-    renderLine(t.c_str(), offsetX, offsetY, &block);
+
+    char *str = (char*)t.c_str();
+
+    for(int i=0;i<block.lineCount;i++) {
+        wmove(win, offsetY + i, 0);
+        wclrtoeol(win); 
+        renderLine(str, offsetX, offsetY + i, &block, i);
+        str += viewWidth;
+    }
 }

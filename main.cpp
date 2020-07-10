@@ -82,6 +82,47 @@ void setupColors(theme_ptr theme)
     }
 }
 
+void renderStatus(struct statusbar_t& statusbar, struct editor_t& editor)
+{
+    struct document_t* doc = &editor.document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
+
+    //-----------------
+    // calculate view
+    //-----------------
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+    statusbar.viewX = 0;
+    statusbar.viewY = w.ws_row - 1;
+    statusbar.viewWidth =w.ws_col;
+    statusbar.viewHeight = 1;
+
+    if (!statusbar.win) {
+        statusbar.win = newwin(statusbar.viewHeight, statusbar.viewWidth, 0, 0);
+    }
+
+    mvwin(statusbar.win, statusbar.viewY, statusbar.viewX);
+    wresize(statusbar.win, statusbar.viewHeight, statusbar.viewWidth);
+
+    static char tmp[512];
+    sprintf(tmp, "Scroll: %d ScreenLine: %d Line: %d Col: %d",
+        (int)(editor.scrollY),
+        (int)(block.screenLine),
+        1 + (int)(block.lineNumber),
+        1 + (int)(cursor.position - block.position));
+
+    statusbar.setText(doc->fileName, 0);
+    statusbar.setText(tmp, -2);
+    if (editor.lang) {
+        statusbar.setText(editor.lang->id, -1);
+    } else {
+        statusbar.setText("", -1);
+    }
+    statusbar.render();
+}
+    
 void renderEditor(struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
@@ -96,7 +137,7 @@ void renderEditor(struct editor_t& editor)
 
     editor.viewX = 0;
     editor.viewY = 0;
-    editor.viewWidth = w.ws_col;
+    editor.viewWidth =  50; // w.ws_col;
     editor.viewHeight = w.ws_row - 1;
 
     if (!editor.win) {
@@ -104,23 +145,52 @@ void renderEditor(struct editor_t& editor)
     }
 
     wresize(editor.win, editor.viewHeight, editor.viewWidth);
-
-    // wclear(editor.win);
-
+    
     int offsetX = 0;
     int offsetY = 0;
     editor.cursorScreenX = 0;
     editor.cursorScreenY = 0;
 
+    static char tmp[512] = "";
     // todo::improve to viewport style
     // todo::compute cursor position on screen
-    while (block.lineNumber + 1 - editor.scrollY > editor.viewHeight) {
-        editor.scrollY++;
+
+    // layout blocks
+    // update block positions
+    // todo!
+    {
+        struct block_t* prev = NULL;
+        int l = 0;
+        size_t pos = 0;
+        for (auto& b : editor.document.blocks) {
+            editor.layoutBlock(b);
+            b.screenLine = 0;
+            if (prev) {
+                b.screenLine = prev->screenLine + prev->lineCount;
+                prev->next = &b;
+            }
+            prev = &b;
+        }
     }
-    while (editor.scrollY > 0 && block.lineNumber - editor.scrollY <= 0) {
-        editor.scrollY--;
+
+    // scroll to cursor
+    while(true) {
+        int blockVirtualLine = block.screenLine > block.lineNumber ? block.screenLine : block.lineNumber;
+        int blockScreenLine = blockVirtualLine - editor.scrollY;
+        bool lineVisible = (blockScreenLine >= 0 & blockScreenLine < editor.viewHeight); 
+        if (lineVisible) {
+            break;
+        }
+        if (blockScreenLine >= editor.viewHeight) {
+            editor.scrollY++;
+        }
+        if (blockScreenLine <= 0) {
+            editor.scrollY--;
+        }
     }
+    
     while (cursor.position - block.position + 1 - editor.scrollX > editor.viewWidth) {
+        if (app_t::instance()->lineWrap) break;
         if (editor.scrollX + 1 >= block.length) {
             editor.scrollX = 0;
             break;
@@ -142,13 +212,14 @@ void renderEditor(struct editor_t& editor)
     // todo: jump to first visible block
     int y = 0;
     for (auto& b : doc->blocks) {
-        if (offsetY-- > 0) {
+        if (offsetY > 0) {
+            offsetY -= b.lineCount;
             continue;
         }
-        wmove(editor.win, y++, 0);
-        wclrtoeol(editor.win);
         editor.highlightBlock(b);
-        editor.renderBlock(b, offsetX, y - 1);
+        editor.renderBlock(b, offsetX, y);
+        y += b.lineCount;
+        
         if (y >= editor.viewHeight) {
             break;
         }
@@ -159,44 +230,6 @@ void renderEditor(struct editor_t& editor)
     }
 }
 
-void renderStatus(struct statusbar_t& statusbar, struct editor_t& editor)
-{
-    struct document_t* doc = &editor.document;
-    struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
-
-    //-----------------
-    // calculate view
-    //-----------------
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-    statusbar.viewX = 0;
-    statusbar.viewY = w.ws_row - 1;
-    statusbar.viewWidth = w.ws_col;
-    statusbar.viewHeight = 1;
-
-    if (!statusbar.win) {
-        statusbar.win = newwin(statusbar.viewHeight, statusbar.viewWidth, 0, 0);
-    }
-
-    mvwin(statusbar.win, statusbar.viewY, statusbar.viewX);
-    wresize(statusbar.win, statusbar.viewHeight, statusbar.viewWidth);
-
-    static char tmp[512];
-    sprintf(tmp, "Line: %d Col: %d",
-        1 + (int)(block.lineNumber),
-        1 + (int)(cursor.position - block.position));
-
-    statusbar.setText(doc->fileName, 0);
-    statusbar.setText(tmp, -2);
-    if (editor.lang) {
-        statusbar.setText(editor.lang->id, -1);
-    } else {
-        statusbar.setText("", -1);
-    }
-    statusbar.render();
-}
 
 void renderCursor(struct editor_t& editor)
 {
@@ -205,9 +238,8 @@ void renderCursor(struct editor_t& editor)
     struct block_t block = doc->block(cursor);
 
     if (block.isValid()) {
-        int cy = block.lineNumber;
         int cx = cursor.position - block.position;
-        wmove(editor.win, cy - editor.cursorScreenY, cx - editor.cursorScreenX);
+        wmove(editor.win, block.screenLine, cx - editor.cursorScreenX);
     } else {
         wmove(editor.win, 0, 0);
     }
@@ -224,6 +256,7 @@ int main(int argc, char** argv)
 
     struct app_t app;
     app.statusbar = &statusbar;
+    app.lineWrap = true;
 
     //-------------------
     // initialize extensions
@@ -267,9 +300,6 @@ int main(int argc, char** argv)
 
     setupColors(editor.theme);
 
-    // endwin();
-    // return 0;
-
     clear();
 
     editor.document.open(filename);
@@ -288,6 +318,8 @@ int main(int argc, char** argv)
         bool disableRefresh = app.commandBuffer.size() || app.inputBuffer.length();
 
         if (!disableRefresh) {
+            doc->update();
+            
             renderEditor(editor);
             renderStatus(statusbar, editor);
             renderCursor(editor);
@@ -295,7 +327,7 @@ int main(int argc, char** argv)
             curs_set(0);
             wrefresh(statusbar.win);
             wrefresh(editor.win);
-            curs_set(1);
+            // curs_set(1);
         }
 
         //-----------------
