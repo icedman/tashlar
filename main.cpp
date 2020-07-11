@@ -206,7 +206,6 @@ int main(int argc, char** argv)
     while (!end) {
 
         app.currentEditor = &_editor;
-        
         struct editor_t& editor = *app.currentEditor;
         struct document_t* doc = &editor.document;
         struct cursor_t cursor = doc->cursor();
@@ -314,17 +313,16 @@ int main(int argc, char** argv)
             app.showSidebar = !app.showSidebar;
             renderEditor(editor);
             continue;
-            
-        case CMD_CANCEL:
-            doc->clearCursors();
-            continue;
 
         case CMD_QUIT:
             end = true;
             break;
         }
 
-        app.currentEditor = &editor;
+        //-------------------
+        // update keystrokes on cursors
+        //-------------------
+        
         if (processCommand(cmd, &app, ch)) {
             continue;
         }

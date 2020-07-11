@@ -20,6 +20,7 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
     //-----------------
     switch (cmd) {
     case CMD_CANCEL:
+        doc->clearCursors();
         return true;
 
     case CMD_SAVE:
@@ -31,7 +32,21 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
         if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
             app->inputBuffer = app->clipBoard;
         } else {
-            break;
+            doc->addSnapshot();
+            doc->history().begin();
+            doc->addBufferDocument(app->clipBoard);
+            app->clipBoard = "";
+
+            // cursorInsertText(&cursor, "/* WARNING: pasting very large buffer is not yet ready */");
+            
+            doc->insertFromBuffer(cursor, doc->buffers.back());
+
+            cursorMovePosition(&cursor, cursor_t::EndOfDocument);
+            doc->history().addPasteBuffer(cursor, doc->buffers.back());
+            
+            doc->history().end();
+            doc->addSnapshot();
+            doc->clearCursors();
         }
         return true;
 
@@ -48,24 +63,17 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
     //-----------------
     switch (cmd) {
 
-    case CMD_PASTE:
-        // large buffer paste!
-        doc->addSnapshot();
-        doc->history().begin();
-        doc->addBufferDocument(app->clipBoard);
-        app->clipBoard = "";
-
-        cursorInsertText(&cursor, "/* WARNING: pasting very large buffer is not yet ready */");
-
-        doc->insertFromBuffer(cursor, doc->buffers.back());
-        doc->history().addPasteBuffer(cursor, doc->buffers.back());
-        
-        doc->history().end();
-        doc->addSnapshot();
-        doc->clearCursors();
-
+    case CMD_MOVE_CURSOR_START_OF_DOCUMENT:
+    case CMD_MOVE_CURSOR_START_OF_DOCUMENT_ANCHORED:
+        cursorMovePosition(&cursor, cursor_t::StartOfDocument, cmd == CMD_MOVE_CURSOR_START_OF_DOCUMENT_ANCHORED);
+        doc->setCursor(cursor);
         return true;
-
+    case CMD_MOVE_CURSOR_END_OF_DOCUMENT:
+    case CMD_MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED:
+        cursorMovePosition(&cursor, cursor_t::EndOfDocument, cmd == CMD_MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED);
+        doc->setCursor(cursor);
+        return true;
+    
     case CMD_ADD_CURSOR_AND_MOVE_UP:
         doc->addCursor(cursor);
         cursorMovePosition(&cursor, cursor_t::Up);

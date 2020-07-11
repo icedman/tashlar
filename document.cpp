@@ -275,6 +275,5 @@ void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<docum
         b.length = bb.length;
         blocks.emplace_back(b);
     }
-
     update();
 }

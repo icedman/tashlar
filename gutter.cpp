@@ -88,14 +88,20 @@ void renderGutter(struct gutter_t& gutter)
             wattron(gutter.win, A_BOLD);
         }
         
-        wmove(gutter.win, y, x);
-        
-        gutter.renderLine(lineNo.c_str());        
+        wmove(gutter.win, y, x);        
+        gutter.renderLine(lineNo.c_str());
         wattroff(gutter.win, COLOR_PAIR(gutter.colorPair));
         wattroff(gutter.win, A_BOLD);
         wattroff(gutter.win, A_REVERSE);
-    
-        y += b.lineCount;
+
+        for(int i=0;i<b.lineCount;i++) {
+            y++;
+            wmove(gutter.win, y, 0);
+            wclrtoeol(gutter.win);
+            if (y >= gutter.viewHeight) {
+                break;
+            }
+        }
 
         if (y >= gutter.viewHeight) {
             break;
@@ -106,3 +112,4 @@ void renderGutter(struct gutter_t& gutter)
         wclrtoeol(gutter.win);
     }
 }
+

@@ -64,8 +64,10 @@ void bindDefaults()
 
     // bindKeySequence("ctrl+shift+z",     CMD_REDO);
 
-    bindKeySequence("ctrl+pageup", CMD_MOVE_CURSOR_START_OF_DOCUMENT);
-    bindKeySequence("ctrl+pagedown", CMD_MOVE_CURSOR_END_OF_DOCUMENT);
+    bindKeySequence("ctrl+home", CMD_MOVE_CURSOR_START_OF_DOCUMENT);
+    bindKeySequence("ctrl+end", CMD_MOVE_CURSOR_END_OF_DOCUMENT);
+    bindKeySequence("ctrl+shift+home", CMD_MOVE_CURSOR_START_OF_DOCUMENT_ANCHORED);
+    bindKeySequence("ctrl+shift+end", CMD_MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED);
 
     bindKeySequence("pageup", CMD_MOVE_CURSOR_PREVIOUS_PAGE);
     bindKeySequence("pagedown", CMD_MOVE_CURSOR_NEXT_PAGE);
