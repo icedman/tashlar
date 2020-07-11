@@ -16,12 +16,15 @@
 #include "document.h"
 #include "editor.h"
 #include "keybinding.h"
-#include "statusbar.h"
 #include "util.h"
 
 #include "extension.h"
 
-void renderEditor(struct editor_t& editor)
+#include "statusbar.h"
+#include "gutter.h"
+#include "explorer.h"
+
+static void renderEditor(struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
     struct cursor_t cursor = doc->cursor();
@@ -41,11 +44,23 @@ void renderEditor(struct editor_t& editor)
     if (app_t::instance()->showStatusBar) {
         editor.viewHeight--;
     }
+    if (app_t::instance()->showSidebar) {
+        int explorerWidth = app_t::instance()->explorer->viewWidth;
+        editor.viewWidth -= explorerWidth;
+        editor.viewX += explorerWidth;
+    }
+
+    if (app_t::instance()->showGutter) {
+        int gutterWidth = app_t::instance()->gutter->viewWidth;
+        editor.viewWidth -= gutterWidth;
+        editor.viewX += gutterWidth;
+    }
 
     if (!editor.win) {
         editor.win = newwin(editor.viewHeight, editor.viewWidth, 0, 0);
     }
 
+    mvwin(editor.win, editor.viewY, editor.viewX);
     wresize(editor.win, editor.viewHeight, editor.viewWidth);
 
     int offsetX = 0;
@@ -128,7 +143,7 @@ void renderEditor(struct editor_t& editor)
     }
 }
 
-void renderCursor(struct editor_t& editor)
+static void renderCursor(struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
     struct cursor_t cursor = doc->cursor();
@@ -143,11 +158,15 @@ void renderCursor(struct editor_t& editor)
 
 int main(int argc, char** argv)
 {
-    struct editor_t editor;
+    struct editor_t _editor;
+    struct gutter_t gutter;
     struct statusbar_t statusbar;
+    struct explorer_t explorer;
 
     struct app_t app;
     app.statusbar = &statusbar;
+    app.gutter = &gutter;
+    app.explorer = &explorer;
 
     char* filename = 0;
     if (argc > 1) {
@@ -158,9 +177,11 @@ int main(int argc, char** argv)
 
     app.configure(argc, argv);
 
-    editor.lang = language_from_file(filename, app.extensions);
-    editor.theme = app.theme;
-    statusbar.theme = app.theme;
+    _editor.lang = language_from_file(filename, app.extensions);
+    _editor.theme = app.theme;
+    _editor.document.open(filename);
+
+    explorer.files.load(filename);
 
     //-------------------
     // keybinding
@@ -178,18 +199,16 @@ int main(int argc, char** argv)
 
     clear();
 
-    editor.document.open(filename);
-
     int ch = 0;
     bool end = false;
 
     std::string previousKeySequence;
     while (!end) {
 
-        app.currentEditor = &editor;
+        app.currentEditor = &_editor;
         
-        struct editor_t* currentEditor = app.currentEditor;
-        struct document_t* doc = &currentEditor->document;
+        struct editor_t& editor = *app.currentEditor;
+        struct document_t* doc = &editor.document;
         struct cursor_t cursor = doc->cursor();
         struct block_t block = doc->block(cursor);
 
@@ -197,13 +216,17 @@ int main(int argc, char** argv)
 
         if (!disableRefresh) {
             doc->update();
-
+            
+            renderExplorer(explorer);
+            renderGutter(gutter);
             renderEditor(editor);
             renderStatus(statusbar);
             renderCursor(editor);
 
             curs_set(0);
             wrefresh(statusbar.win);
+            wrefresh(explorer.win);
+            wrefresh(gutter.win);
             wrefresh(editor.win);
             curs_set(1);
         }
@@ -258,7 +281,7 @@ int main(int argc, char** argv)
             }
         }
 
-        doc->history.paused = app.inputBuffer.length() || app.commandBuffer.size();
+        doc->history().paused = app.inputBuffer.length() || app.commandBuffer.size();
         if (app.inputBuffer.length()) {
             ch = app.inputBuffer[0];
             if (ch == '\n') {
@@ -279,11 +302,21 @@ int main(int argc, char** argv)
             continue;
         }
 
+        if (ch == ESC) {
+            cmd = CMD_CANCEL;
+        }
+        
         //-----------------
         // app commands
         //-----------------
         switch (cmd) {
+        case CMD_TOGGLE_EXPLORER:
+            app.showSidebar = !app.showSidebar;
+            renderEditor(editor);
+            continue;
+            
         case CMD_CANCEL:
+            doc->clearCursors();
             continue;
 
         case CMD_QUIT:
@@ -300,12 +333,6 @@ int main(int argc, char** argv)
             continue;
         }
 
-        switch (ch) {
-        case ESC:
-            doc->clearCursors();
-            continue;
-        }
-
         //-------------------
         // update keystrokes on cursors
         //-------------------
@@ -319,14 +346,14 @@ int main(int argc, char** argv)
 
             int advance = 0;
 
-            doc->history.addInsert(cur, s);
+            doc->history().addInsert(cur, s);
             if (cur.hasSelection()) {
                 advance -= cursorDeleteSelection(&cur);
             }
             cursorInsertText(&cur, s);
             cursorMovePosition(&cur, cursor_t::Right, false, s.length());
             if (s == " " || s == "\t") {
-                doc->history.mark();
+                doc->history().mark();
             }
             advance += s.length();
 

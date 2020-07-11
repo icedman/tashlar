@@ -10,8 +10,6 @@
 
 #define STATUS_ITEMS 4
 
-int pairForColor(int idx, bool selected);
-
 void statusbar_t::setText(std::string text, int pos)
 {
     if (!start.size()) {
@@ -36,40 +34,7 @@ void statusbar_t::setStatus(std::string s, int f)
 }
 
 void statusbar_t::render()
-{
-    if (colorPair == 0) {
-        style_t s = theme->styles_for_scope("comment");
-        colorPair = pairForColor(s.foreground.index, false);
-    }
-
-    wattron(win, COLOR_PAIR(colorPair));
-    wmove(win, 0, 0);
-
-    // wclrtoeol(win);
-    for (int i = 0; i < viewWidth; i++) {
-        waddch(win, ' ');
-    }
-
-    wmove(win, 0, 0);
-
-    int offset = 2;
-    if (status.length()) {
-        renderLine(status.c_str(), offset);
-    } else {
-        for (auto s : start) {
-            renderLine(s.c_str(), offset);
-            offset += s.length() + 2;
-        }
-    }
-
-    offset = 2;
-    for (auto s : end) {
-        offset += s.length();
-        renderLine(s.c_str(), viewWidth - offset);
-        offset += 2;
-    }
-    wattroff(win, COLOR_PAIR(colorPair));
-}
+{}
 
 void statusbar_t::renderLine(const char* line, int offsetX)
 {
@@ -106,7 +71,6 @@ void renderStatus(struct statusbar_t& statusbar)
     }
 
     struct editor_t* editor = app_t::instance()->currentEditor;
-
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
@@ -141,5 +105,35 @@ void renderStatus(struct statusbar_t& statusbar)
     } else {
         statusbar.setText("", -1);
     }
-    statusbar.render();
+
+    //-----------------
+    // render the bar
+    //-----------------
+    wattron(statusbar.win, COLOR_PAIR(statusbar.colorPair));
+    wmove(statusbar.win, 0, 0);
+
+    // wclrtoeol(win);
+    for (int i = 0; i < statusbar.viewWidth; i++) {
+        waddch(statusbar.win, ' ');
+    }
+
+    wmove(statusbar.win, 0, 0);
+
+    int offset = 2;
+    if (statusbar.status.length()) {
+        statusbar.renderLine(statusbar.status.c_str(), offset);
+    } else {
+        for (auto s : statusbar.start) {
+            statusbar.renderLine(s.c_str(), offset);
+            offset += s.length() + 2;
+        }
+    }
+
+    offset = 2;
+    for (auto s : statusbar.end) {
+        offset += s.length();
+        statusbar.renderLine(s.c_str(), statusbar.viewWidth - offset);
+        offset += 2;
+    }
+    wattroff(statusbar.win, COLOR_PAIR(statusbar.colorPair));
 }

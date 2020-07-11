@@ -64,7 +64,10 @@ enum command_e {
     CMD_ENTER,
     CMD_DELETE,
     CMD_BACKSPACE,
-    CMD_INSERT
+    CMD_INSERT,
+
+    CMD_CYCLE_FOCUS,
+    CMD_TOGGLE_EXPLORER
 };
 
 bool processCommand(command_e cmd, struct app_t* app, char ch);

@@ -9,8 +9,6 @@
 #include "app.h"
 #include "editor.h"
 
-int pairForColor(int idx, bool selected);
-
 void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct block_t* block, int relativeLine)
 {
     if (!line) {
@@ -72,6 +70,10 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
                 if (pos == cur.position - wrapOffset) {
                     if (firstCursor) {
                         wattron(win, A_REVERSE);
+                    } else {
+                        if (cur.hasSelection()) {
+                            wattron(win, A_UNDERLINE);
+                        }
                     }
                     if (colorIdx != -1) {
                         colorPair = 0;
@@ -99,6 +101,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
         waddch(win, c);
         wattroff(win, COLOR_PAIR(colorPair));
         wattroff(win, A_REVERSE);
+        wattroff(win, A_UNDERLINE);
         x++;
     }
 }

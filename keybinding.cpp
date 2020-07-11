@@ -14,7 +14,11 @@ static std::map<std::string, command_e> keybindings;
 
 void bindDefaults()
 {
+    bindKeySequence("ctrl+b", CMD_TOGGLE_EXPLORER);
+    // bindKeySequence("ctrl+e+ctrl+e", CMD_CYCLE_FOCUS);
+    
     bindKeySequence("ctrl+s", CMD_SAVE);
+    
     bindKeySequence("ctrl+q", CMD_QUIT);
 
     bindKeySequence("ctrl+c", CMD_COPY);
@@ -96,7 +100,7 @@ int kbhit(int timeout)
     return FD_ISSET(STDIN_FILENO, &fds);
 }
 
-int other_escape_sequence(int c, std::string& keySequence)
+static int readMoreEscapeSequence(int c, std::string& keySequence)
 {
     char tmp[32];
 
@@ -123,10 +127,9 @@ int other_escape_sequence(int c, std::string& keySequence)
     return ESC;
 }
 
-int read_key_sequence(std::string& keySequence)
+static int readEscapeSequence(std::string& keySequence)
 {
     keySequence = "";
-
     std::string sequence = "";
 
     char seq[4];
@@ -138,7 +141,7 @@ int read_key_sequence(std::string& keySequence)
     read(STDIN_FILENO, &seq[0], 1);
 
     if (!kbhit(wait)) {
-        return other_escape_sequence(seq[0], keySequence);
+        return readMoreEscapeSequence(seq[0], keySequence);
     }
     read(STDIN_FILENO, &seq[1], 1);
 
@@ -333,7 +336,7 @@ int read_key_sequence(std::string& keySequence)
 
     /* ESC O sequences. */
     else if (seq[0] == 'O') {
-        // app_t::log("escap+O+%d\n", seq[1]);
+        // app_t::log("escape+O+%d\n", seq[1]);
         switch (seq[1]) {
         case 'H':
             return HOME_KEY;
@@ -345,17 +348,15 @@ int read_key_sequence(std::string& keySequence)
     return ESC;
 }
 
+
 int readKey(std::string& keySequence)
 {
     if (kbhit(50) != 0) {
         int c;
         if (read(STDIN_FILENO, &c, 1) != 0) {
-
-            // app_t::log("key:%d\n", c);
-
+                        
             if (c == ESC) {
-                keySequence = "";
-                return read_key_sequence(keySequence);
+                return readEscapeSequence(keySequence);
             }
 
             switch (c) {
@@ -383,6 +384,8 @@ int readKey(std::string& keySequence)
 
                 return c;
             }
+
+            app_t::log("key:%d\n", c);
 
             return c;
         }

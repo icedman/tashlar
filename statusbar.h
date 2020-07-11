@@ -38,7 +38,6 @@ struct statusbar_t {
     WINDOW* win;
 
     theme_ptr theme;
-
     int colorPair;
 };
 

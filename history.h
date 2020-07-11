@@ -43,7 +43,7 @@ struct history_t {
     std::vector<edit_batch_t> edits;
     edit_batch_t editBatch;
 
-    void addSnapShot(struct document_t *document);
+    void initialize(struct document_t *document);
 
     void begin();
     void end();

@@ -92,5 +92,8 @@ void history_t::replay()
     }
 }
     
-void history_t::addSnapShot(struct document_t *document)
-{}
+void history_t::initialize(struct document_t *document)
+{
+    initialState = document->blocks;
+    edits.clear();
+}

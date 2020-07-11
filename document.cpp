@@ -70,21 +70,33 @@ bool document_t::open(const char* path)
 
     tmpPaths.push_back(tmpPath);
 
-    history.initialState = blocks;
+    addSnapshot();
     return true;
 }
 
+void document_t::addSnapshot()
+{
+    struct history_t _history;
+    _history.initialize(this);
+    snapShots.emplace_back(_history);
+}
+    
 void document_t::undo()
 {
-    history.mark();
+    if (snapShots.size() > 1 && history().edits.size() == 0) {
+        snapShots.pop_back();
+    }
+    
+    struct history_t &_history = history();
+    _history.mark();
 
     cursorBlockCache.clear();
     clearCursors();
 
-    blocks = history.initialState;
+    blocks = _history.initialState;
     update();
 
-    history.replay();
+    _history.replay();
     update();
 
     clearSelections();
@@ -250,11 +262,6 @@ void document_t::addBufferDocument(const std::string& largeText)
     buffers.emplace_back(doc);
 
     tmpPaths.push_back(tmpPath);
-
-    // pasting larget text .. resets the history
-    // todo.. remove this limitation
-    // history.edits.clear();
-    // history.initialState = blocks;
 }
 
 void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer)

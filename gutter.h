@@ -10,8 +10,13 @@
 
 struct gutter_t {
 
+    gutter_t()
+        : win(0)
+        , colorPair(0) {
+    }
+    
     void render();
-    void renderLine(const char* line, int offsetX = 0);
+    void renderLine(const char* line);
     
     int viewX;
     int viewY;
@@ -21,9 +26,9 @@ struct gutter_t {
     WINDOW* win;
 
     theme_ptr theme;
-
     int colorPair;
-    
 };
+
+void renderGutter(struct gutter_t& gutter);
 
 #endif // GUTTER_H

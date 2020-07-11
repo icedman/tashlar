@@ -6,8 +6,11 @@
 
 #include "app.h"
 #include "editor.h"
-#include "statusbar.h"
 #include "util.h"
+
+#include "statusbar.h"
+#include "gutter.h"
+#include "explorer.h"
 
 #include "json/json.h"
 #include "reader.h"
@@ -75,10 +78,15 @@ void app_t::setupColors()
         init_pair(idx++, it->first, selBg);
         it++;
     }
+
+    applyColors();
 }
 
 app_t::app_t()
     : lineWrap(false)
+    , statusbar(0)
+    , gutter(0)
+    , explorer(0)
 {
     appInstance = this;
 }
@@ -186,4 +194,21 @@ void app_t::configure(int argc, char** argv)
     if (settings.isMember("statusbar")) {
         showStatusBar = settings["statusbar"].asBool();
     }
+    if (settings.isMember("gutter")) {
+        showGutter = settings["gutter"].asBool();
+    }
+    if (settings.isMember("sidebar")) {
+        showSidebar = settings["sidebar"].asBool();
+    }
+
+    statusbar->theme = theme;
+    gutter->theme = theme;
+    explorer->theme = theme;
+}
+
+void app_t::applyColors()
+{
+    style_t s = theme->styles_for_scope("comment");
+    statusbar->colorPair = pairForColor(s.foreground.index, false);
+    gutter->colorPair = pairForColor(s.foreground.index, false);
 }

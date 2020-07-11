@@ -10,6 +10,7 @@
 
 struct editor_t;
 struct statusbar_t;
+struct gutter_t;
 
 struct app_t {
 
@@ -19,6 +20,8 @@ struct app_t {
 
     struct editor_t* currentEditor;
     struct statusbar_t* statusbar;
+    struct gutter_t* gutter;
+    struct explorer_t* explorer;
 
     std::vector<command_e> commandBuffer;
     std::string inputBuffer;
@@ -32,13 +35,18 @@ struct app_t {
     std::string themeName;
     bool lineWrap;
     bool showStatusBar;
+    bool showGutter;
+    bool showSidebar;
 
     void configure(int argc, char** argv);
     void setupColors();
+    void applyColors();
 
     // log
     static void iniLog();
     static void log(const char* format, ...);
 };
 
+int pairForColor(int colorIdx, bool selected);
+    
 #endif // APP_H
