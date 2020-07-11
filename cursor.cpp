@@ -1,8 +1,8 @@
 #include "cursor.h"
+#include "app.h"
 #include "document.h"
 #include "search.h"
 #include "util.h"
-#include "app.h"
 
 #include <algorithm>
 
@@ -72,12 +72,12 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     case cursor_t::Move::EndOfLine:
         cursor->position = block.position + (block.length - 1);
         break;
-        
+
     case cursor_t::Move::StartOfDocument:
         cursor->position = 0;
         break;
     case cursor_t::Move::EndOfDocument: {
-        struct block_t &end = cursor->document->blocks.back();
+        struct block_t& end = cursor->document->blocks.back();
         cursor->position = end.position + end.length - 1;
         break;
     }
@@ -239,7 +239,7 @@ void cursorSplitBlock(struct cursor_t* cursor)
 
     cursor->document->update();
 }
-    
+
 // todo .. broken for selections spanning several lines, way too slow
 int cursorDeleteSelection(struct cursor_t* cursor)
 {
@@ -263,8 +263,8 @@ int cursorDeleteSelection(struct cursor_t* cursor)
     curEnd.position = end;
 
     // for selection spanning multiple blocks
-    struct block_t &startBlock = cursor->document->block(cur);
-    struct block_t &endBlock = cursor->document->block(curEnd);
+    struct block_t& startBlock = cursor->document->block(cur);
+    struct block_t& endBlock = cursor->document->block(curEnd);
     if (startBlock.position != endBlock.position) {
         int count = 0;
 
@@ -279,11 +279,11 @@ int cursorDeleteSelection(struct cursor_t* cursor)
 
         cursor->document->update();
 
-        struct block_t *next = startBlock.next;
+        struct block_t* next = startBlock.next;
         int linesToDelete = 0;
-        while(next && next != &endBlock) {
+        while (next && next != &endBlock) {
             linesToDelete++;
-                        count += next->length;
+            count += next->length;
             next = next->next;
         }
 
@@ -300,10 +300,10 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         // merge two block
         cursor->document->update();
         cursorEraseText(&cur, 1);
-        count ++;
-   
+        count++;
+
         cursor->position = cur.position;
-        cursor->anchorPosition = cur.position;     
+        cursor->anchorPosition = cur.position;
         return count;
     }
 

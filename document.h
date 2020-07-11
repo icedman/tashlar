@@ -11,6 +11,7 @@
 #include <cstddef>
 
 #include "cursor.h"
+#include "history.h"
 #include "grammar.h"
 
 struct document_t;
@@ -29,14 +30,6 @@ enum block_state_e {
     BLOCK_STATE_UNKNOWN = 0,
     BLOCK_STATE_COMMENT = 1 << 1,
     BLOCK_STATE_STRING = 1 << 2
-};
-
-enum cursor_edit_e {
-    EDIT_NONE = 0,
-    EDIT_INSERT = 1,
-    EDIT_DELETE = 2,
-    EDIT_SPLIT = 3,
-    EDIT_STOP = 100
 };
 
 struct blockdata_t {
@@ -60,7 +53,6 @@ struct block_t {
         , file(0)
         , position(0)
         , screenLine(0)
-        , data(0)
         , dirty(false)
         , next(0)
         , previous()
@@ -113,7 +105,7 @@ struct block_t {
 
     int lineNumber;
     int lineCount;
-    
+
     struct document_t* document;
     size_t position;
     size_t screenLine;
@@ -124,52 +116,19 @@ struct block_t {
     std::ifstream* file;
     size_t filePosition;
 
-    struct blockdata_t* data;
     struct block_t* next;
     struct block_t* previous;
 
     bool dirty;
-};
 
-struct cursor_edit_t {
-    struct cursor_t cursor;
-    std::string text;
-    int count;
-    cursor_edit_e edit;
-};
-
-typedef std::vector<cursor_edit_t> edit_batch_t;
-
-struct history_t {
-    history_t()
-        : frames(0)
-        , paused(false)
-    {
-    }
-
-    std::vector<struct block_t> initialState;
-    // std::vector<struct cursor_edit_t> edits;
-
-    std::vector<edit_batch_t> edits;
-    edit_batch_t editBatch;
-
-    void begin();
-    void end();
-    void mark();
-
-    void addInsert(struct cursor_t& c, std::string text);
-    void addDelete(struct cursor_t& c, int count);
-    void addSplit(struct cursor_t& c);
-    void replay();
-
-    int frames;
-    bool paused;
+    std::shared_ptr<blockdata_t> data;
 };
 
 struct document_t {
     document_t()
         : file(0)
-    {}
+    {
+    }
 
     ~document_t()
     {
@@ -193,8 +152,8 @@ struct document_t {
     void clearCursors();
     void clearSelections();
 
-    void addBufferDocument(const std::string &largeText);
-    void insertLastBuffer(struct cursor_t& cursor);
+    void addBufferDocument(const std::string& largeText);
+    void insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer);
 
     void undo();
     void update();

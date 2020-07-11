@@ -1,8 +1,8 @@
 #include "document.h"
+#include "app.h"
 #include "cursor.h"
 #include "editor.h"
 #include "util.h"
-#include "app.h"
 
 static size_t cursor_uid = 1;
 
@@ -15,88 +15,11 @@ std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blo
             return it;
         }
         // if (blk.position == block.position) {
-            // return it;
+        // return it;
         // }
         it++;
     }
     return it;
-}
-
-void history_t::begin()
-{
-    paused = true;
-}
-
-void history_t::end()
-{
-    paused = false;
-    mark();
-}
-
-void history_t::mark()
-{
-    if (paused) {
-        return;
-    }
-
-    if (editBatch.size()) {
-        edits.push_back(editBatch);
-        editBatch.clear();
-    }
-}
-
-void history_t::addInsert(struct cursor_t& cur, std::string t)
-{
-    editBatch.push_back({ .cursor = cur,
-        .text = t,
-        .edit = cursor_edit_e::EDIT_INSERT });
-}
-
-void history_t::addDelete(struct cursor_t& cur, int c)
-{
-    editBatch.push_back({ .cursor = cur,
-        .count = c,
-        .edit = cursor_edit_e::EDIT_DELETE });
-}
-
-void history_t::addSplit(struct cursor_t& cur)
-{
-    editBatch.push_back({ .cursor = cur,
-        .edit = cursor_edit_e::EDIT_SPLIT });
-}
-
-void history_t::replay()
-{
-    if (!edits.size()) {
-        return;
-    }
-
-    edit_batch_t last = edits.back();
-    edits.pop_back();
-
-    for (auto batch : edits) {
-        for (auto e : batch) {
-            switch (e.edit) {
-
-            case cursor_edit_e::EDIT_INSERT:
-                cursorInsertText(&e.cursor, e.text);
-                break;
-            case cursor_edit_e::EDIT_DELETE:
-                cursorEraseText(&e.cursor, e.count);
-                break;
-            case cursor_edit_e::EDIT_SPLIT:
-                cursorSplitBlock(&e.cursor);
-                break;
-            }
-
-            e.cursor.document->update();
-        }
-    }
-
-    for (auto e : last) {
-        e.cursor.document->setCursor(e.cursor);
-        break;
-    }
 }
 
 bool document_t::open(const char* path)
@@ -154,9 +77,6 @@ bool document_t::open(const char* path)
 void document_t::undo()
 {
     history.mark();
-    if (!history.edits.size()) {
-        return;
-    }
 
     cursorBlockCache.clear();
     clearCursors();
@@ -175,7 +95,7 @@ void document_t::close()
     file.close();
 
     std::cout << "cleanup" << std::endl;
-    for(auto tmpPath : tmpPaths) {
+    for (auto tmpPath : tmpPaths) {
         std::cout << "unlink " << tmpPath << std::endl;
         remove(tmpPath.c_str());
     }
@@ -248,6 +168,8 @@ void document_t::clearSelections()
 
 void document_t::update()
 {
+    // TODO: This is used all over.. perpetually improve (update only changed)
+
     if (!cursors.size()) {
         struct cursor_t cursor;
         cursor.document = this;
@@ -312,9 +234,9 @@ struct block_t& document_t::block(struct cursor_t& cursor, bool skipCache)
     return nullBlock;
 }
 
-void document_t::addBufferDocument(const std::string &largeText)
+void document_t::addBufferDocument(const std::string& largeText)
 {
-    std:: string tmpPath = "/tmp/tmpfile.paste.XXXXXX";
+    std::string tmpPath = "/tmp/tmpfile.paste.XXXXXX";
     mkstemp((char*)tmpPath.c_str());
 
     app_t::instance()->log(tmpPath.c_str());
@@ -328,29 +250,24 @@ void document_t::addBufferDocument(const std::string &largeText)
     buffers.emplace_back(doc);
 
     tmpPaths.push_back(tmpPath);
-    
+
     // pasting larget text .. resets the history
     // todo.. remove this limitation
-    history.edits.clear();
-    history.initialState = blocks;
+    // history.edits.clear();
+    // history.initialState = blocks;
 }
 
-void document_t::insertLastBuffer(struct cursor_t& cursor)
+void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer)
 {
-    std::shared_ptr<document_t> doc = buffers.back();
-    if (doc) {
-        for(auto bb : doc->blocks) {
-            struct block_t b;
-            b.document = doc.get();
-            b.file = &doc->file;
-            b.position = bb.position;
-            b.filePosition = bb.position;
-            b.length = bb.length;
-            blocks.emplace_back(b);
-        }
+    for (auto bb : buffer->blocks) {
+        struct block_t b;
+        b.document = buffer.get();
+        b.file = &buffer->file;
+        b.position = bb.position;
+        b.filePosition = bb.position;
+        b.length = bb.length;
+        blocks.emplace_back(b);
     }
 
     update();
 }
-    
-    

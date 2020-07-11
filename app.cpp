@@ -7,8 +7,12 @@
 #include "app.h"
 #include "editor.h"
 #include "statusbar.h"
+#include "util.h"
 
-static struct app_t *appInstance = 0;
+#include "json/json.h"
+#include "reader.h"
+
+static struct app_t* appInstance = 0;
 
 static std::map<int, int> colorMap;
 
@@ -44,7 +48,7 @@ void app_t::setupColors()
         fg = clr.index;
     }
     if (!s.foreground.is_blank()) {
-       fg = s.foreground.index;
+        fg = s.foreground.index;
     }
     theme->theme_color("editor.selectionBackground", clr);
     if (!clr.is_blank()) {
@@ -64,7 +68,7 @@ void app_t::setupColors()
         init_pair(idx++, it->first, bg);
         it++;
     }
-    
+
     it = theme->colorIndices.begin();
     while (it != theme->colorIndices.end()) {
         colorMap[it->first + SELECTED_OFFSET] = idx;
@@ -73,7 +77,7 @@ void app_t::setupColors()
     }
 }
 
-app_t::app_t() 
+app_t::app_t()
     : lineWrap(false)
 {
     appInstance = this;
@@ -83,7 +87,7 @@ struct app_t* app_t::instance()
 {
     return appInstance;
 }
-    
+
 void app_t::iniLog()
 {
     FILE* log_file = fopen("/tmp/ashlar.log", "w");
@@ -112,7 +116,74 @@ void app_t::log(const char* format, ...)
     }
     fclose(log_file);
 }
-    
-void app_t::configure()
+
+void app_t::configure(int argc, char** argv)
 {
+    //-------------------
+    // defaults
+    //-------------------
+    const char* argTheme = 0;
+    const char* defaultTheme = "Monokai";
+    for (int i = 0; i < argc - 1; i++) {
+        if (strcmp(argv[i], "-t") == 0) {
+            argTheme = argv[i + 1];
+        }
+    }
+
+    std::string _path = "~/.ashlar/settings.json";
+
+    char* cpath = (char*)malloc(_path.length() + 1 * sizeof(char));
+    strcpy(cpath, _path.c_str());
+    expand_path((char**)(&cpath));
+
+    const std::string path(cpath);
+    free(cpath);
+
+    // Json::
+    Json::Value settings = parse::loadJson(path);
+
+    //-------------------
+    // initialize extensions
+    //-------------------
+    if (settings.isMember("extensions_paths")) {
+        Json::Value exts = settings["extensions_paths"];
+        if (exts.isArray()) {
+            for (auto path : exts) {
+                load_extensions(path.asString().c_str(), extensions);
+            }
+        }
+    }
+    load_extensions("~/.ashlar/extensions/", extensions);
+
+    //-------------------
+    // theme
+    //-------------------
+    if (argTheme) {
+        themeName = argTheme;
+        theme_ptr tmpTheme = theme_from_name(argTheme, extensions);
+        if (tmpTheme && tmpTheme->colorIndices.size()) {
+            theme = tmpTheme;
+        }
+    }
+    if (!theme && settings.isMember("theme")) {
+        themeName = settings["theme"].asString();
+        theme_ptr tmpTheme = theme_from_name(themeName, extensions);
+        if (tmpTheme && tmpTheme->colorIndices.size()) {
+            theme = tmpTheme;
+        }
+    }
+    if (!theme) {
+        themeName = defaultTheme;
+        theme = theme_from_name(defaultTheme, extensions);
+    }
+
+    //-------------------
+    // editor settings
+    //-------------------
+    if (settings.isMember("word_wrap")) {
+        lineWrap = settings["word_wrap"].asBool();
+    }
+    if (settings.isMember("statusbar")) {
+        showStatusBar = settings["statusbar"].asBool();
+    }
 }

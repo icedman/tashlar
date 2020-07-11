@@ -42,4 +42,6 @@ struct statusbar_t {
     int colorPair;
 };
 
+void renderStatus(struct statusbar_t& statusbar);
+
 #endif // STATUSBAR_H

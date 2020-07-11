@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "editor.h"
+#include "app.h"
 #include "statusbar.h"
 
 #define STATUS_ITEMS 4
@@ -96,4 +97,49 @@ bool statusbar_t::tick(int tick)
     bool res = prevStatus != status;
     prevStatus = status;
     return res;
+}
+
+void renderStatus(struct statusbar_t& statusbar)
+{
+    if (!app_t::instance()->showStatusBar) {
+        return;
+    }
+
+    struct editor_t* editor = app_t::instance()->currentEditor;
+
+    struct document_t* doc = &editor->document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
+
+    //-----------------
+    // calculate view
+    //-----------------
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+    statusbar.viewX = 0;
+    statusbar.viewY = w.ws_row - 1;
+    statusbar.viewWidth = w.ws_col;
+    statusbar.viewHeight = 1;
+
+    if (!statusbar.win) {
+        statusbar.win = newwin(statusbar.viewHeight, statusbar.viewWidth, 0, 0);
+    }
+
+    mvwin(statusbar.win, statusbar.viewY, statusbar.viewX);
+    wresize(statusbar.win, statusbar.viewHeight, statusbar.viewWidth);
+
+    static char tmp[512];
+    sprintf(tmp, "Line: %d Col: %d",
+        1 + (int)(block.lineNumber),
+        1 + (int)(cursor.position - block.position));
+
+    statusbar.setText(doc->fileName, 0);
+    statusbar.setText(tmp, -2);
+    if (editor->lang) {
+        statusbar.setText(editor->lang->id, -1);
+    } else {
+        statusbar.setText("", -1);
+    }
+    statusbar.render();
 }

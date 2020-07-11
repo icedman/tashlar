@@ -1,10 +1,12 @@
 #include "command.h"
-#include "document.h"
 #include "app.h"
+#include "document.h"
 #include "editor.h"
 #include "statusbar.h"
 
-#define SIMPLE_PASTE_THRESHOLD 1000
+// 50K
+// beyond this threshold, paste will use an additional file buffer
+#define SIMPLE_PASTE_THRESHOLD 50000
 
 bool processCommand(command_e cmd, struct app_t* app, char ch)
 {
@@ -28,7 +30,7 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
     case CMD_PASTE:
         if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
             app->inputBuffer = app->clipBoard;
-        } else {            
+        } else {
             break;
         }
         return true;
@@ -50,7 +52,15 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
         // large buffer paste!
         doc->addBufferDocument(app->clipBoard);
         app->clipBoard = "";
-        break;
+
+        cursorInsertText(&cursor, "/* WARNING: pasting very large buffer is not yet ready */");
+
+        doc->insertFromBuffer(cursor, doc->buffers.back());
+        doc->history.addPasteBuffer(cursor, doc->buffers.back());
+        doc->clearCursors();
+        doc->history.mark();
+
+        return true;
 
     case CMD_ADD_CURSOR_AND_MOVE_UP:
         doc->addCursor(cursor);
@@ -78,7 +88,7 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
         cursorMovePosition(&cursor, cursor_t::EndOfDocument, true);
         doc->setCursor(cursor);
         return true;
-        
+
     case CMD_SELECT_WORD:
     case CMD_ADD_CURSOR_FOR_SELECTED_WORD:
 
@@ -133,7 +143,26 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
 
     case CMD_DELETE_LINE:
         app->commandBuffer.push_back(CMD_SELECT_LINE);
+        app->commandBuffer.push_back(CMD_COPY);
         app->commandBuffer.push_back(CMD_DELETE);
+        return true;
+
+    case CMD_MOVE_LINE_UP:
+        doc->clearCursors();
+        app->commandBuffer.push_back(CMD_SELECT_LINE);
+        app->commandBuffer.push_back(CMD_CUT);
+        app->commandBuffer.push_back(CMD_MOVE_CURSOR_UP);
+        app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
+        app->commandBuffer.push_back(CMD_PASTE);
+        return true;
+
+    case CMD_MOVE_LINE_DOWN:
+        doc->clearCursors();
+        app->commandBuffer.push_back(CMD_SELECT_LINE);
+        app->commandBuffer.push_back(CMD_CUT);
+        app->commandBuffer.push_back(CMD_MOVE_CURSOR_DOWN);
+        app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
+        app->commandBuffer.push_back(CMD_PASTE);
         return true;
 
     default:
@@ -154,12 +183,6 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
 
         switch (cmd) {
 
-        case CMD_PASTE:
-            // large buffer paste!
-            doc->insertLastBuffer(cur);
-            handled = true;
-            break;
-            
         //-----------
         // navigation
         //-----------

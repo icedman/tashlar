@@ -21,45 +21,6 @@
 
 #include "extension.h"
 
-void renderStatus(struct statusbar_t& statusbar, struct editor_t& editor)
-{
-    struct document_t* doc = &editor.document;
-    struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
-
-    //-----------------
-    // calculate view
-    //-----------------
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-    statusbar.viewX = 0;
-    statusbar.viewY = w.ws_row - 1;
-    statusbar.viewWidth =w.ws_col;
-    statusbar.viewHeight = 1;
-
-    if (!statusbar.win) {
-        statusbar.win = newwin(statusbar.viewHeight, statusbar.viewWidth, 0, 0);
-    }
-
-    mvwin(statusbar.win, statusbar.viewY, statusbar.viewX);
-    wresize(statusbar.win, statusbar.viewHeight, statusbar.viewWidth);
-
-    static char tmp[512];
-    sprintf(tmp, "Line: %d Col: %d",
-        1 + (int)(block.lineNumber),
-        1 + (int)(cursor.position - block.position));
-
-    statusbar.setText(doc->fileName, 0);
-    statusbar.setText(tmp, -2);
-    if (editor.lang) {
-        statusbar.setText(editor.lang->id, -1);
-    } else {
-        statusbar.setText("", -1);
-    }
-    statusbar.render();
-}
-    
 void renderEditor(struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
@@ -75,14 +36,18 @@ void renderEditor(struct editor_t& editor)
     editor.viewX = 0;
     editor.viewY = 0;
     editor.viewWidth = w.ws_col;
-    editor.viewHeight = w.ws_row - 1;
+    editor.viewHeight = w.ws_row;
+
+    if (app_t::instance()->showStatusBar) {
+        editor.viewHeight--;
+    }
 
     if (!editor.win) {
         editor.win = newwin(editor.viewHeight, editor.viewWidth, 0, 0);
     }
 
     wresize(editor.win, editor.viewHeight, editor.viewWidth);
-    
+
     int offsetX = 0;
     int offsetY = 0;
     editor.cursorScreenX = 0;
@@ -90,7 +55,7 @@ void renderEditor(struct editor_t& editor)
 
     // layout blocks
     // update block positions only when needed
-    // todo!
+    // TODO: perpetually improve (update only changed)
     {
         struct block_t* prev = NULL;
         int l = 0;
@@ -107,10 +72,11 @@ void renderEditor(struct editor_t& editor)
     }
 
     // scroll to cursor
-    while(true) {
+    // TODO: use math not loops
+    while (true) {
         int blockVirtualLine = block.screenLine > block.lineNumber ? block.screenLine : block.lineNumber;
         int blockScreenLine = blockVirtualLine - editor.scrollY;
-        bool lineVisible = (blockScreenLine >= 0 & blockScreenLine < editor.viewHeight); 
+        bool lineVisible = (blockScreenLine >= 0 & blockScreenLine < editor.viewHeight);
         if (lineVisible) {
             break;
         }
@@ -121,9 +87,10 @@ void renderEditor(struct editor_t& editor)
             editor.scrollY--;
         }
     }
-    
+
     while (cursor.position - block.position + 1 - editor.scrollX > editor.viewWidth) {
-        if (app_t::instance()->lineWrap) break;
+        if (app_t::instance()->lineWrap)
+            break;
         if (editor.scrollX + 1 >= block.length) {
             editor.scrollX = 0;
             break;
@@ -150,7 +117,7 @@ void renderEditor(struct editor_t& editor)
         editor.highlightBlock(b);
         editor.renderBlock(b, offsetX, y);
         y += b.lineCount;
-        
+
         if (y >= editor.viewHeight) {
             break;
         }
@@ -160,7 +127,6 @@ void renderEditor(struct editor_t& editor)
         wclrtoeol(editor.win);
     }
 }
-
 
 void renderCursor(struct editor_t& editor)
 {
@@ -182,37 +148,20 @@ int main(int argc, char** argv)
 
     struct app_t app;
     app.statusbar = &statusbar;
-    app.lineWrap = true;
-
-    app.configure();
-    
-    //-------------------
-    // initialize extensions
-    //-------------------
-    std::vector<struct extension_t> extensions;
-    load_extensions("/opt/visual-studio-code/resources/app/extensions/", extensions);
-    load_extensions("~/.ashlar/extensions/", extensions);
 
     char* filename = 0;
-    char* theme = "Dracula";
     if (argc > 1) {
         filename = argv[argc - 1];
     } else {
         return 0;
     }
 
-    for (int i = 0; i < argc - 1; i++) {
-        if (strcmp(argv[i], "-t") == 0) {
-            theme = argv[i + 1];
-        }
-    }
+    app.configure(argc, argv);
 
-    editor.lang = language_from_file(filename, extensions);
-
-    app.theme = theme_from_name(theme, extensions);
+    editor.lang = language_from_file(filename, app.extensions);
     editor.theme = app.theme;
     statusbar.theme = app.theme;
-    
+
     //-------------------
     // keybinding
     //-------------------
@@ -237,8 +186,10 @@ int main(int argc, char** argv)
     std::string previousKeySequence;
     while (!end) {
 
-        struct editor_t* currentEditor = &editor;
-        struct document_t* doc = &editor.document;
+        app.currentEditor = &editor;
+        
+        struct editor_t* currentEditor = app.currentEditor;
+        struct document_t* doc = &currentEditor->document;
         struct cursor_t cursor = doc->cursor();
         struct block_t block = doc->block(cursor);
 
@@ -246,9 +197,9 @@ int main(int argc, char** argv)
 
         if (!disableRefresh) {
             doc->update();
-            
+
             renderEditor(editor);
-            renderStatus(statusbar, editor);
+            renderStatus(statusbar);
             renderCursor(editor);
 
             curs_set(0);
@@ -263,6 +214,7 @@ int main(int argc, char** argv)
         command_e cmd = CMD_UNKNOWN;
         std::string keySequence;
         std::string expandedSequence;
+        int sequenceTick = 0;
         while (true) {
             if (app.inputBuffer.length()) {
                 break;
@@ -278,20 +230,18 @@ int main(int argc, char** argv)
                 statusbar.setStatus(keySequence, 2000);
                 cmd = commandKorKeys(keySequence);
 
-                if (cmd == CMD_UNKNOWN && previousKeySequence.length()) {
+                if (previousKeySequence.length()) {
                     expandedSequence = previousKeySequence + "+" + keySequence;
-                    cmd = commandKorKeys(expandedSequence);
+                    command_e exCmd = commandKorKeys(expandedSequence);
                     statusbar.setStatus(expandedSequence, 2000);
-                    previousKeySequence = "";
+                    if (exCmd != CMD_UNKNOWN) {
+                        cmd = exCmd;
+                    }
                 }
 
-                if (cmd != CMD_UNKNOWN || expandedSequence.length()) {
-                    previousKeySequence = "";
-                } else {
-                    previousKeySequence = keySequence;
-                }
-
+                previousKeySequence = keySequence;
                 keySequence = ""; // always consume
+                sequenceTick = 2500;
                 ch = 0;
             }
 
@@ -302,15 +252,18 @@ int main(int argc, char** argv)
             if (statusbar.tick(150)) {
                 break;
             }
+
+            if (sequenceTick > 0 && (sequenceTick -= 150) < 0) {
+                previousKeySequence = "";
+            }
         }
 
-        doc->history.paused = app.inputBuffer.length();
+        doc->history.paused = app.inputBuffer.length() || app.commandBuffer.size();
         if (app.inputBuffer.length()) {
             ch = app.inputBuffer[0];
             if (ch == '\n') {
                 ch = ENTER;
             }
-
             app.inputBuffer.erase(0, 1);
         }
 

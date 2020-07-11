@@ -22,14 +22,14 @@ void bindDefaults()
     bindKeySequence("ctrl+v", CMD_PASTE);
     bindKeySequence("ctrl+z", CMD_UNDO);
 
-    bindKeySequence("ctrl+l", CMD_SELECT_LINE);
+    bindKeySequence("ctrl+l+ctrl+l", CMD_SELECT_LINE);
+    bindKeySequence("ctrl+l+ctrl+v", CMD_DUPLICATE_LINE);
+    bindKeySequence("ctrl+l+ctrl+x", CMD_DELETE_LINE);
+    bindKeySequence("ctrl+l+ctrl+up", CMD_MOVE_LINE_UP);
+    bindKeySequence("ctrl+l+ctrl+down", CMD_MOVE_LINE_DOWN);
+
     bindKeySequence("ctrl+a", CMD_SELECT_ALL);
     // bindKeySequence("ctrl+?", CMD_SELECT_WORD);
-    
-    // bindKeySequence("ctrl+shift+d",     CMD_DUPLICATE_LINE);
-    // bindKeySequence("ctrl+shift+k",     CMD_DELETE_LINE);
-    bindKeySequence("alt+shift+d", CMD_DUPLICATE_LINE);
-    bindKeySequence("alt+shift+k", CMD_DELETE_LINE);
 
     bindKeySequence("ctrl+d", CMD_ADD_CURSOR_FOR_SELECTED_WORD);
     bindKeySequence("ctrl+alt+up", CMD_ADD_CURSOR_AND_MOVE_UP);
@@ -53,15 +53,15 @@ void bindDefaults()
     bindKeySequence("shift+down", CMD_MOVE_CURSOR_DOWN_ANCHORED);
     bindKeySequence("shift+up", CMD_MOVE_CURSOR_UP_ANCHORED);
 
-    bindKeySequence("ctrl+alt+left", CMD_MOVE_CURSOR_START_OF_LINE);
-    bindKeySequence("ctrl+alt+right", CMD_MOVE_CURSOR_END_OF_LINE);
-    bindKeySequence("ctrl+shift+alt+left", CMD_MOVE_CURSOR_START_OF_LINE_ANCHORED);
-    bindKeySequence("ctrl+shift+alt+right", CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED);
+    bindKeySequence("home", CMD_MOVE_CURSOR_START_OF_LINE);
+    bindKeySequence("end", CMD_MOVE_CURSOR_END_OF_LINE);
+    bindKeySequence("shift+home", CMD_MOVE_CURSOR_START_OF_LINE_ANCHORED);
+    bindKeySequence("shift+end", CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED);
 
     // bindKeySequence("ctrl+shift+z",     CMD_REDO);
 
-    // bindKeySequence("home",             CMD_MOVE_CURSOR_START_OF_DOCUMENT);
-    // bindKeySequence("end",              CMD_MOVE_CURSOR_END_OF_DOCUMENT);
+    bindKeySequence("ctrl+pageup", CMD_MOVE_CURSOR_START_OF_DOCUMENT);
+    bindKeySequence("ctrl+pagedown", CMD_MOVE_CURSOR_END_OF_DOCUMENT);
 
     bindKeySequence("pageup", CMD_MOVE_CURSOR_PREVIOUS_PAGE);
     bindKeySequence("pagedown", CMD_MOVE_CURSOR_NEXT_PAGE);
@@ -178,7 +178,7 @@ int read_key_sequence(std::string& keySequence)
 
                 sequence = "shift+";
                 if (seq[0] == '2') {
-                    // app_t::log("shift+%d\n", seq[1]);
+                    app_t::log("shift+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -192,12 +192,18 @@ int read_key_sequence(std::string& keySequence)
                     case 'D':
                         keySequence = sequence + "left";
                         return KEY_SLEFT;
+                    case 'H':
+                        keySequence = sequence + "home";
+                        return SHIFT_HOME;
+                    case 'F':
+                        keySequence = sequence + "end";
+                        return SHIFT_END;
                     }
                 }
 
                 sequence = "ctrl+";
                 if (seq[0] == '5') {
-                    // app_t::log("ctrl+%d\n", seq[1]);
+                    app_t::log("ctrl+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -211,12 +217,18 @@ int read_key_sequence(std::string& keySequence)
                     case 'D':
                         keySequence = sequence + "left";
                         return CTRL_LEFT;
+                    case 'H':
+                        keySequence = sequence + "home";
+                        return CTRL_HOME;
+                    case 'F':
+                        keySequence = sequence + "end";
+                        return CTRL_END;
                     }
                 }
 
                 sequence = "ctrl+shift+";
                 if (seq[0] == '6') {
-                    // app_t::log("ctrl+shift+%d\n", seq[1]);
+                    app_t::log("ctrl+shift+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -230,12 +242,18 @@ int read_key_sequence(std::string& keySequence)
                     case 'D':
                         keySequence = sequence + "left";
                         return CTRL_SHIFT_LEFT;
+                    case 'H':
+                        keySequence = sequence + "home";
+                        return CTRL_SHIFT_HOME;
+                    case 'F':
+                        keySequence = sequence + "end";
+                        return CTRL_SHIFT_END;
                     }
                 }
 
                 sequence = "ctrl+alt+";
                 if (seq[0] == '7') {
-                    // app_t::log("ctrl+alt+%d\n", seq[1]);
+                    app_t::log("ctrl+alt+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -249,12 +267,18 @@ int read_key_sequence(std::string& keySequence)
                     case 'D':
                         keySequence = sequence + "left";
                         return CTRL_ALT_LEFT;
+                    case 'H':
+                        keySequence = sequence + "home";
+                        return CTRL_ALT_HOME;
+                    case 'F':
+                        keySequence = sequence + "end";
+                        return CTRL_ALT_END;
                     }
                 }
 
                 sequence = "ctrl+shift+alt+";
                 if (seq[0] == '8') {
-                    // app_t::log("ctrl+shift+alt+%d\n", seq[1]);
+                    app_t::log("ctrl+shift+alt+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -268,6 +292,12 @@ int read_key_sequence(std::string& keySequence)
                     case 'D':
                         keySequence = sequence + "left";
                         return CTRL_SHIFT_ALT_LEFT;
+                    case 'H':
+                        keySequence = sequence + "home";
+                        return CTRL_SHIFT_ALT_HOME;
+                    case 'F':
+                        keySequence = sequence + "end";
+                        return CTRL_SHIFT_ALT_END;
                     }
                 }
 
@@ -376,5 +406,5 @@ command_e commandKorKeys(std::string keys)
 
     app_t::log(keys.c_str());
 
-    return command_e::CMD_UNKNOWN;
+    return CMD_UNKNOWN;
 }

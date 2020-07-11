@@ -23,7 +23,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
     int colorPairSelected = color_pair_e::SELECTED;
     int wrapOffset = relativeLine * viewWidth;
 
-    int skip = offsetX;        
+    int skip = offsetX;
     char c;
     int idx = 0;
     int x = 0;
@@ -43,10 +43,10 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
             int rpos = idx - 1;
             int pos = block->position + idx - 1;
             int colorIdx = -1;
-                        
+
             // syntax here
             if (block && block->data) {
-                struct blockdata_t* blockData = block->data;
+                struct blockdata_t* blockData = block->data.get();
                 for (auto span : blockData->spans) {
                     if (rpos + wrapOffset >= span.start && rpos + wrapOffset < span.start + span.length) {
                         colorPair = pairForColor(span.colorIndex, false);
@@ -138,7 +138,7 @@ void editor_t::highlightBlock(struct block_t& block)
     }
 
     if (!block.data) {
-        block.data = new blockdata_t;
+        block.data = std::make_shared<blockdata_t>();
         block.data->dirty = true;
     }
 
@@ -148,7 +148,7 @@ void editor_t::highlightBlock(struct block_t& block)
 
     std::string text = block.text();
 
-    struct blockdata_t* blockData = block.data;
+    struct blockdata_t* blockData = block.data.get();
     block_state_e previousBlockState = BLOCK_STATE_UNKNOWN;
 
     std::string str = text;
@@ -166,7 +166,7 @@ void editor_t::highlightBlock(struct block_t& block)
     struct block_t* prevBlock = block.previous;
     struct blockdata_t* prevBlockData = NULL;
     if (prevBlock) {
-        prevBlockData = prevBlock->data;
+        prevBlockData = prevBlock->data.get();
     }
     if (prevBlockData) {
         previousBlockState = prevBlockData->state;
@@ -252,7 +252,7 @@ void editor_t::highlightBlock(struct block_t& block)
     if (parser_state->rule) {
         struct block_t* next = block.next;
         if (next && next->isValid()) {
-            struct blockdata_t* nextBlockData = next->data;
+            struct blockdata_t* nextBlockData = next->data.get();
             if (nextBlockData && parser_state->rule->rule_id != nextBlockData->lastPrevBlockRule) {
                 nextBlockData->dirty = true;
             }
@@ -267,7 +267,7 @@ void editor_t::layoutBlock(struct block_t& block)
         block.lineCount += block.length / viewWidth;
     }
 }
-    
+
 void editor_t::renderBlock(struct block_t& block, int offsetX, int offsetY)
 {
     std::string t = block.text();
@@ -275,11 +275,11 @@ void editor_t::renderBlock(struct block_t& block, int offsetX, int offsetY)
         t = " ";
     }
 
-    char *str = (char*)t.c_str();
+    char* str = (char*)t.c_str();
 
-    for(int i=0;i<block.lineCount;i++) {
+    for (int i = 0; i < block.lineCount; i++) {
         wmove(win, offsetY + i, 0);
-        wclrtoeol(win); 
+        wclrtoeol(win);
         renderLine(str, offsetX, offsetY + i, &block, i);
         str += viewWidth;
     }

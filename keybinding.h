@@ -12,8 +12,7 @@ enum KEY_ACTION {
     ENTER = 13, /* Enter */
     ESC = 27, /* Escape */
     BACKSPACE = 127, /* Backspace */
-    /* The following are just soft codes, not really reported by the
-         * terminal directly. */
+    /* The following are just soft codes, not really reported by the terminal directly. */
     ALT_ = 1000,
     CTRL_,
     CTRL_ALT_,
@@ -23,16 +22,26 @@ enum KEY_ACTION {
     CTRL_DOWN,
     CTRL_LEFT,
     CTRL_RIGHT,
+    CTRL_HOME,
+    CTRL_END,
     CTRL_SHIFT_UP,
     CTRL_SHIFT_DOWN,
     CTRL_SHIFT_LEFT,
     CTRL_SHIFT_RIGHT,
+    CTRL_SHIFT_HOME,
+    CTRL_SHIFT_END,
     CTRL_ALT_UP,
     CTRL_ALT_DOWN,
     CTRL_ALT_LEFT,
     CTRL_ALT_RIGHT,
+    CTRL_ALT_HOME,
+    CTRL_ALT_END,
     CTRL_SHIFT_ALT_LEFT,
     CTRL_SHIFT_ALT_RIGHT,
+    CTRL_SHIFT_ALT_HOME,
+    CTRL_SHIFT_ALT_END,
+    SHIFT_HOME,
+    SHIFT_END,
     HOME_KEY,
     END_KEY,
     PAGE_UP,
