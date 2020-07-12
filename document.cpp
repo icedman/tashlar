@@ -80,14 +80,14 @@ void document_t::addSnapshot()
     _history.initialize(this);
     snapShots.emplace_back(_history);
 }
-    
+
 void document_t::undo()
 {
     if (snapShots.size() > 1 && history().edits.size() == 0) {
         snapShots.pop_back();
     }
-    
-    struct history_t &_history = history();
+
+    struct history_t& _history = history();
     _history.mark();
 
     cursorBlockCache.clear();

@@ -19,7 +19,7 @@ enum cursor_edit_e {
     EDIT_PASTE_BUFFER,
     EDIT_STOP
 };
-    
+
 struct cursor_edit_t {
     struct cursor_t cursor;
     std::string text;
@@ -43,7 +43,7 @@ struct history_t {
     std::vector<edit_batch_t> edits;
     edit_batch_t editBatch;
 
-    void initialize(struct document_t *document);
+    void initialize(struct document_t* document);
 
     void begin();
     void end();

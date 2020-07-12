@@ -7,6 +7,7 @@
 #include "command.h"
 #include "extension.h"
 #include "theme.h"
+#include "window.h"
 
 struct editor_t;
 struct statusbar_t;
@@ -22,6 +23,7 @@ struct app_t {
     struct statusbar_t* statusbar;
     struct gutter_t* gutter;
     struct explorer_t* explorer;
+    struct window_t* focused;
 
     std::vector<command_e> commandBuffer;
     std::string inputBuffer;
@@ -48,5 +50,5 @@ struct app_t {
 };
 
 int pairForColor(int colorIdx, bool selected);
-    
+
 #endif // APP_H

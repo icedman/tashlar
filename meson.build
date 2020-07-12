@@ -20,7 +20,8 @@ tashlar_files = [
     'keybinding.cpp',
     'search.cpp',
     'statusbar.cpp',
-    'util.cpp'
+    'util.cpp',
+    'window.cpp'
 ]
 
 curses_dep = dependency('ncurses', required: true, disabler: true)

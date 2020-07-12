@@ -56,6 +56,11 @@ enum command_e {
     CMD_MOVE_CURSOR_NEXT_PAGE_ANCHORED,
     CMD_MOVE_CURSOR_PREVIOUS_PAGE_ANCHORED,
 
+    CMD_FOCUS_WINDOW_LEFT,
+    CMD_FOCUS_WINDOW_RIGHT,
+    CMD_FOCUS_WINDOW_UP,
+    CMD_FOCUS_WINDOW_DOWN,
+
     CMD_SAVE,
     CMD_QUIT,
     CMD_UNDO,
@@ -70,6 +75,6 @@ enum command_e {
     CMD_TOGGLE_EXPLORER
 };
 
-bool processCommand(command_e cmd, struct app_t* app, char ch);
+bool processEditorCommand(command_e cmd, char ch);
 
 #endif // COMMAND_H

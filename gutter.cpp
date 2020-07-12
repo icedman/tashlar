@@ -4,21 +4,45 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include "editor.h"
 #include "app.h"
-#include "gutter.h"
+#include "editor.h"
 #include "explorer.h"
+#include "gutter.h"
+#include "statusbar.h"
 
 void gutter_t::render()
-{}
+{
+}
 
 void gutter_t::renderLine(const char* line)
-{    
+{
     char c;
     int idx = 0;
     while ((c = line[idx++])) {
         waddch(win, c);
     }
+}
+
+void gutter_t::layout(int w, int h)
+{
+    if (!app_t::instance()->showGutter) {
+        viewWidth = 0;
+        return;
+    }
+
+    struct editor_t* editor = app_t::instance()->currentEditor;
+    struct document_t* doc = &editor->document;
+
+    int gutterWidth = 4;
+    int lineNoMax = std::to_string(doc->blocks.back().lineNumber).length() + 2;
+    if (lineNoMax > gutterWidth) {
+        gutterWidth = lineNoMax;
+    }
+
+    viewX = 0;
+    viewY = 0;
+    viewWidth = gutterWidth;
+    viewHeight = h - app_t::instance()->statusbar->viewHeight;
 }
 
 void renderGutter(struct gutter_t& gutter)
@@ -31,23 +55,6 @@ void renderGutter(struct gutter_t& gutter)
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
-
-    //-----------------
-    // calculate view
-    //-----------------
-    int gutterWidth = 4;
-    int lineNoMax = std::to_string(doc->blocks.back().lineNumber).length() + 2;
-    if (lineNoMax > gutterWidth) {
-        gutterWidth = lineNoMax;
-    }
-    
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-    gutter.viewX = 0;
-    gutter.viewY = 0;
-    gutter.viewWidth = gutterWidth;
-    gutter.viewHeight = editor->viewHeight;
 
     if (app_t::instance()->showSidebar) {
         int explorerWidth = app_t::instance()->explorer->viewWidth;
@@ -62,10 +69,10 @@ void renderGutter(struct gutter_t& gutter)
     wresize(gutter.win, gutter.viewHeight, gutter.viewWidth);
 
     wmove(gutter.win, 0, 0);
-    
+
     int offsetY = editor->scrollY;
     int currentLine = block.lineNumber;
-    
+
     //-----------------
     // render the gutter
     //-----------------
@@ -76,7 +83,7 @@ void renderGutter(struct gutter_t& gutter)
             offsetY -= b.lineCount;
             continue;
         }
-        
+
         std::string lineNo = std::to_string(1 + b.lineNumber);
         int x = gutter.viewWidth - (lineNo.length() + 1);
 
@@ -87,14 +94,15 @@ void renderGutter(struct gutter_t& gutter)
         if (block.lineNumber == b.lineNumber) {
             wattron(gutter.win, A_BOLD);
         }
-        
-        wmove(gutter.win, y, x);        
+
+        wmove(gutter.win, y, x);
         gutter.renderLine(lineNo.c_str());
+
         wattroff(gutter.win, COLOR_PAIR(gutter.colorPair));
         wattroff(gutter.win, A_BOLD);
         wattroff(gutter.win, A_REVERSE);
 
-        for(int i=0;i<b.lineCount;i++) {
+        for (int i = 0; i < b.lineCount; i++) {
             y++;
             wmove(gutter.win, y, 0);
             wclrtoeol(gutter.win);
@@ -112,4 +120,3 @@ void renderGutter(struct gutter_t& gutter)
         wclrtoeol(gutter.win);
     }
 }
-

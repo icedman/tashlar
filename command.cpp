@@ -4,59 +4,13 @@
 #include "editor.h"
 #include "statusbar.h"
 
-// 20K
-// beyond this threshold, paste will use an additional file buffer
-#define SIMPLE_PASTE_THRESHOLD 20000
-
-bool processCommand(command_e cmd, struct app_t* app, char ch)
+bool processEditorCommand(command_e cmd, char ch)
 {
+    struct app_t* app = app_t::instance();
     struct editor_t* editor = app->currentEditor;
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
-
-    //-----------------
-    // global
-    //-----------------
-    switch (cmd) {
-    case CMD_CANCEL:
-        doc->clearCursors();
-        return true;
-
-    case CMD_SAVE:
-        doc->save();
-        app->statusbar->setStatus("saved", 2000);
-        return true;
-
-    case CMD_PASTE:
-        if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
-            app->inputBuffer = app->clipBoard;
-        } else {
-            doc->addSnapshot();
-            doc->history().begin();
-            doc->addBufferDocument(app->clipBoard);
-            app->clipBoard = "";
-
-            // cursorInsertText(&cursor, "/* WARNING: pasting very large buffer is not yet ready */");
-            
-            doc->insertFromBuffer(cursor, doc->buffers.back());
-
-            cursorMovePosition(&cursor, cursor_t::EndOfDocument);
-            doc->history().addPasteBuffer(cursor, doc->buffers.back());
-            
-            doc->history().end();
-            doc->addSnapshot();
-            doc->clearCursors();
-        }
-        return true;
-
-    case CMD_UNDO:
-        doc->undo();
-        return true;
-
-    default:
-        break;
-    }
 
     //-----------------
     // main cursor
@@ -73,7 +27,7 @@ bool processCommand(command_e cmd, struct app_t* app, char ch)
         cursorMovePosition(&cursor, cursor_t::EndOfDocument, cmd == CMD_MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED);
         doc->setCursor(cursor);
         return true;
-    
+
     case CMD_ADD_CURSOR_AND_MOVE_UP:
         doc->addCursor(cursor);
         cursorMovePosition(&cursor, cursor_t::Up);

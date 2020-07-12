@@ -16,9 +16,9 @@ void bindDefaults()
 {
     bindKeySequence("ctrl+b", CMD_TOGGLE_EXPLORER);
     // bindKeySequence("ctrl+e+ctrl+e", CMD_CYCLE_FOCUS);
-    
+
     bindKeySequence("ctrl+s", CMD_SAVE);
-    
+
     bindKeySequence("ctrl+q", CMD_QUIT);
 
     bindKeySequence("ctrl+c", CMD_COPY);
@@ -49,9 +49,9 @@ void bindDefaults()
     bindKeySequence("down", CMD_MOVE_CURSOR_DOWN);
     bindKeySequence("up", CMD_MOVE_CURSOR_UP);
 
-    // bindKeySequence("ctrl+up",               CMD_MOVE_LINE_DOWN);
-    // bindKeySequence("ctrl+down",             CMD_MOVE_LINE_UP);
-
+    bindKeySequence("ctrl+alt+left", CMD_FOCUS_WINDOW_LEFT);
+    bindKeySequence("ctrl+alt+right", CMD_FOCUS_WINDOW_RIGHT);
+    
     bindKeySequence("shift+left", CMD_MOVE_CURSOR_LEFT_ANCHORED);
     bindKeySequence("shift+right", CMD_MOVE_CURSOR_RIGHT_ANCHORED);
     bindKeySequence("shift+down", CMD_MOVE_CURSOR_DOWN_ANCHORED);
@@ -350,13 +350,12 @@ static int readEscapeSequence(std::string& keySequence)
     return ESC;
 }
 
-
 int readKey(std::string& keySequence)
 {
     if (kbhit(50) != 0) {
         int c;
         if (read(STDIN_FILENO, &c, 1) != 0) {
-                        
+
             if (c == ESC) {
                 return readEscapeSequence(keySequence);
             }

@@ -7,15 +7,18 @@
 
 #include "extension.h"
 #include "theme.h"
+#include "window.h"
 
 struct filelist_t {
 
     filelist_t();
     filelist_t(std::string path);
-    
+
     std::string name;
     std::string path;
     std::vector<std::shared_ptr<struct filelist_t>> files;
+
+    bool expanded;
 
     bool isDirectory;
     bool canLoadMore;
@@ -25,22 +28,19 @@ struct filelist_t {
     void load(std::string path);
 };
 
-struct explorer_t {
+struct explorer_t : public window_t {
 
     explorer_t()
-        : win(0)
-        , colorPair(0) {
+        : window_t(true)
+        , colorPair(0)
+    {
+        focusable = true;
     }
 
-    void render();
+    void layout(int w, int h) override;
+    void render() override;
+    void renderCursor() override;
     void renderLine(const char* line);
-    
-    int viewX;
-    int viewY;
-    int viewWidth;
-    int viewHeight;
-
-    WINDOW* win;
 
     theme_ptr theme;
     int colorPair;
@@ -51,5 +51,5 @@ struct explorer_t {
 };
 
 void renderExplorer(struct explorer_t& explorer);
-    
+
 #endif // EXPLORER_H

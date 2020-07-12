@@ -1,20 +1,37 @@
 #include <curses.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include "editor.h"
+#include <algorithm>
+
 #include "app.h"
+#include "editor.h"
 #include "explorer.h"
+#include "statusbar.h"
 #include "util.h"
 
 #define EXPLORER_WIDTH 15
 
+bool compareFile(std::shared_ptr<struct filelist_t> f1, std::shared_ptr<struct filelist_t> f2)
+{
+    if (f1->isDirectory && !f2->isDirectory) {
+        return true;
+    }
+    if (!f1->isDirectory && f2->isDirectory) {
+        return false;
+    }
+    return f1->name < f2->name;
+}
+
 filelist_t::filelist_t()
-    : isDirectory(false)
+    : expanded(false)
+    , isDirectory(false)
     , canLoadMore(false)
-{}
+{
+}
 
 filelist_t::filelist_t(std::string p)
     : filelist_t()
@@ -29,42 +46,52 @@ void filelist_t::setPath(std::string p)
     name = spath.back();
     path = p.erase(p.find(name));
 }
-    
+
 void filelist_t::load(std::string p)
 {
     setPath(p);
-    for (const auto& filePath : enumerate_dir(path)) {
-        app_t::instance()->log(filePath.c_str());
 
-        std::string fullPath = path + "/";
-        fullPath += filePath;
-        std::shared_ptr<struct filelist_t> file = std::make_shared<struct filelist_t>(fullPath);
-        files.emplace_back(file);
+    DIR* dir;
+    struct dirent* ent;
+    if ((dir = opendir(path.c_str())) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            if (ent->d_name[0] == '.') {
+                continue;
+            }
+            std::string filePath = ent->d_name;
+            std::string fullPath = path + filePath;
+
+            app_t::instance()->log(filePath.c_str());
+            std::shared_ptr<struct filelist_t> file = std::make_shared<struct filelist_t>(fullPath);
+            file->isDirectory = ent->d_type == DT_DIR;
+            files.emplace_back(file);
+        }
+        closedir(dir);
     }
+
+    sort(files.begin(), files.end(), compareFile);
 }
 
-void buildRenderList(std::vector<struct filelist_t*>& list, struct filelist_t *files)
+void buildRenderList(std::vector<struct filelist_t*>& list, struct filelist_t* files)
 {
-    for(auto file : files->files) {
-        if (file->name[0] == '.') {
-            continue;
-        }
+    for (auto file : files->files) {
         list.push_back(file.get());
     }
 }
-    
+
 void explorer_t::render()
 {
     renderList.clear();
     buildRenderList(renderList, &files);
 
     int y = 0;
-    for(auto file : renderList) {
+    for (auto file : renderList) {
         wmove(win, y++, 0);
-        renderLine(file->name.c_str()); 
-       if (y > viewHeight) {
-           break;
-       }       
+        wclrtoeol(win);
+        renderLine(file->name.c_str());
+        if (y > viewHeight) {
+            break;
+        }
     }
 
     while (y < viewHeight) {
@@ -85,6 +112,23 @@ void explorer_t::renderLine(const char* line)
     }
 }
 
+void explorer_t::layout(int w, int h)
+{
+    if (!app_t::instance()->showSidebar) {
+        viewWidth = 0;
+        return;
+    }
+    viewX = 0;
+    viewY = 0;
+    viewWidth = EXPLORER_WIDTH;
+    viewHeight = h - app_t::instance()->statusbar->viewHeight;
+}
+
+void explorer_t::renderCursor()
+{
+    wmove(win, 0, 0);
+}
+    
 void renderExplorer(struct explorer_t& explorer)
 {
     if (!app_t::instance()->showSidebar) {
@@ -95,17 +139,6 @@ void renderExplorer(struct explorer_t& explorer)
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
-
-    //-----------------
-    // calculate view
-    //-----------------
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-    explorer.viewX = 0;
-    explorer.viewY = 0;
-    explorer.viewWidth = EXPLORER_WIDTH;
-    explorer.viewHeight = editor->viewHeight;
 
     if (!explorer.win) {
         explorer.win = newwin(explorer.viewHeight, explorer.viewWidth, 0, 0);

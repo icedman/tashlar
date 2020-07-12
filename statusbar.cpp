@@ -4,8 +4,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include "editor.h"
 #include "app.h"
+#include "editor.h"
 #include "statusbar.h"
 
 #define STATUS_ITEMS 4
@@ -34,7 +34,8 @@ void statusbar_t::setStatus(std::string s, int f)
 }
 
 void statusbar_t::render()
-{}
+{
+}
 
 void statusbar_t::renderLine(const char* line, int offsetX)
 {
@@ -64,6 +65,18 @@ bool statusbar_t::tick(int tick)
     return res;
 }
 
+void statusbar_t::layout(int w, int h)
+{
+    if (!app_t::instance()->showStatusBar) {
+        viewHeight = 0;
+        return;
+    }
+    viewX = 0;
+    viewY = h - 1;
+    viewWidth = w;
+    viewHeight = 1;
+}
+
 void renderStatus(struct statusbar_t& statusbar)
 {
     if (!app_t::instance()->showStatusBar) {
@@ -74,17 +87,6 @@ void renderStatus(struct statusbar_t& statusbar)
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
-
-    //-----------------
-    // calculate view
-    //-----------------
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-    statusbar.viewX = 0;
-    statusbar.viewY = w.ws_row - 1;
-    statusbar.viewWidth = w.ws_col;
-    statusbar.viewHeight = 1;
 
     if (!statusbar.win) {
         statusbar.win = newwin(statusbar.viewHeight, statusbar.viewWidth, 0, 0);

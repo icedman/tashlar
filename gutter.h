@@ -7,23 +7,19 @@
 
 #include "extension.h"
 #include "theme.h"
+#include "window.h"
 
-struct gutter_t {
+struct gutter_t : public window_t {
 
     gutter_t()
-        : win(0)
-        , colorPair(0) {
+        : window_t(false)
+        , colorPair(0)
+    {
     }
-    
-    void render();
-    void renderLine(const char* line);
-    
-    int viewX;
-    int viewY;
-    int viewWidth;
-    int viewHeight;
 
-    WINDOW* win;
+    void layout(int w, int h) override;
+    void render() override;
+    void renderLine(const char* line);
 
     theme_ptr theme;
     int colorPair;

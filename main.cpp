@@ -4,6 +4,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include <locale.h>
+
 #include <cstring>
 #include <set>
 #include <string>
@@ -20,41 +22,25 @@
 
 #include "extension.h"
 
-#include "statusbar.h"
-#include "gutter.h"
 #include "explorer.h"
+#include "gutter.h"
+#include "statusbar.h"
+#include "window.h"
+
+void layoutWindows(std::vector<struct window_t*>& windows)
+{
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    for (auto window : windows) {
+        window->layout(w.ws_col, w.ws_row);
+    }
+}
 
 static void renderEditor(struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
-
-    //-----------------
-    // calculate view
-    //-----------------
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-    editor.viewX = 0;
-    editor.viewY = 0;
-    editor.viewWidth = w.ws_col;
-    editor.viewHeight = w.ws_row;
-
-    if (app_t::instance()->showStatusBar) {
-        editor.viewHeight--;
-    }
-    if (app_t::instance()->showSidebar) {
-        int explorerWidth = app_t::instance()->explorer->viewWidth;
-        editor.viewWidth -= explorerWidth;
-        editor.viewX += explorerWidth;
-    }
-
-    if (app_t::instance()->showGutter) {
-        int gutterWidth = app_t::instance()->gutter->viewWidth;
-        editor.viewWidth -= gutterWidth;
-        editor.viewX += gutterWidth;
-    }
 
     if (!editor.win) {
         editor.win = newwin(editor.viewHeight, editor.viewWidth, 0, 0);
@@ -143,19 +129,6 @@ static void renderEditor(struct editor_t& editor)
     }
 }
 
-static void renderCursor(struct editor_t& editor)
-{
-    struct document_t* doc = &editor.document;
-    struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
-
-    if (block.isValid()) {
-        wmove(editor.win, editor.cursorScreenY, editor.cursorScreenX);
-    } else {
-        wmove(editor.win, 0, 0);
-    }
-}
-
 int main(int argc, char** argv)
 {
     struct editor_t _editor;
@@ -168,6 +141,13 @@ int main(int argc, char** argv)
     app.gutter = &gutter;
     app.explorer = &explorer;
 
+    std::vector<struct window_t*> windows;
+    windows.push_back(&statusbar);
+    windows.push_back(&explorer);
+    windows.push_back(&gutter);
+    windows.push_back(&_editor);
+    app.focused = &_editor;
+    
     char* filename = 0;
     if (argc > 1) {
         filename = argv[argc - 1];
@@ -194,10 +174,9 @@ int main(int argc, char** argv)
     initscr();
     raw();
     noecho();
+    clear();
 
     app.setupColors();
-
-    clear();
 
     int ch = 0;
     bool end = false;
@@ -215,19 +194,21 @@ int main(int argc, char** argv)
 
         if (!disableRefresh) {
             doc->update();
-            
+
+            layoutWindows(windows);
+
+            curs_set(0);
             renderExplorer(explorer);
             renderGutter(gutter);
             renderEditor(editor);
             renderStatus(statusbar);
-            renderCursor(editor);
 
-            curs_set(0);
+            app.focused->renderCursor();
             wrefresh(statusbar.win);
             wrefresh(explorer.win);
             wrefresh(gutter.win);
             wrefresh(editor.win);
-            curs_set(1);
+            
         }
 
         //-----------------
@@ -304,14 +285,22 @@ int main(int argc, char** argv)
         if (ch == ESC) {
             cmd = CMD_CANCEL;
         }
-        
+
         //-----------------
         // app commands
         //-----------------
         switch (cmd) {
+        case CMD_FOCUS_WINDOW_LEFT:
+            app.focused = &explorer;
+            continue;
+        case CMD_FOCUS_WINDOW_RIGHT:
+            app.focused = &_editor;
+            continue;
         case CMD_TOGGLE_EXPLORER:
             app.showSidebar = !app.showSidebar;
-            renderEditor(editor);
+            if (!app.showSidebar) {
+                app.focused = &_editor;
+            }
             continue;
 
         case CMD_QUIT:
@@ -322,8 +311,13 @@ int main(int argc, char** argv)
         //-------------------
         // update keystrokes on cursors
         //-------------------
-        
-        if (processCommand(cmd, &app, ch)) {
+        bool commandHandled = false;
+        for (auto window : windows) {
+            if ((commandHandled = window->processCommand(cmd, ch))) {
+                break;
+            }
+        }
+        if (commandHandled) {
             continue;
         }
 

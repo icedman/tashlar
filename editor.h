@@ -1,7 +1,6 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include <curses.h>
 #include <string>
 
 #include "command.h"
@@ -14,44 +13,33 @@
 #include "theme.h"
 
 #include "extension.h"
+#include "window.h"
+
+// 20K
+// beyond this threshold, paste will use an additional file buffer
+#define SIMPLE_PASTE_THRESHOLD 20000
 
 enum color_pair_e {
     NORMAL = 0,
     SELECTED
 };
 
-struct editor_t {
-    editor_t()
-        : viewX(0)
-        , viewY(0)
-        , scrollX(0)
-        , scrollY(0)
-        , win(0)
-    {
-    }
+struct editor_t : public window_t {
+    editor_t() : window_t(true)
+    {}
 
-    // view port
-    int scrollX;
-    int scrollY;
-    int viewX;
-    int viewY;
-    int viewWidth;
-    int viewHeight;
-    int cursorScreenX;
-    int cursorScreenY;
-
-    struct document_t document;
-
+    bool processCommand(command_e cmd, char ch) override;
+    void layout(int w, int h) override;
+    void render() override;
+    void renderCursor() override;
     void highlightBlock(struct block_t& block);
     void layoutBlock(struct block_t& block);
     void renderBlock(struct block_t& block, int offsetX, int offsetY);
     void renderLine(const char* line, int offsetX = 0, int offsetY = 0, struct block_t* block = 0, int relativeLine = 0);
 
-    std::string clipBoard;
+    struct document_t document;
     language_info_ptr lang;
     theme_ptr theme;
-
-    WINDOW* win;
 };
 
 struct statusbar_t;

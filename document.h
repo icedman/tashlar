@@ -11,8 +11,8 @@
 #include <cstddef>
 
 #include "cursor.h"
-#include "history.h"
 #include "grammar.h"
+#include "history.h"
 
 struct document_t;
 struct block_t;
@@ -155,12 +155,12 @@ struct document_t {
     void addBufferDocument(const std::string& largeText);
     void insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer);
 
-    void addSnapshot();    
+    void addSnapshot();
     void undo();
     struct history_t& history() { return snapShots.back(); }
-    
+
     void update();
-    
+
     struct block_t& block(struct cursor_t& cursor, bool skipCache = false);
 
     struct block_t nullBlock;
@@ -171,7 +171,6 @@ struct document_t {
 
     std::map<size_t, struct block_t&> cursorBlockCache;
     std::vector<struct history_t> snapShots;
-
 };
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block);

@@ -8,9 +8,9 @@
 #include "editor.h"
 #include "util.h"
 
-#include "statusbar.h"
-#include "gutter.h"
 #include "explorer.h"
+#include "gutter.h"
+#include "statusbar.h"
 
 #include "json/json.h"
 #include "reader.h"

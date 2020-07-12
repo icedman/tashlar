@@ -1,6 +1,6 @@
 #include "history.h"
-#include "document.h"
 #include "cursor.h"
+#include "document.h"
 
 void history_t::begin()
 {
@@ -91,8 +91,8 @@ void history_t::replay()
         break;
     }
 }
-    
-void history_t::initialize(struct document_t *document)
+
+void history_t::initialize(struct document_t* document)
 {
     initialState = document->blocks;
     edits.clear();

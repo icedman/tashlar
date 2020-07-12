@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 #include <ctype.h>
+#include <dirent.h>
 #include <stdbool.h>
 #include <string.h>
 #include <strings.h>
@@ -8,7 +9,6 @@
 #include <iostream>
 
 #include "util.h"
-#include <dirent.h>
 
 std::vector<std::string> split_path(const std::string& str, const std::set<char> delimiters)
 {

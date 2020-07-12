@@ -8,6 +8,9 @@
 
 #include "app.h"
 #include "editor.h"
+#include "explorer.h"
+#include "gutter.h"
+#include "statusbar.h"
 
 void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct block_t* block, int relativeLine)
 {
@@ -16,13 +19,15 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
     }
 
     std::vector<struct cursor_t>* cursors = &document.cursors;
-
+    
+    bool hasFocus = app_t::instance()->focused->id == id;
+    
     int colorPair = color_pair_e::NORMAL;
     int colorPairSelected = color_pair_e::SELECTED;
     int wrapOffset = relativeLine * viewWidth;
 
     int skip = offsetX;
-    char c;
+    int c;
     int idx = 0;
     int x = 0;
     while (c = line[idx++]) {
@@ -32,6 +37,8 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
 
         colorPair = color_pair_e::NORMAL;
         colorPairSelected = color_pair_e::SELECTED;
+
+        app_t::instance()->log("%d", c);
 
         if (c == '\t') {
             c = ' ';
@@ -67,7 +74,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
                         cursorScreenY = offsetY;
                     }
                 }
-                if (pos == cur.position - wrapOffset) {
+                if (pos == cur.position - wrapOffset && hasFocus) {
                     if (firstCursor) {
                         wattron(win, A_REVERSE);
                     } else {
@@ -98,7 +105,27 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
         }
 
         wattron(win, COLOR_PAIR(colorPair));
-        waddch(win, c);
+
+        if (!isprint(c)) {
+            // app_t::instance()->log("%d", c);
+            /*
+            if (c < 0) {
+                char *cptr = (char*)&line[idx-1];
+                const cchar_t cc = { .attr=0, .ext_color=0 };
+                wchar_t *wc = L"X";
+                memcpy((void*)&cc.chars, wc, sizeof(wchar_t));
+                // memcpy((void*)&cc.chars, cptr, sizeof(char)*3);
+                // write(STDOUT_FILENO, cptr, 1);
+                wadd_wch(win, &cc);
+                // waddch(win, c);
+            } else {
+            */
+            c = '?';
+            waddch(win, c);
+        } else {
+            waddch(win, c);
+        }
+
         wattroff(win, COLOR_PAIR(colorPair));
         wattroff(win, A_REVERSE);
         wattroff(win, A_UNDERLINE);
@@ -126,7 +153,7 @@ static void setFormatFromStyle(size_t start, size_t length, style_t& style, cons
                     .blue = style.foreground.blue * 255
                 };
 
-                span.colorIndex = style.foreground.index; // nearestColor(span.red, span.green, span.blue);
+                span.colorIndex = style.foreground.index;
                 blockData->spans.push_back(span);
             }
             s = -1;
@@ -286,4 +313,105 @@ void editor_t::renderBlock(struct block_t& block, int offsetX, int offsetY)
         renderLine(str, offsetX, offsetY + i, &block, i);
         str += viewWidth;
     }
+}
+
+void editor_t::render()
+{
+}
+
+void editor_t::renderCursor()
+{
+    struct document_t* doc = &document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
+
+    if (block.isValid()) {
+        wmove(win, cursorScreenY, cursorScreenX);
+    } else {
+        wmove(win, 0, 0);
+    }
+
+    curs_set(1);
+}
+
+void editor_t::layout(int w, int h)
+{
+    viewX = 0;
+    viewY = 0;
+    viewWidth = w;
+    viewHeight = h;
+
+    if (app_t::instance()->showStatusBar) {
+        viewHeight -= app_t::instance()->statusbar->viewHeight;
+    }
+    if (app_t::instance()->showSidebar) {
+        int explorerWidth = app_t::instance()->explorer->viewWidth;
+        viewWidth -= explorerWidth;
+        viewX += explorerWidth;
+    }
+
+    if (app_t::instance()->showGutter) {
+        int gutterWidth = app_t::instance()->gutter->viewWidth;
+        viewWidth -= gutterWidth;
+        viewX += gutterWidth;
+    }
+}
+
+bool editor_t::processCommand(command_e cmd, char ch)
+{
+    struct app_t* app = app_t::instance();
+    struct editor_t* editor = app->currentEditor;
+    struct document_t* doc = &editor->document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
+
+    //-----------------
+    // global
+    //-----------------
+    switch (cmd) {
+    case CMD_CANCEL:
+        doc->clearCursors();
+        return true;
+
+    case CMD_SAVE:
+        doc->save();
+        app->statusbar->setStatus("saved", 2000);
+        return true;
+
+    case CMD_PASTE:
+        if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
+            app->inputBuffer = app->clipBoard;
+        } else {
+            doc->addSnapshot();
+            doc->history().begin();
+            doc->addBufferDocument(app->clipBoard);
+            app->clipBoard = "";
+
+            // cursorInsertText(&cursor, "/* WARNING: pasting very large buffer is not yet ready */");
+
+            doc->insertFromBuffer(cursor, doc->buffers.back());
+
+            cursorMovePosition(&cursor, cursor_t::EndOfDocument);
+            doc->history().addPasteBuffer(cursor, doc->buffers.back());
+
+            doc->history().end();
+            doc->addSnapshot();
+            doc->clearCursors();
+        }
+        return true;
+
+    case CMD_UNDO:
+        doc->undo();
+        return true;
+
+    default:
+        break;
+    }
+
+    // proceed only if got focus
+    if (app_t::instance()->focused->id != id) {
+        return false;
+    }
+    
+    return processEditorCommand(cmd, ch);
 }
