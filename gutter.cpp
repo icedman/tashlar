@@ -8,6 +8,7 @@
 #include "editor.h"
 #include "explorer.h"
 #include "gutter.h"
+#include "tabbar.h"
 #include "statusbar.h"
 
 void gutter_t::render()
@@ -30,7 +31,7 @@ void gutter_t::layout(int w, int h)
         return;
     }
 
-    struct editor_t* editor = app_t::instance()->currentEditor;
+    struct editor_t* editor = app_t::instance()->currentEditor.get();
     struct document_t* doc = &editor->document;
 
     int gutterWidth = 4;
@@ -43,6 +44,12 @@ void gutter_t::layout(int w, int h)
     viewY = 0;
     viewWidth = gutterWidth;
     viewHeight = h - app_t::instance()->statusbar->viewHeight;
+    
+    if (app_t::instance()->showTabbar) {
+        int tabbarHeight = app_t::instance()->tabbar->viewHeight;
+        viewHeight -= tabbarHeight;
+        viewY += tabbarHeight;
+    }
 }
 
 void renderGutter(struct gutter_t& gutter)
@@ -51,7 +58,7 @@ void renderGutter(struct gutter_t& gutter)
         return;
     }
 
-    struct editor_t* editor = app_t::instance()->currentEditor;
+    struct editor_t* editor = app_t::instance()->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);

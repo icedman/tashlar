@@ -25,13 +25,16 @@ enum color_pair_e {
 };
 
 struct editor_t : public window_t {
-    editor_t() : window_t(true)
-    {}
+    editor_t()
+        : window_t(true)
+    {
+    }
 
     bool processCommand(command_e cmd, char ch) override;
     void layout(int w, int h) override;
     void render() override;
     void renderCursor() override;
+
     void highlightBlock(struct block_t& block);
     void layoutBlock(struct block_t& block);
     void renderBlock(struct block_t& block, int offsetX, int offsetY);
@@ -42,6 +45,19 @@ struct editor_t : public window_t {
     theme_ptr theme;
 };
 
-struct statusbar_t;
+struct editor_proxy_t : public window_t {
+    editor_proxy_t()
+        : window_t(true)
+    {
+    }
+
+    bool processCommand(command_e cmd, char ch) override;
+    void layout(int w, int h) override;
+    void render() override;
+    void renderCursor() override;
+    bool isFocused() override;
+};
+
+typedef std::shared_ptr<struct editor_t> editor_ptr;
 
 #endif // EDITOR_H

@@ -25,6 +25,7 @@
 #include "explorer.h"
 #include "gutter.h"
 #include "statusbar.h"
+#include "tabbar.h"
 #include "window.h"
 
 void layoutWindows(std::vector<struct window_t*>& windows)
@@ -131,7 +132,8 @@ static void renderEditor(struct editor_t& editor)
 
 int main(int argc, char** argv)
 {
-    struct editor_t _editor;
+    struct editor_proxy_t _editor;
+    struct tabbar_t tabbar;
     struct gutter_t gutter;
     struct statusbar_t statusbar;
     struct explorer_t explorer;
@@ -139,15 +141,16 @@ int main(int argc, char** argv)
     struct app_t app;
     app.statusbar = &statusbar;
     app.gutter = &gutter;
+    app.tabbar = &tabbar;
     app.explorer = &explorer;
 
     std::vector<struct window_t*> windows;
     windows.push_back(&statusbar);
     windows.push_back(&explorer);
+    windows.push_back(&tabbar);
     windows.push_back(&gutter);
     windows.push_back(&_editor);
-    app.focused = &_editor;
-    
+
     char* filename = 0;
     if (argc > 1) {
         filename = argv[argc - 1];
@@ -157,11 +160,8 @@ int main(int argc, char** argv)
 
     app.configure(argc, argv);
 
-    _editor.lang = language_from_file(filename, app.extensions);
-    _editor.theme = app.theme;
-    _editor.document.open(filename);
-
-    explorer.files.load(filename);
+    app.openEditor(filename);
+    explorer.setRootFromFile(filename);
 
     //-------------------
     // keybinding
@@ -184,7 +184,6 @@ int main(int argc, char** argv)
     std::string previousKeySequence;
     while (!end) {
 
-        app.currentEditor = &_editor;
         struct editor_t& editor = *app.currentEditor;
         struct document_t* doc = &editor.document;
         struct cursor_t cursor = doc->cursor();
@@ -199,16 +198,24 @@ int main(int argc, char** argv)
 
             curs_set(0);
             renderExplorer(explorer);
-            renderGutter(gutter);
+            renderTabbar(tabbar);
             renderEditor(editor);
+            renderTabbar(tabbar);
+            renderGutter(gutter);
             renderStatus(statusbar);
 
             app.focused->renderCursor();
+
             wrefresh(statusbar.win);
             wrefresh(explorer.win);
-            wrefresh(gutter.win);
+            wrefresh(tabbar.win);
             wrefresh(editor.win);
-            
+            wrefresh(gutter.win);
+
+            if (app.refreshLoop > 0) {
+                app.refreshLoop--;
+                continue;
+            }
         }
 
         //-----------------
@@ -270,13 +277,6 @@ int main(int argc, char** argv)
             app.inputBuffer.erase(0, 1);
         }
 
-        std::string s;
-        s += (char)ch;
-
-        if (cmd == CMD_ENTER || ch == ENTER || s == "\n") {
-            cmd = CMD_SPLIT_LINE;
-        }
-
         if ((cmd == CMD_UNKNOWN || cmd == CMD_CANCEL) && ch >= ALT_ && ch <= CTRL_SHIFT_ALT_) {
             // drop unhandled;
             continue;
@@ -290,21 +290,33 @@ int main(int argc, char** argv)
         // app commands
         //-----------------
         switch (cmd) {
+        case CMD_CLOSE_TAB:
+            app.close();
+            if (app.editors.size() == 0) {
+                end = true;
+                continue;
+            }
+            app.refresh();
+            break;
         case CMD_FOCUS_WINDOW_LEFT:
             app.focused = &explorer;
             continue;
         case CMD_FOCUS_WINDOW_RIGHT:
-            app.focused = &_editor;
+            app.focused = app.currentEditor.get();
             continue;
         case CMD_TOGGLE_EXPLORER:
             app.showSidebar = !app.showSidebar;
-            if (!app.showSidebar) {
-                app.focused = &_editor;
+            if (app.showSidebar) {
+                app.focused = &explorer;
+            } else {
+                app.focused = app.currentEditor.get();
             }
+            app.refresh();
             continue;
-
         case CMD_QUIT:
             end = true;
+            continue;
+        default:
             break;
         }
 
@@ -317,7 +329,7 @@ int main(int argc, char** argv)
                 break;
             }
         }
-        if (commandHandled) {
+        if (commandHandled || cmd == CMD_CANCEL) {
             continue;
         }
 
@@ -328,6 +340,9 @@ int main(int argc, char** argv)
         //-------------------
         // update keystrokes on cursors
         //-------------------
+        std::string s;
+        s += (char)ch;
+
         if (s.length() != 1) {
             continue;
         }

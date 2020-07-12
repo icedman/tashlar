@@ -7,7 +7,7 @@
 bool processEditorCommand(command_e cmd, char ch)
 {
     struct app_t* app = app_t::instance();
-    struct editor_t* editor = app->currentEditor;
+    struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);

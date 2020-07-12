@@ -11,6 +11,34 @@
 #include "explorer.h"
 #include "gutter.h"
 #include "statusbar.h"
+#include "tabbar.h"
+
+#include "keybinding.h"
+
+bool editor_proxy_t::processCommand(command_e cmd, char ch)
+{
+    return app_t::instance()->currentEditor->processCommand(cmd, ch);
+}
+
+void editor_proxy_t::layout(int w, int h)
+{
+    app_t::instance()->currentEditor->layout(w, h);
+}
+
+void editor_proxy_t::render()
+{
+    app_t::instance()->currentEditor->render();
+}
+
+void editor_proxy_t::renderCursor()
+{
+    app_t::instance()->currentEditor->renderCursor();
+}
+
+bool editor_proxy_t::isFocused()
+{
+    app_t::instance()->currentEditor->isFocused();
+}
 
 void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct block_t* block, int relativeLine)
 {
@@ -19,9 +47,9 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
     }
 
     std::vector<struct cursor_t>* cursors = &document.cursors;
-    
-    bool hasFocus = app_t::instance()->focused->id == id;
-    
+
+    bool hasFocus = isFocused();
+
     int colorPair = color_pair_e::NORMAL;
     int colorPairSelected = color_pair_e::SELECTED;
     int wrapOffset = relativeLine * viewWidth;
@@ -37,8 +65,6 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
 
         colorPair = color_pair_e::NORMAL;
         colorPairSelected = color_pair_e::SELECTED;
-
-        app_t::instance()->log("%d", c);
 
         if (c == '\t') {
             c = ' ';
@@ -300,11 +326,7 @@ void editor_t::layoutBlock(struct block_t& block)
 
 void editor_t::renderBlock(struct block_t& block, int offsetX, int offsetY)
 {
-    std::string t = block.text();
-    if (!t.length()) {
-        t = " ";
-    }
-
+    std::string t = block.text() + " ";
     char* str = (char*)t.c_str();
 
     for (int i = 0; i < block.lineCount; i++) {
@@ -321,17 +343,20 @@ void editor_t::render()
 
 void editor_t::renderCursor()
 {
+    /*
     struct document_t* doc = &document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
 
     if (block.isValid()) {
         wmove(win, cursorScreenY, cursorScreenX);
+        app_t::instance()->log("%d %d", cursorScreenY, cursorScreenX);
     } else {
         wmove(win, 0, 0);
     }
-
-    curs_set(1);
+    */
+    // do our own blink?
+    curs_set(0);
 }
 
 void editor_t::layout(int w, int h)
@@ -349,7 +374,11 @@ void editor_t::layout(int w, int h)
         viewWidth -= explorerWidth;
         viewX += explorerWidth;
     }
-
+    if (app_t::instance()->showTabbar) {
+        int tabbarHeight = app_t::instance()->tabbar->viewHeight;
+        viewHeight -= tabbarHeight;
+        viewY += tabbarHeight;
+    }
     if (app_t::instance()->showGutter) {
         int gutterWidth = app_t::instance()->gutter->viewWidth;
         viewWidth -= gutterWidth;
@@ -360,7 +389,7 @@ void editor_t::layout(int w, int h)
 bool editor_t::processCommand(command_e cmd, char ch)
 {
     struct app_t* app = app_t::instance();
-    struct editor_t* editor = app->currentEditor;
+    struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
@@ -371,7 +400,7 @@ bool editor_t::processCommand(command_e cmd, char ch)
     switch (cmd) {
     case CMD_CANCEL:
         doc->clearCursors();
-        return true;
+        return false;
 
     case CMD_SAVE:
         doc->save();
@@ -409,9 +438,16 @@ bool editor_t::processCommand(command_e cmd, char ch)
     }
 
     // proceed only if got focus
-    if (app_t::instance()->focused->id != id) {
+    if (!isFocused()) {
         return false;
     }
-    
+
+    std::string s;
+    s += (char)ch;
+
+    if (cmd == CMD_ENTER || ch == ENTER || s == "\n") {
+        cmd = CMD_SPLIT_LINE;
+    }
+
     return processEditorCommand(cmd, ch);
 }

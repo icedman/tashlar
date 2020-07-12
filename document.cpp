@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <cstring>
+
 #include "document.h"
 #include "app.h"
 #include "cursor.h"
@@ -68,6 +71,13 @@ bool document_t::open(const char* path)
     std::vector<std::string> spath = split_path(filePath, delims);
     fileName = spath.back();
 
+    std::string _path = filePath;
+    char* cpath = (char*)malloc(_path.length() + 1 * sizeof(char));
+    strcpy(cpath, _path.c_str());
+    expand_path((char**)(&cpath));
+    fullPath = std::string(cpath);
+    free(cpath);
+    
     tmpPaths.push_back(tmpPath);
 
     addSnapshot();

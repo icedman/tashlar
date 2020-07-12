@@ -9,23 +9,26 @@
 #include "theme.h"
 #include "window.h"
 
-struct filelist_t {
+struct fileitem_t {
 
-    filelist_t();
-    filelist_t(std::string path);
+    fileitem_t();
+    fileitem_t(std::string path);
 
     std::string name;
     std::string path;
-    std::vector<std::shared_ptr<struct filelist_t>> files;
+    std::string fullPath;
+    std::vector<std::shared_ptr<struct fileitem_t>> files;
 
     bool expanded;
 
     bool isDirectory;
     bool canLoadMore;
+
     int depth;
+    int lineNumber;
 
     void setPath(std::string path);
-    void load(std::string path);
+    void load(std::string path = "");
 };
 
 struct explorer_t : public window_t {
@@ -33,21 +36,25 @@ struct explorer_t : public window_t {
     explorer_t()
         : window_t(true)
         , colorPair(0)
+        , currentItem(-1)
     {
         focusable = true;
     }
 
+    bool processCommand(command_e cmd, char ch) override;
     void layout(int w, int h) override;
     void render() override;
     void renderCursor() override;
     void renderLine(const char* line);
+    void setRootFromFile(std::string path);
 
     theme_ptr theme;
     int colorPair;
 
-    filelist_t files;
+    fileitem_t files;
+    std::vector<struct fileitem_t*> renderList;
 
-    std::vector<struct filelist_t*> renderList;
+    int currentItem;
 };
 
 void renderExplorer(struct explorer_t& explorer);

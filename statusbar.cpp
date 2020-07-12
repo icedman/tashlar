@@ -83,7 +83,7 @@ void renderStatus(struct statusbar_t& statusbar)
         return;
     }
 
-    struct editor_t* editor = app_t::instance()->currentEditor;
+    struct editor_t* editor = app_t::instance()->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);

@@ -166,6 +166,7 @@ struct document_t {
     struct block_t nullBlock;
     std::string filePath;
     std::string fileName;
+    std::string fullPath;
 
     std::vector<std::string> tmpPaths;
 

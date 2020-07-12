@@ -1,8 +1,8 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include <curses.h>
 #include "command.h"
+#include <curses.h>
 
 struct window_t {
     window_t(bool focusable);
@@ -10,6 +10,9 @@ struct window_t {
     virtual void render();
     virtual void renderCursor();
     virtual bool processCommand(command_e cmd, char ch);
+    virtual bool isFocused();
+
+    void scrollToCursor(int x, int y);
 
     int id;
     bool focusable;

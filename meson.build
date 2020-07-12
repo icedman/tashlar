@@ -20,6 +20,7 @@ tashlar_files = [
     'keybinding.cpp',
     'search.cpp',
     'statusbar.cpp',
+    'tabbar.cpp',
     'util.cpp',
     'window.cpp'
 ]

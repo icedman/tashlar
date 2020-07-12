@@ -253,8 +253,8 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
                 // }
                 // load_language_configuration(path, lang);
 
-                std::cout << "langauge matched" << lang->id << std::endl;
-                std::cout << path << std::endl;
+                // std::cout << "langauge matched" << lang->id << std::endl;
+                // std::cout << path << std::endl;
 
                 // cache.emplace(suffix, lang);
                 // return lang;

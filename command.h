@@ -61,6 +61,9 @@ enum command_e {
     CMD_FOCUS_WINDOW_UP,
     CMD_FOCUS_WINDOW_DOWN,
 
+    CMD_NEW_TAB,
+    CMD_CLOSE_TAB,
+    
     CMD_SAVE,
     CMD_QUIT,
     CMD_UNDO,

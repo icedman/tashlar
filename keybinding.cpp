@@ -18,7 +18,8 @@ void bindDefaults()
     // bindKeySequence("ctrl+e+ctrl+e", CMD_CYCLE_FOCUS);
 
     bindKeySequence("ctrl+s", CMD_SAVE);
-
+    // bindKeySequence("alt+t",  CMD_OPEN_TAB);
+    bindKeySequence("alt+w",  CMD_CLOSE_TAB);
     bindKeySequence("ctrl+q", CMD_QUIT);
 
     bindKeySequence("ctrl+c", CMD_COPY);
@@ -51,7 +52,7 @@ void bindDefaults()
 
     bindKeySequence("ctrl+alt+left", CMD_FOCUS_WINDOW_LEFT);
     bindKeySequence("ctrl+alt+right", CMD_FOCUS_WINDOW_RIGHT);
-    
+
     bindKeySequence("shift+left", CMD_MOVE_CURSOR_LEFT_ANCHORED);
     bindKeySequence("shift+right", CMD_MOVE_CURSOR_RIGHT_ANCHORED);
     bindKeySequence("shift+down", CMD_MOVE_CURSOR_DOWN_ANCHORED);
@@ -386,7 +387,7 @@ int readKey(std::string& keySequence)
                 return c;
             }
 
-            app_t::log("key:%d\n", c);
+            // app_t::log("key:%d\n", c);
 
             return c;
         }
@@ -408,7 +409,7 @@ command_e commandKorKeys(std::string keys)
         return keybindings[keys];
     }
 
-    app_t::log(keys.c_str());
+    // app_t::log(keys.c_str());
 
     return CMD_UNKNOWN;
 }

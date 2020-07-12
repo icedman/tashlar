@@ -1,4 +1,5 @@
 #include "window.h"
+#include "app.h"
 
 static int windowId = 1000;
 
@@ -22,9 +23,19 @@ void window_t::render()
 }
 
 void window_t::renderCursor()
-{}
+{
+}
 
 bool window_t::processCommand(command_e cmd, char ch)
 {
     return false;
+}
+
+void window_t::scrollToCursor(int cx, int cy)
+{
+}
+
+bool window_t::isFocused()
+{
+    return app_t::instance()->focused->id == id;
 }

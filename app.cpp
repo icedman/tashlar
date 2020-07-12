@@ -10,7 +10,10 @@
 
 #include "explorer.h"
 #include "gutter.h"
+#include "tabbar.h"
 #include "statusbar.h"
+
+#include "extension.h"
 
 #include "json/json.h"
 #include "reader.h"
@@ -87,8 +90,15 @@ app_t::app_t()
     , statusbar(0)
     , gutter(0)
     , explorer(0)
+    , refreshLoop(0)
 {
     appInstance = this;
+
+    // simple by default
+    showStatusBar = false;
+    showTabbar = false;
+    showGutter = false;
+    showSidebar = false;
 }
 
 struct app_t* app_t::instance()
@@ -143,7 +153,6 @@ void app_t::configure(int argc, char** argv)
     char* cpath = (char*)malloc(_path.length() + 1 * sizeof(char));
     strcpy(cpath, _path.c_str());
     expand_path((char**)(&cpath));
-
     const std::string path(cpath);
     free(cpath);
 
@@ -200,6 +209,9 @@ void app_t::configure(int argc, char** argv)
     if (settings.isMember("sidebar")) {
         showSidebar = settings["sidebar"].asBool();
     }
+    if (settings.isMember("tabbar")) {
+        showTabbar = settings["tabbar"].asBool();
+    }
 
     statusbar->theme = theme;
     gutter->theme = theme;
@@ -211,4 +223,55 @@ void app_t::applyColors()
     style_t s = theme->styles_for_scope("comment");
     statusbar->colorPair = pairForColor(s.foreground.index, false);
     gutter->colorPair = pairForColor(s.foreground.index, false);
+}
+
+editor_ptr app_t::openEditor(std::string path)
+{
+    log("open: %s", path.c_str());
+    for(auto e : editors) {
+        if (e->document.fullPath == path) {
+            log("reopening existing tab");
+            currentEditor = e;
+            focused = currentEditor.get();
+            return e;
+        }
+    }
+    
+    const char* filename = path.c_str();
+    editor_ptr editor = std::make_shared<struct editor_t>();
+    editor->lang = language_from_file(filename, extensions);
+    editor->theme = theme;
+    editor->document.open(filename);
+    editors.emplace_back(editor);
+
+    currentEditor = editor;
+    focused = currentEditor.get();
+
+    tabbar->tabs.clear();
+    refresh();
+    return editor;
+}
+
+void app_t::refresh()
+{
+    refreshLoop = 2;
+}
+
+void app_t::close()
+{
+    std::vector<editor_ptr>::iterator it = editors.begin();
+    while(it != editors.end()) {
+        if ((*it)->id == currentEditor->id) {
+            editors.erase(it);
+            break;
+        }
+        it++;
+    }
+    if (editors.size()) {
+        currentEditor = editors.front();
+        focused = currentEditor.get();
+    }
+    
+    tabbar->tabs.clear();
+    refresh();
 }
