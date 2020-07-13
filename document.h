@@ -35,13 +35,23 @@ enum block_state_e {
 struct blockdata_t {
     blockdata_t()
         : dirty(true)
+        , dots(0)
     {
+    }
+
+    ~blockdata_t()
+    {
+        if (dots) {
+            free(dots);
+        }
     }
 
     std::vector<span_info_t> spans;
     parse::stack_ptr parser_state;
     std::map<size_t, scope::scope_t> scopes;
 
+    int *dots;
+    
     size_t lastPrevBlockRule;
     block_state_e state;
     bool dirty;

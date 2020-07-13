@@ -129,6 +129,43 @@ static void renderEditor(struct editor_t& editor)
 
 int main(int argc, char** argv)
 {   
+    if (0) {
+    setlocale(LC_ALL, "");
+    initscr();
+    clear();
+    
+    char *line1 = "hello world";
+    char *line2 = "      hello world";
+    char *line3 = "  hello          world";
+    char *line4 = "hello world";
+
+    int y = 0;
+    move(y++, 0);
+    addstr(line1);
+    move(y++, 0);
+    addstr(line2);
+    move(y++, 0);
+    addstr(line3);
+    move(y++, 0);
+    addstr(line4);
+
+    for(int i=0;i<4;i++) {
+        y++;
+        int *dots = buildUpDotsForLines(line1, line2, line3, line4, 1+i, 25);
+        move(y++,0);
+        for(int i=0;i<25;i++) {
+            addwstr(wcharFromDots(dots[i]));
+        }
+        free(dots);
+    }
+        
+    refresh();
+
+    getch();
+    endwin();
+    return 0;
+    }
+    
     setlocale(LC_ALL, "");
     
     struct editor_proxy_t _editor;
@@ -199,8 +236,7 @@ int main(int argc, char** argv)
 
             curs_set(0);
             
-            renderEditor(editor);       
-
+            renderEditor(editor);
             for(int i=0; i<app.windows.size(); i++) {
                 app.windows[i]->render();
             }

@@ -16,11 +16,59 @@
 #include "dots.h"
 
 #define MINIMAP_WIDTH 10
+#define MINIMAP_TEXT_COMPRESS 5
 
 minimap_t::minimap_t()
         : window_t(false)
 {}
 
+void buildUpDotsForBlock(struct block_t *block, float textCompress, int bufferWidth)
+{        
+    if (!block->data) {
+        block->data = std::make_shared<blockdata_t>();
+        block->data->dirty = true;
+    }
+    
+    struct blockdata_t *data = block->data.get();
+    if (data->dots) {
+        return;
+    }
+    
+    std::string line1;
+    std::string line2;
+    std::string line3;
+    std::string line4;
+
+    struct block_t *it = block;
+    line1 = it->text();
+    if (it->next) {
+        it = it->next;
+        line2 = it->text();
+        if (it->next) {
+            it = it->next;
+            line3 = it->text();
+            if (it->next) {
+                it = it->next;
+                line4 = it->text();
+            }
+        }
+    }
+    
+    // app_t::instance()->log(line1.c_str());
+    // app_t::instance()->log(line2.c_str());
+    // app_t::instance()->log(line3.c_str());
+    // app_t::instance()->log(line4.c_str());
+    
+    data->dots = buildUpDotsForLines(
+        (char*)line1.c_str(), 
+        (char*)line2.c_str(), 
+        (char*)line3.c_str(), 
+        (char*)line4.c_str(),
+        textCompress,
+        bufferWidth
+    );
+}
+        
 void minimap_t::render()
 {
     if (!app_t::instance()->showMinimap) {
@@ -38,72 +86,50 @@ void minimap_t::render()
 
     mvwin(win, viewY, viewX);
     wresize(win, viewHeight, viewWidth);
+    wmove(win, 0, 0);
 
-    int offsetY = editor->scrollY;
+    int offsetY = editor->scrollY/4;
     int currentLine = block.lineNumber;
 
     int wc = 0;
-    wc = buildUpDots(wc, 0, 1, 1);
-    wc = buildUpDots(wc, 3, 1, 1);
+    wc = buildUpDots(wc, 1, 1, 1);
+    wc = buildUpDots(wc, 2, 1, 1);
     
     // todo: jump to first visible block
     int y = 0;
-    for(int idx=0; idx<doc->blocks.size(); idx++) {
+    for(int idx=0; idx<doc->blocks.size(); idx+=4) {
         auto& b = doc->blocks[idx];
         if (offsetY > 0) {
-            offsetY -= b.lineCount;
+            offsetY -= 1; // b.lineCount;
+            if (b.data) {
+                if (b.data->dots) {
+                    free(b.data->dots);
+                    b.data->dots = 0;
+                }
+            }
             continue;
         }
 
-        std::string lineNo = std::to_string(1 + b.lineNumber);
-        std::string t = b.text();
-        char *line = (char*)t.c_str();
-        char *end = line + t.length();
-
         wattron(win, COLOR_PAIR(colorPair));
-        wmove(win, y, 0);
-        wclrtoeol(win);
+        wmove(win, y++, 0);
+        wclrtoeol(win);    
 
-        if (currentLine == b.lineNumber) {
+        if (currentLine >= b.lineNumber && currentLine < b.lineNumber + 4) {
             wattron(win, A_BOLD);
         }
-
-        struct blockdata_t *data = b.data.get();
-        if (data) {
-            for(int j=0; j<b.length && line < end; j++) {
-                char c = *line;
-                if (c != ' ') {
-                    waddwstr(win, dotsFromChar(wc));
-                } else {
-                    waddch(win, ' ');
-                }
-                if (j > viewWidth) {
-                    break;
-                }
-                for(int k=0;k<8;k++) {
-                    line++;
-                    if (line == end) {
-                        break;
-                    }
-                }
-            }
-        }
         
-        // renderLine(lineNo.c_str());
-
-        wattroff(win, COLOR_PAIR(colorPair));
-        wattroff(win, A_BOLD);
-        wattroff(win, A_REVERSE);
-
-        for (int i = 0; i < b.lineCount; i++) {
-            y++;
-            wmove(win, y, 0);
-            wclrtoeol(win);
-            if (y >= viewHeight) {
+        buildUpDotsForBlock(&b, MINIMAP_TEXT_COMPRESS, 25);
+        for(int x=0;x<25;x++) {
+            waddwstr(win, wcharFromDots(b.data->dots[x]));
+            if (x >= viewWidth) {
                 break;
             }
         }
 
+        wattroff(win, COLOR_PAIR(colorPair));
+        wattroff(win, A_BOLD);
+        // wattroff(win, A_REVERSE);
+    
         if (y >= viewHeight) {
             break;
         }

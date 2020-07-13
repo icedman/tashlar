@@ -291,7 +291,7 @@ int buildUpDots(int c, int row, int left, int right)
     return c;
 }
 
-const wchar_t* dotsFromChar(int idx)
+const wchar_t* wcharFromDots(int idx)
 {
     if (idx == 0) {
         return dots_map[0].chars;
@@ -323,4 +323,39 @@ const wchar_t* dotsFromChar(int idx)
     
     return L"";
 }
-    
+
+int* buildUpDotsForLines(char *row1, char *row2, char *row3, char *row4, float textCompress, int bufferWidth)
+{
+    if (bufferWidth > 50) {
+        // exceeded maximum buffer
+        return 0;
+    }
+    char compressedLine[50];
+    size_t sz = sizeof(int) * bufferWidth + 1;
+    int *res = (int*)malloc(sz);
+    memset(res, 0, sz);
+    for(int r=0; r<4; r++) {
+        char *row = 0;
+        if (r == 0) row = row1;
+        if (r == 1) row = row2;
+        if (r == 2) row = row3;
+        if (r == 3) row = row4;
+        int len = strlen(row);
+        memset(compressedLine, 0, 50*sizeof(char));
+        for(int i=0;i<len && i<50;i++) {
+            int idx = i/textCompress;
+            if (row[i] != ' ' && row[i] != '\t') {
+                compressedLine[idx]=row[i];
+            }
+        }
+
+        int cx = 0;
+        for(int i=0; i<bufferWidth && i<len-1;i++) {
+            int left = compressedLine[cx] != 0;
+            int right = compressedLine[cx+1] != 0;
+            res[i] = buildUpDots(res[i], r, left, right);
+            cx+=2;
+        }
+    }
+    return res;
+}
