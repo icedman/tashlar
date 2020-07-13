@@ -31,7 +31,7 @@ enum block_state_e {
     BLOCK_STATE_COMMENT = 1 << 1,
     BLOCK_STATE_STRING = 1 << 2
 };
-
+    
 struct blockdata_t {
     blockdata_t()
         : dirty(true)

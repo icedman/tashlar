@@ -37,8 +37,8 @@ void bindDefaults()
     // bindKeySequence("ctrl+?", CMD_SELECT_WORD);
 
     bindKeySequence("ctrl+d", CMD_ADD_CURSOR_FOR_SELECTED_WORD);
-    bindKeySequence("ctrl+alt+up", CMD_ADD_CURSOR_AND_MOVE_UP);
-    bindKeySequence("ctrl+alt+down", CMD_ADD_CURSOR_AND_MOVE_DOWN);
+    bindKeySequence("ctrl+up", CMD_ADD_CURSOR_AND_MOVE_UP);
+    bindKeySequence("ctrl+down", CMD_ADD_CURSOR_AND_MOVE_DOWN);
 
     bindKeySequence("ctrl+left", CMD_MOVE_CURSOR_PREVIOUS_WORD);
     bindKeySequence("ctrl+right", CMD_MOVE_CURSOR_NEXT_WORD);
@@ -50,6 +50,8 @@ void bindDefaults()
     bindKeySequence("down", CMD_MOVE_CURSOR_DOWN);
     bindKeySequence("up", CMD_MOVE_CURSOR_UP);
 
+    bindKeySequence("ctrl+alt+up", CMD_FOCUS_WINDOW_UP);
+    bindKeySequence("ctrl+alt+down", CMD_FOCUS_WINDOW_DOWN);
     bindKeySequence("ctrl+alt+left", CMD_FOCUS_WINDOW_LEFT);
     bindKeySequence("ctrl+alt+right", CMD_FOCUS_WINDOW_RIGHT);
 
@@ -184,7 +186,7 @@ static int readEscapeSequence(std::string& keySequence)
 
                 sequence = "shift+";
                 if (seq[0] == '2') {
-                    app_t::log("shift+%d\n", seq[1]);
+                    // app_t::log("shift+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -209,7 +211,7 @@ static int readEscapeSequence(std::string& keySequence)
 
                 sequence = "ctrl+";
                 if (seq[0] == '5') {
-                    app_t::log("ctrl+%d\n", seq[1]);
+                    // app_t::log("ctrl+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -234,7 +236,7 @@ static int readEscapeSequence(std::string& keySequence)
 
                 sequence = "ctrl+shift+";
                 if (seq[0] == '6') {
-                    app_t::log("ctrl+shift+%d\n", seq[1]);
+                    // app_t::log("ctrl+shift+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -259,7 +261,7 @@ static int readEscapeSequence(std::string& keySequence)
 
                 sequence = "ctrl+alt+";
                 if (seq[0] == '7') {
-                    app_t::log("ctrl+alt+%d\n", seq[1]);
+                    // app_t::log("ctrl+alt+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -284,7 +286,7 @@ static int readEscapeSequence(std::string& keySequence)
 
                 sequence = "ctrl+shift+alt+";
                 if (seq[0] == '8') {
-                    app_t::log("ctrl+shift+alt+%d\n", seq[1]);
+                    // app_t::log("ctrl+shift+alt+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";

@@ -116,9 +116,9 @@ void document_t::close()
 {
     file.close();
 
-    std::cout << "cleanup" << std::endl;
+    app_t::instance()->log("file closed %s", filePath.c_str());
     for (auto tmpPath : tmpPaths) {
-        std::cout << "unlink " << tmpPath << std::endl;
+        app_t::instance()->log("temporary file freed %s", tmpPath.c_str());
         remove(tmpPath.c_str());
     }
 }

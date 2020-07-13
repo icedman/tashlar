@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "extension.h"
-#include "theme.h"
 #include "window.h"
 
 struct statusbar_t : public window_t {
@@ -14,7 +13,6 @@ struct statusbar_t : public window_t {
     statusbar_t()
         : window_t(false)
         , frames(0)
-        , colorPair(0)
     {
     }
 
@@ -28,15 +26,10 @@ struct statusbar_t : public window_t {
     void layout(int w, int h) override;
     void render() override;
     void renderLine(const char* line, int offsetX = 0);
-    bool tick(int tick);
+    void update(int tick);
 
     int frames; // x mseconds from last kbhit (corresponds to kbhit timeout)
     std::string prevStatus;
-
-    theme_ptr theme;
-    int colorPair;
 };
-
-void renderStatus(struct statusbar_t& statusbar);
 
 #endif // STATUSBAR_H

@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "extension.h"
-#include "theme.h"
 #include "window.h"
 
 struct fileitem_t {
@@ -35,7 +34,6 @@ struct explorer_t : public window_t {
 
     explorer_t()
         : window_t(true)
-        , colorPair(0)
         , currentItem(-1)
     {
         focusable = true;
@@ -48,15 +46,10 @@ struct explorer_t : public window_t {
     void renderLine(const char* line);
     void setRootFromFile(std::string path);
 
-    theme_ptr theme;
-    int colorPair;
-
     fileitem_t files;
     std::vector<struct fileitem_t*> renderList;
 
     int currentItem;
 };
-
-void renderExplorer(struct explorer_t& explorer);
 
 #endif // EXPLORER_H

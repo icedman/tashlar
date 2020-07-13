@@ -7,7 +7,6 @@
 
 #include "extension.h"
 #include "editor.h"
-#include "theme.h"
 #include "window.h"
 
 struct tabitem_t {
@@ -23,21 +22,15 @@ struct tabbar_t: public window_t {
 
     tabbar_t()
         : window_t(true)
-        , colorPair(0)
     {
     }
 
     bool processCommand(command_e cmd, char ch) override;
     void layout(int w, int h) override;
     void render() override;
-    void renderLine(const char* line);
+    void renderLine(const char* line, int& offsetX);
     
-    theme_ptr theme;
-    int colorPair;
-
     std::vector<struct tabitem_t> tabs;
 };
-
-void renderTabbar(struct tabbar_t& tabbar);
 
 #endif // TABBAR_H

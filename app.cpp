@@ -1,8 +1,10 @@
 #include <curses.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+#include <cstring>
 
 #include "app.h"
 #include "editor.h"
@@ -11,6 +13,7 @@
 #include "explorer.h"
 #include "gutter.h"
 #include "tabbar.h"
+#include "minimap.h"
 #include "statusbar.h"
 
 #include "extension.h"
@@ -90,7 +93,7 @@ app_t::app_t()
     , statusbar(0)
     , gutter(0)
     , explorer(0)
-    , refreshLoop(0)
+    , buffer(0)
 {
     appInstance = this;
 
@@ -99,14 +102,44 @@ app_t::app_t()
     showTabbar = false;
     showGutter = false;
     showSidebar = false;
+    showMinimap = false;
+
+    initLog();
 }
 
+app_t::~app_t()
+{
+    free(buffer);
+}
+    
 struct app_t* app_t::instance()
 {
     return appInstance;
 }
 
-void app_t::iniLog()
+void app_t::layout()
+{
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    width = w.ws_col;
+    height = w.ws_row;
+    for (auto window : windows) {
+        window->layout(w.ws_col, w.ws_row);
+    }
+}
+
+bool app_t::processCommand(command_e cmd, char ch)
+{
+    bool handled = false;
+    for (auto window : windows) {
+        if ((handled = window->processCommand(cmd, ch))) {
+            break;
+        }
+    }
+    return handled;
+}
+    
+void app_t::initLog()
 {
     FILE* log_file = fopen("/tmp/ashlar.log", "w");
     fclose(log_file);
@@ -212,7 +245,11 @@ void app_t::configure(int argc, char** argv)
     if (settings.isMember("tabbar")) {
         showTabbar = settings["tabbar"].asBool();
     }
+    if (settings.isMember("mini_map")) {
+        showMinimap =  settings["mini_map"].asBool();
+    }
 
+    minimap->theme = theme;
     statusbar->theme = theme;
     gutter->theme = theme;
     explorer->theme = theme;
@@ -223,6 +260,7 @@ void app_t::applyColors()
     style_t s = theme->styles_for_scope("comment");
     statusbar->colorPair = pairForColor(s.foreground.index, false);
     gutter->colorPair = pairForColor(s.foreground.index, false);
+    minimap->colorPair = pairForColor(s.foreground.index, false);
 }
 
 editor_ptr app_t::openEditor(std::string path)
@@ -254,7 +292,6 @@ editor_ptr app_t::openEditor(std::string path)
 
 void app_t::refresh()
 {
-    refreshLoop = 2;
 }
 
 void app_t::close()

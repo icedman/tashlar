@@ -12,17 +12,22 @@
 
 struct statusbar_t;
 struct gutter_t;
+struct tabbar_t;
+struct explorer_t;
+struct minimap_t;
 
 struct app_t {
 
     app_t();
+    ~app_t();
 
     static app_t* instance();
 
     struct statusbar_t* statusbar;
-    struct tabbar_t* tabbar;
-    struct gutter_t* gutter;
     struct explorer_t* explorer;
+    struct tabbar_t* tabbar;
+    struct window_t* gutter;
+    struct window_t* minimap;
     struct window_t* focused;
 
     std::vector<editor_ptr> editors;
@@ -30,7 +35,6 @@ struct app_t {
 
     std::vector<command_e> commandBuffer;
     std::string inputBuffer;
-    int refreshLoop;
     
     std::string clipBoard;
 
@@ -44,18 +48,27 @@ struct app_t {
     bool showGutter;
     bool showTabbar;
     bool showSidebar;
+    bool showMinimap;
 
     void configure(int argc, char** argv);
     void setupColors();
     void applyColors();
     void close();
     void refresh();
-    
+    void layout();
+    bool processCommand(command_e cmd, char ch);
+        
     // log
-    static void iniLog();
+    static void initLog();
     static void log(const char* format, ...);
 
     editor_ptr openEditor(std::string path);
+
+    std::vector<struct window_t*> windows;
+    int width;
+    int height;
+    char *buffer;
+    size_t bufferSize;
 };
 
 int pairForColor(int colorIdx, bool selected);

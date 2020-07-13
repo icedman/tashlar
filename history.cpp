@@ -29,20 +29,20 @@ void history_t::addInsert(struct cursor_t& cur, std::string t)
 {
     editBatch.push_back({ .cursor = cur,
         .text = t,
-        .edit = cursor_edit_e::EDIT_INSERT });
+        .edit = EDIT_INSERT });
 }
 
 void history_t::addDelete(struct cursor_t& cur, int c)
 {
     editBatch.push_back({ .cursor = cur,
         .count = c,
-        .edit = cursor_edit_e::EDIT_DELETE });
+        .edit = EDIT_DELETE });
 }
 
 void history_t::addSplit(struct cursor_t& cur)
 {
     editBatch.push_back({ .cursor = cur,
-        .edit = cursor_edit_e::EDIT_SPLIT });
+        .edit = EDIT_SPLIT });
 }
 
 void history_t::addPasteBuffer(struct cursor_t& cur, std::shared_ptr<document_t> buffer)
@@ -51,7 +51,7 @@ void history_t::addPasteBuffer(struct cursor_t& cur, std::shared_ptr<document_t>
     mark();
 
     editBatch.push_back({ .cursor = cur,
-        .edit = cursor_edit_e::EDIT_PASTE_BUFFER,
+        .edit = EDIT_PASTE_BUFFER,
         .buffer = buffer });
 }
 

@@ -6,6 +6,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include <unicode/utf8.h>
+
 #include "app.h"
 #include "editor.h"
 #include "explorer.h"
@@ -45,10 +47,11 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
     if (!line) {
         return;
     }
-
     std::vector<struct cursor_t>* cursors = &document.cursors;
 
     bool hasFocus = isFocused();
+
+    struct blockdata_t* blockData = block->data.get();
 
     int colorPair = color_pair_e::NORMAL;
     int colorPairSelected = color_pair_e::SELECTED;
@@ -69,89 +72,76 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
         if (c == '\t') {
             c = ' ';
         }
-
-        if (block && cursors) {
-            int rpos = idx - 1;
-            int pos = block->position + idx - 1;
-            int colorIdx = -1;
-
-            // syntax here
-            if (block && block->data) {
-                struct blockdata_t* blockData = block->data.get();
-                for (auto span : blockData->spans) {
-                    if (rpos + wrapOffset >= span.start && rpos + wrapOffset < span.start + span.length) {
-                        colorPair = pairForColor(span.colorIndex, false);
-                        colorPairSelected = pairForColor(span.colorIndex, true);
-                        break;
-                    }
+        
+        int rpos = idx - 1;
+        int pos = block->position + idx - 1;
+        int colorIdx = -1;
+        
+        // syntax here
+        if (block && block->data) {
+            for (auto span : blockData->spans) {
+                if (rpos + wrapOffset >= span.start && rpos + wrapOffset < span.start + span.length) {
+                    colorPair = pairForColor(span.colorIndex, false);
+                    colorPairSelected = pairForColor(span.colorIndex, true);
+                    break;
                 }
             }
+        }
 
-            // selection
-            bool firstCursor = true;
-            for (auto cur : *cursors) {
+        // selection
+        bool firstCursor = true;
+        for (auto cur : *cursors) {
+            if (firstCursor) {
+                if (pos + 1 == cur.position - wrapOffset) {
+                    cursorScreenX = x + 1;
+                    cursorScreenY = offsetY;
+                }
+                if (pos == cur.position - wrapOffset) {
+                    cursorScreenX = x;
+                    cursorScreenY = offsetY;
+                }
+            }
+            if (pos == cur.position - wrapOffset && hasFocus) {
                 if (firstCursor) {
-                    if (pos + 1 == cur.position - wrapOffset) {
-                        cursorScreenX = x + 1;
-                        cursorScreenY = offsetY;
-                    }
-                    if (pos == cur.position - wrapOffset) {
-                        cursorScreenX = x;
-                        cursorScreenY = offsetY;
+                    wattron(win, A_REVERSE);
+                } else {
+                    if (cur.hasSelection()) {
+                        wattron(win, A_UNDERLINE);
                     }
                 }
-                if (pos == cur.position - wrapOffset && hasFocus) {
-                    if (firstCursor) {
-                        wattron(win, A_REVERSE);
-                    } else {
-                        if (cur.hasSelection()) {
-                            wattron(win, A_UNDERLINE);
-                        }
-                    }
-                    if (colorIdx != -1) {
-                        colorPair = 0;
-                    }
-                    colorPair = colorPairSelected;
+                if (colorIdx != -1) {
+                    colorPair = 0;
                 }
-                firstCursor = false;
+                colorPair = colorPairSelected;
+            }
+            firstCursor = false;
 
-                if (!cur.hasSelection()) {
-                    continue;
-                }
-                size_t startSel = cur.anchorPosition;
-                size_t endSel = cur.position;
-                if (startSel > endSel) {
-                    startSel = cur.position + 1;
-                    endSel = cur.anchorPosition + 1;
-                }
-                if (pos >= startSel - wrapOffset && pos < endSel - wrapOffset) {
-                    colorPair = colorPairSelected;
-                }
+            if (!cur.hasSelection()) {
+                continue;
+            }
+            size_t startSel = cur.anchorPosition;
+            size_t endSel = cur.position;
+            if (startSel > endSel) {
+                startSel = cur.position + 1;
+                endSel = cur.anchorPosition + 1;
+            }
+            if (pos >= startSel - wrapOffset && pos < endSel - wrapOffset) {
+                colorPair = colorPairSelected;
             }
         }
 
         wattron(win, COLOR_PAIR(colorPair));
 
         if (!isprint(c)) {
-            // app_t::instance()->log("%d", c);
-            /*
-            if (c < 0) {
-                char *cptr = (char*)&line[idx-1];
-                const cchar_t cc = { .attr=0, .ext_color=0 };
-                wchar_t *wc = L"X";
-                memcpy((void*)&cc.chars, wc, sizeof(wchar_t));
-                // memcpy((void*)&cc.chars, cptr, sizeof(char)*3);
-                // write(STDOUT_FILENO, cptr, 1);
-                wadd_wch(win, &cc);
-                // waddch(win, c);
-            } else {
-            */
+            // if (c < 0) {
+            // todo.. learn utf-8 read utf8.h
+            // }
             c = '?';
             waddch(win, c);
         } else {
             waddch(win, c);
         }
-
+        
         wattroff(win, COLOR_PAIR(colorPair));
         wattroff(win, A_REVERSE);
         wattroff(win, A_UNDERLINE);
@@ -174,12 +164,8 @@ static void setFormatFromStyle(size_t start, size_t length, style_t& style, cons
                 span_info_t span = {
                     .start = s,
                     .length = i - s + 1,
-                    .red = style.foreground.red * 255,
-                    .green = style.foreground.green * 255,
-                    .blue = style.foreground.blue * 255
+                    .colorIndex = style.foreground.index
                 };
-
-                span.colorIndex = style.foreground.index;
                 blockData->spans.push_back(span);
             }
             s = -1;
@@ -205,6 +191,7 @@ void editor_t::highlightBlock(struct block_t& block)
     std::string text = block.text();
 
     struct blockdata_t* blockData = block.data.get();
+    
     block_state_e previousBlockState = BLOCK_STATE_UNKNOWN;
 
     std::string str = text;
@@ -343,20 +330,18 @@ void editor_t::render()
 
 void editor_t::renderCursor()
 {
-    /*
     struct document_t* doc = &document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
 
     if (block.isValid()) {
         wmove(win, cursorScreenY, cursorScreenX);
-        app_t::instance()->log("%d %d", cursorScreenY, cursorScreenX);
+        curs_set(1);
+        // app_t::instance()->log("%d %d", cursorScreenY, cursorScreenX);
     } else {
-        wmove(win, 0, 0);
+        curs_set(0);
     }
-    */
     // do our own blink?
-    curs_set(0);
 }
 
 void editor_t::layout(int w, int h)
@@ -366,23 +351,28 @@ void editor_t::layout(int w, int h)
     viewWidth = w;
     viewHeight = h;
 
-    if (app_t::instance()->showStatusBar) {
-        viewHeight -= app_t::instance()->statusbar->viewHeight;
+    struct app_t *app = app_t::instance();
+    if (app->showStatusBar) {
+        viewHeight -= app->statusbar->viewHeight;
     }
-    if (app_t::instance()->showSidebar) {
-        int explorerWidth = app_t::instance()->explorer->viewWidth;
+    if (app->showSidebar) {
+        int explorerWidth = app->explorer->viewWidth;
         viewWidth -= explorerWidth;
         viewX += explorerWidth;
     }
-    if (app_t::instance()->showTabbar) {
-        int tabbarHeight = app_t::instance()->tabbar->viewHeight;
+    if (app->showTabbar) {
+        int tabbarHeight = app->tabbar->viewHeight;
         viewHeight -= tabbarHeight;
         viewY += tabbarHeight;
     }
-    if (app_t::instance()->showGutter) {
-        int gutterWidth = app_t::instance()->gutter->viewWidth;
+    if (app->showGutter) {
+        int gutterWidth = app->gutter->viewWidth;
         viewWidth -= gutterWidth;
         viewX += gutterWidth;
+    }
+    if (app->showMinimap) {
+        int minimapWidth = app->minimap->viewWidth;
+        viewWidth -= minimapWidth;
     }
 }
 
@@ -450,4 +440,11 @@ bool editor_t::processCommand(command_e cmd, char ch)
     }
 
     return processEditorCommand(cmd, ch);
+}
+
+void editor_t::update(int frames)
+{
+    if (isFocused()) {
+        renderCursor();
+    }
 }

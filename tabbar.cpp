@@ -20,12 +20,24 @@ static bool compareFile(struct tabitem_t& f1, struct tabitem_t& f2)
     
 void tabbar_t::render()
 {
+    if (!app_t::instance()->showTabbar) {
+        return;
+    }
+
+    if (!win) {
+        win = newwin(viewHeight, viewWidth, 0, 0);
+    }
+
+    mvwin(win, viewY, viewX);
+    wresize(win, viewHeight, viewWidth);
+
     struct app_t * app = app_t::instance();
+    bool hasFocus = isFocused();
     
     if (!tabs.size()) {
         for(auto e : app->editors) {
             struct tabitem_t item = {
-                .name = e->document.fileName,
+                .name = " " + e->document.fileName + " ",
                 .itemNumber = tabs.size(),
                 .width = e->document.fileName.length() + 2,
                 .editor = e
@@ -35,31 +47,51 @@ void tabbar_t::render()
         sort(tabs.begin(), tabs.end(), compareFile);
     }
 
-    wmove(win, 0,0);
-    for(int i=0;i<viewWidth;i++) {
-        waddch(win, ' ');
+    // compute
+    int x = 0;
+    int totalWidth = 0;
+    int currentTabX = 0;
+    int currentTabWidth = 0;
+    for(auto t : tabs) {
+        if (t.editor->id == app->currentEditor->id) {
+            currentTabX = x;
+            currentTabWidth = t.width;            
+        }
+        totalWidth += t.width;
+        x += t.width;
+    }
+
+    while (currentTabX + currentTabWidth + 1 - scrollX > viewWidth) {
+        scrollX++;
+    }
+    while (scrollX > 0 && currentTabX - scrollX <= 0) {
+        scrollX--;
     }
     
-    wmove(win, 0,4);
+    int offsetX = scrollX;
+    wmove(win, 0,0);
+    wclrtoeol(win);
     for(auto t : tabs) {
-        std::string name = " ";
-        name += t.name;
-        name += " ";
-
         if (t.editor->id == app->currentEditor->id) {
-            wattron(win, A_REVERSE);
+            wattron(win, hasFocus ? A_REVERSE : A_BOLD);
         }
         
-        renderLine(name.c_str());
+        renderLine(t.name.c_str(), offsetX);
         wattroff(win, A_REVERSE);
+        wattroff(win, A_BOLD);
     }
+
+    wrefresh(win);
 }
 
-void tabbar_t::renderLine(const char* line)
+void tabbar_t::renderLine(const char* line, int& offsetX)
 {
     char c;
     int idx = 0;
     while ((c = line[idx++])) {
+        if (offsetX-- > 0) {
+            continue;
+        }
         waddch(win, c);
     }
 }
@@ -86,24 +118,51 @@ void tabbar_t::layout(int w, int h)
     }
 }
 
-void renderTabbar(struct tabbar_t& tabbar)
-{
-    if (!app_t::instance()->showTabbar) {
-        return;
-    }
-
-    if (!tabbar.win) {
-        tabbar.win = newwin(tabbar.viewHeight, tabbar.viewWidth, 0, 0);
-    }
-
-    mvwin(tabbar.win, tabbar.viewY, tabbar.viewX);
-    wresize(tabbar.win, tabbar.viewHeight, tabbar.viewWidth);
-    
-    tabbar.render();
-}
-
 bool tabbar_t::processCommand(command_e cmd, char ch)
-{
+{    
+    // proceed only if got focus
+    if (app_t::instance()->focused->id != id) {
+        return false;
+    }
+
+    struct app_t * app = app_t::instance();
+    
+    switch(cmd) {
+    case CMD_MOVE_CURSOR_LEFT:
+    case CMD_MOVE_CURSOR_RIGHT: {
+        std::vector<struct tabitem_t>::iterator it = tabs.begin();
+        std::vector<struct tabitem_t>::iterator prev = it;
+        std::vector<struct tabitem_t>::iterator next = it;
+        while(it != tabs.end()) {
+            if (it != tabs.begin()) {
+                prev = it-1;
+            }
+            if (it + 1 != tabs.end()) {
+                next = it+1;
+            }
+            if (it->editor->id == app->currentEditor->id) {
+                if (cmd == CMD_MOVE_CURSOR_LEFT) {
+                    it = prev;
+                } else {
+                    it = next;
+                }
+                if (it != tabs.end()) {
+                    app->openEditor(it->editor->document.fullPath);
+                    app->focused = this;
+                }
+                return true;
+            }
+            it++;
+        }
+        break;
+    };  
+    case CMD_ENTER:
+    case CMD_MOVE_CURSOR_DOWN:
+        app->focused = app->currentEditor.get();
+        return true;
+    default:
+        break;
+    }
+    
     return false;
 }
-    

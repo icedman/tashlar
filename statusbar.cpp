@@ -35,6 +35,67 @@ void statusbar_t::setStatus(std::string s, int f)
 
 void statusbar_t::render()
 {
+    if (!app_t::instance()->showStatusBar) {
+        return;
+    }
+
+    struct editor_t* editor = app_t::instance()->currentEditor.get();
+    struct document_t* doc = &editor->document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
+
+    if (!win) {
+        win = newwin(viewHeight, viewWidth, 0, 0);
+    }
+
+    mvwin(win, viewY, viewX);
+    wresize(win, viewHeight, viewWidth);
+
+    static char tmp[512];
+    sprintf(tmp, "Line: %d Col: %d",
+        1 + (int)(block.lineNumber),
+        1 + (int)(cursor.position - block.position));
+
+    setText(doc->fileName, 0);
+    setText(tmp, -2);
+    if (editor->lang) {
+        setText(editor->lang->id, -1);
+    } else {
+        setText("", -1);
+    }
+
+    //-----------------
+    // render the bar
+    //-----------------
+    wattron(win, COLOR_PAIR(colorPair));
+    wmove(win, 0, 0);
+
+    // wclrtoeol(win);
+    for (int i = 0; i < viewWidth; i++) {
+        waddch(win, ' ');
+    }
+
+    wmove(win, 0, 0);
+
+    int offset = 2;
+    if (status.length()) {
+        renderLine(status.c_str(), offset);
+    } else {
+        for (auto s : start) {
+            renderLine(s.c_str(), offset);
+            offset += s.length() + 2;
+        }
+    }
+
+    offset = 2;
+    for (auto s : end) {
+        offset += s.length();
+        renderLine(s.c_str(), viewWidth - offset);
+        offset += 2;
+    }
+    wattroff(win, COLOR_PAIR(colorPair));
+
+    wrefresh(win);
 }
 
 void statusbar_t::renderLine(const char* line, int offsetX)
@@ -47,22 +108,25 @@ void statusbar_t::renderLine(const char* line, int offsetX)
     }
 }
 
-bool statusbar_t::tick(int tick)
+void statusbar_t::update(int tick)
 {
+    if (!app_t::instance()->showStatusBar) {
+        return;
+    }
+    
     if (frames < 0) {
-        return false;
+        return;
     }
 
     frames = frames - tick;
-
     if (frames < 500) {
         status = "";
-        return true;
     }
 
-    bool res = prevStatus != status;
+    if (prevStatus != status) {
+        render();
+    }
     prevStatus = status;
-    return res;
 }
 
 void statusbar_t::layout(int w, int h)
@@ -77,65 +141,3 @@ void statusbar_t::layout(int w, int h)
     viewHeight = 1;
 }
 
-void renderStatus(struct statusbar_t& statusbar)
-{
-    if (!app_t::instance()->showStatusBar) {
-        return;
-    }
-
-    struct editor_t* editor = app_t::instance()->currentEditor.get();
-    struct document_t* doc = &editor->document;
-    struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
-
-    if (!statusbar.win) {
-        statusbar.win = newwin(statusbar.viewHeight, statusbar.viewWidth, 0, 0);
-    }
-
-    mvwin(statusbar.win, statusbar.viewY, statusbar.viewX);
-    wresize(statusbar.win, statusbar.viewHeight, statusbar.viewWidth);
-
-    static char tmp[512];
-    sprintf(tmp, "Line: %d Col: %d",
-        1 + (int)(block.lineNumber),
-        1 + (int)(cursor.position - block.position));
-
-    statusbar.setText(doc->fileName, 0);
-    statusbar.setText(tmp, -2);
-    if (editor->lang) {
-        statusbar.setText(editor->lang->id, -1);
-    } else {
-        statusbar.setText("", -1);
-    }
-
-    //-----------------
-    // render the bar
-    //-----------------
-    wattron(statusbar.win, COLOR_PAIR(statusbar.colorPair));
-    wmove(statusbar.win, 0, 0);
-
-    // wclrtoeol(win);
-    for (int i = 0; i < statusbar.viewWidth; i++) {
-        waddch(statusbar.win, ' ');
-    }
-
-    wmove(statusbar.win, 0, 0);
-
-    int offset = 2;
-    if (statusbar.status.length()) {
-        statusbar.renderLine(statusbar.status.c_str(), offset);
-    } else {
-        for (auto s : statusbar.start) {
-            statusbar.renderLine(s.c_str(), offset);
-            offset += s.length() + 2;
-        }
-    }
-
-    offset = 2;
-    for (auto s : statusbar.end) {
-        offset += s.length();
-        statusbar.renderLine(s.c_str(), statusbar.viewWidth - offset);
-        offset += 2;
-    }
-    wattroff(statusbar.win, COLOR_PAIR(statusbar.colorPair));
-}

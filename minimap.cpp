@@ -4,16 +4,26 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include <cstring>
+
 #include "app.h"
 #include "editor.h"
 #include "explorer.h"
-#include "gutter.h"
+#include "minimap.h"
 #include "tabbar.h"
 #include "statusbar.h"
 
-void gutter_t::render()
+#include "dots.h"
+
+#define MINIMAP_WIDTH 10
+
+minimap_t::minimap_t()
+        : window_t(false)
+{}
+
+void minimap_t::render()
 {
-    if (!app_t::instance()->showGutter) {
+    if (!app_t::instance()->showMinimap) {
         return;
     }
 
@@ -22,11 +32,6 @@ void gutter_t::render()
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
 
-    if (app_t::instance()->showSidebar) {
-        int explorerWidth = app_t::instance()->explorer->viewWidth;
-        viewX += explorerWidth;
-    }
-
     if (!win) {
         win = newwin(viewHeight, viewWidth, 0, 0);
     }
@@ -34,24 +39,26 @@ void gutter_t::render()
     mvwin(win, viewY, viewX);
     wresize(win, viewHeight, viewWidth);
 
-    wmove(win, 0, 0);
-
     int offsetY = editor->scrollY;
     int currentLine = block.lineNumber;
 
-    //-----------------
-    // render the gutter
-    //-----------------
+    int wc = 0;
+    wc = buildUpDots(wc, 0, 1, 1);
+    wc = buildUpDots(wc, 3, 1, 1);
+    
     // todo: jump to first visible block
     int y = 0;
-    for (auto& b : doc->blocks) {
+    for(int idx=0; idx<doc->blocks.size(); idx++) {
+        auto& b = doc->blocks[idx];
         if (offsetY > 0) {
             offsetY -= b.lineCount;
             continue;
         }
 
         std::string lineNo = std::to_string(1 + b.lineNumber);
-        int x = viewWidth - (lineNo.length() + 1);
+        std::string t = b.text();
+        char *line = (char*)t.c_str();
+        char *end = line + t.length();
 
         wattron(win, COLOR_PAIR(colorPair));
         wmove(win, y, 0);
@@ -61,8 +68,28 @@ void gutter_t::render()
             wattron(win, A_BOLD);
         }
 
-        wmove(win, y, x);
-        renderLine(lineNo.c_str());
+        struct blockdata_t *data = b.data.get();
+        if (data) {
+            for(int j=0; j<b.length && line < end; j++) {
+                char c = *line;
+                if (c != ' ') {
+                    waddwstr(win, dotsFromChar(wc));
+                } else {
+                    waddch(win, ' ');
+                }
+                if (j > viewWidth) {
+                    break;
+                }
+                for(int k=0;k<8;k++) {
+                    line++;
+                    if (line == end) {
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // renderLine(lineNo.c_str());
 
         wattroff(win, COLOR_PAIR(colorPair));
         wattroff(win, A_BOLD);
@@ -89,7 +116,7 @@ void gutter_t::render()
     wrefresh(win);
 }
 
-void gutter_t::renderLine(const char* line)
+void minimap_t::renderLine(const char* line)
 {
     char c;
     int idx = 0;
@@ -98,25 +125,18 @@ void gutter_t::renderLine(const char* line)
     }
 }
 
-void gutter_t::layout(int w, int h)
+void minimap_t::layout(int w, int h)
 {
-    if (!app_t::instance()->showGutter) {
+    if (!app_t::instance()->showMinimap) {
         viewWidth = 0;
         return;
     }
 
-    struct editor_t* editor = app_t::instance()->currentEditor.get();
-    struct document_t* doc = &editor->document;
+    int minimapWidth = MINIMAP_WIDTH;
 
-    int gutterWidth = 4;
-    int lineNoMax = std::to_string(doc->blocks.back().lineNumber).length() + 2;
-    if (lineNoMax > gutterWidth) {
-        gutterWidth = lineNoMax;
-    }
-
-    viewX = 0;
+    viewX = w - minimapWidth;
     viewY = 0;
-    viewWidth = gutterWidth;
+    viewWidth = minimapWidth;
     viewHeight = h;
     
     if (app_t::instance()->showStatusBar) {

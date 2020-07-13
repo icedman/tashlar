@@ -8,8 +8,14 @@ terminal version of the ashlar text editor
 * undo
 * textmate grammar support (json)
 * textmate themes support (json)
+* undo
+* utf-8
+
+# to improve
+* large file support
 
 # todo
+* redo
 * gutter
 * word wrap (layout)
 * file explorer

@@ -1,18 +1,19 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include "command.h"
 #include <curses.h>
+
+#include "command.h"
+#include "theme.h"
 
 struct window_t {
     window_t(bool focusable);
-    virtual void layout(int w, int h);
-    virtual void render();
+    virtual void layout(int w, int h) = 0;
+    virtual void update(int frames);
+    virtual void render() = 0;
     virtual void renderCursor();
     virtual bool processCommand(command_e cmd, char ch);
     virtual bool isFocused();
-
-    void scrollToCursor(int x, int y);
 
     int id;
     bool focusable;
@@ -25,6 +26,10 @@ struct window_t {
     int cursorScreenX;
     int cursorScreenY;
     WINDOW* win;
+
+    theme_ptr theme;
+    int colorPair;
+    int colorPairSelected;
 };
 
 #endif // WINDOW_H

@@ -1,23 +1,20 @@
-#ifndef GUTTER_H
-#define GUTTER_H
+#ifndef MINIMAP_H
+#define MINIMAP_H
 
 #include <curses.h>
 #include <string>
 #include <vector>
 
+#include "document.h"
 #include "extension.h"
 #include "window.h"
 
-struct gutter_t : public window_t {
+struct minimap_t : public window_t {
 
-    gutter_t()
-        : window_t(false)
-    {
-    }
-
+    minimap_t();
     void layout(int w, int h) override;
     void render() override;
     void renderLine(const char* line);
 };
 
-#endif // GUTTER_H
+#endif // MINIMAP_H

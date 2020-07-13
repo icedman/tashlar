@@ -57,7 +57,7 @@ void fileitem_t::setPath(std::string p)
     // app_t::instance()->log("--------------------");
     // app_t::instance()->log("name: %s", name.c_str());
     // app_t::instance()->log("path: %s", path.c_str());
-    app_t::instance()->log("path added: %s", fullPath.c_str());
+    // app_t::instance()->log("fullPath: %s", fullPath.c_str());
 }
 
 void fileitem_t::load(std::string p)
@@ -76,7 +76,13 @@ void fileitem_t::load(std::string p)
                 continue;
             }
             std::string filePath = ent->d_name;
-            std::string fullPath = path + filePath;
+            std::string fullPath = path + "/" + filePath;
+
+            size_t pos = fullPath.find("//");
+            if (pos != std::string::npos) {
+                fullPath.replace(fullPath.begin() + pos, fullPath.begin() + pos + 2, "/");
+            }
+
             std::shared_ptr<struct fileitem_t> file = std::make_shared<struct fileitem_t>(fullPath);
             file->isDirectory = ent->d_type == DT_DIR;
             file->canLoadMore = file->isDirectory;
@@ -110,6 +116,24 @@ void explorer_t::setRootFromFile(std::string path)
 
 void explorer_t::render()
 {
+    if (!app_t::instance()->showSidebar) {
+        return;
+    }
+
+    struct editor_t* editor = app_t::instance()->currentEditor.get();
+    struct document_t* doc = &editor->document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
+
+    if (!win) {
+        win = newwin(viewHeight, viewWidth, 0, 0);
+    }
+
+    mvwin(win, viewY, viewX);
+    wresize(win, viewHeight, viewWidth);
+
+    wmove(win, 0, 0);
+
     if (renderList.size() == 0) {
         buildRenderList(renderList, &files, 0);
     }
@@ -145,15 +169,16 @@ void explorer_t::render()
             continue;
         }
         wmove(win, y, 0);
-        // wclrtoeol(win);
+        wclrtoeol(win);
 
         if (hasFocus && currentItem == file->lineNumber) {
             wattron(win, A_REVERSE);
+            wattron(win, A_BOLD);
+            for(int i=0; i<viewWidth; i++) {
+                waddch(win, ' ');
+            }
         }
-
-        for(int i=0; i<viewWidth; i++) {
-            waddch(win, ' ');
-        }
+        
         wmove(win, y++, 0);
 
         char toggle = ' ';
@@ -170,6 +195,7 @@ void explorer_t::render()
         
         renderLine(file->name.c_str());
         wattroff(win, A_REVERSE);
+        wattroff(win, A_BOLD);
         if (y >= viewHeight) {
             break;
         }
@@ -182,6 +208,8 @@ void explorer_t::render()
             waddch(win, ' ');
         }
     }
+
+    wrefresh(win);
 }
 
 void explorer_t::renderLine(const char* line)
@@ -211,29 +239,6 @@ void explorer_t::layout(int w, int h)
 void explorer_t::renderCursor()
 {
     wmove(win, 0, 0);
-}
-
-void renderExplorer(struct explorer_t& explorer)
-{
-    if (!app_t::instance()->showSidebar) {
-        return;
-    }
-
-    struct editor_t* editor = app_t::instance()->currentEditor.get();
-    struct document_t* doc = &editor->document;
-    struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
-
-    if (!explorer.win) {
-        explorer.win = newwin(explorer.viewHeight, explorer.viewWidth, 0, 0);
-    }
-
-    mvwin(explorer.win, explorer.viewY, explorer.viewX);
-    wresize(explorer.win, explorer.viewHeight, explorer.viewWidth);
-
-    wmove(explorer.win, 0, 0);
-
-    explorer.render();
 }
 
 static struct fileitem_t *parentItem(struct fileitem_t* item, std::vector<struct fileitem_t*>& list)

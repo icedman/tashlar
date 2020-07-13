@@ -1,3 +1,4 @@
+#include <locale.h>
 #include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,16 +27,10 @@
 #include "gutter.h"
 #include "statusbar.h"
 #include "tabbar.h"
+#include "minimap.h"
 #include "window.h"
 
-void layoutWindows(std::vector<struct window_t*>& windows)
-{
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    for (auto window : windows) {
-        window->layout(w.ws_col, w.ws_row);
-    }
-}
+#include "dots.h"
 
 static void renderEditor(struct editor_t& editor)
 {
@@ -128,14 +123,19 @@ static void renderEditor(struct editor_t& editor)
         wmove(editor.win, y++, 0);
         wclrtoeol(editor.win);
     }
+
+    wrefresh(editor.win);
 }
 
 int main(int argc, char** argv)
-{
+{   
+    setlocale(LC_ALL, "");
+    
     struct editor_proxy_t _editor;
     struct tabbar_t tabbar;
     struct gutter_t gutter;
     struct statusbar_t statusbar;
+    struct minimap_t minimap;
     struct explorer_t explorer;
 
     struct app_t app;
@@ -143,14 +143,15 @@ int main(int argc, char** argv)
     app.gutter = &gutter;
     app.tabbar = &tabbar;
     app.explorer = &explorer;
+    app.minimap = &minimap;
 
-    std::vector<struct window_t*> windows;
-    windows.push_back(&statusbar);
-    windows.push_back(&explorer);
-    windows.push_back(&tabbar);
-    windows.push_back(&gutter);
-    windows.push_back(&_editor);
-
+    app.windows.push_back(&statusbar);
+    app.windows.push_back(&explorer);
+    app.windows.push_back(&tabbar);
+    app.windows.push_back(&gutter);
+    app.windows.push_back(&_editor);
+    app.windows.push_back(&minimap);
+    
     char* filename = 0;
     if (argc > 1) {
         filename = argv[argc - 1];
@@ -194,27 +195,14 @@ int main(int argc, char** argv)
         if (!disableRefresh) {
             doc->update();
 
-            layoutWindows(windows);
+            app.layout();
 
             curs_set(0);
-            renderExplorer(explorer);
-            renderTabbar(tabbar);
-            renderEditor(editor);
-            renderTabbar(tabbar);
-            renderGutter(gutter);
-            renderStatus(statusbar);
+            
+            renderEditor(editor);       
 
-            app.focused->renderCursor();
-
-            wrefresh(statusbar.win);
-            wrefresh(explorer.win);
-            wrefresh(tabbar.win);
-            wrefresh(editor.win);
-            wrefresh(gutter.win);
-
-            if (app.refreshLoop > 0) {
-                app.refreshLoop--;
-                continue;
+            for(int i=0; i<app.windows.size(); i++) {
+                app.windows[i]->render();
             }
         }
 
@@ -258,9 +246,9 @@ int main(int argc, char** argv)
             if (ch != -1) {
                 break;
             }
-
-            if (statusbar.tick(150)) {
-                break;
+            
+            for(int i=0; i<app.windows.size(); i++) {
+                app.windows[i]->update(150);
             }
 
             if (sequenceTick > 0 && (sequenceTick -= 150) < 0) {
@@ -297,11 +285,17 @@ int main(int argc, char** argv)
                 continue;
             }
             app.refresh();
-            break;
+            continue;
         case CMD_FOCUS_WINDOW_LEFT:
             app.focused = &explorer;
             continue;
         case CMD_FOCUS_WINDOW_RIGHT:
+            app.focused = app.currentEditor.get();
+            continue;
+        case CMD_FOCUS_WINDOW_UP:
+            app.focused = &tabbar;
+            continue;
+        case CMD_FOCUS_WINDOW_DOWN:
             app.focused = app.currentEditor.get();
             continue;
         case CMD_TOGGLE_EXPLORER:
@@ -323,12 +317,7 @@ int main(int argc, char** argv)
         //-------------------
         // update keystrokes on cursors
         //-------------------
-        bool commandHandled = false;
-        for (auto window : windows) {
-            if ((commandHandled = window->processCommand(cmd, ch))) {
-                break;
-            }
-        }
+        bool commandHandled = app.processCommand(cmd, ch);
         if (commandHandled || cmd == CMD_CANCEL) {
             continue;
         }
