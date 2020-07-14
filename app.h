@@ -6,6 +6,7 @@
 
 #include "command.h"
 #include "editor.h"
+#include "popup.h"
 #include "extension.h"
 #include "theme.h"
 #include "window.h"
@@ -15,6 +16,7 @@ struct gutter_t;
 struct tabbar_t;
 struct explorer_t;
 struct minimap_t;
+struct popup_t;
 
 struct app_t {
 
@@ -28,7 +30,10 @@ struct app_t {
     struct tabbar_t* tabbar;
     struct window_t* gutter;
     struct window_t* minimap;
+    struct window_t* popup;
     struct window_t* focused;
+
+    int refreshLoop;
 
     std::vector<editor_ptr> editors;
     editor_ptr currentEditor;
@@ -50,6 +55,19 @@ struct app_t {
     bool showSidebar;
     bool showMinimap;
 
+    // colors
+    int fg;
+    int bg;
+    int selFg;
+    int selBg;
+    int treeFg;
+    int treeBg;
+    int tabFg;
+    int tabBg;
+    int tabHoverFg;
+    int tabHoverBg;
+    int tabActiveBorder;
+
     void configure(int argc, char** argv);
     void setupColors();
     void applyColors();
@@ -67,8 +85,9 @@ struct app_t {
     std::vector<struct window_t*> windows;
     int width;
     int height;
-    char *buffer;
-    size_t bufferSize;
+
+    std::vector<std::string> excludeFiles;
+    std::vector<std::string> excludeFolders;
 };
 
 int pairForColor(int colorIdx, bool selected);

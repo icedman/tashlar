@@ -20,6 +20,7 @@ tashlar_files = [
     'history.cpp',
     'keybinding.cpp',
     'minimap.cpp',
+    'popup.cpp',
     'search.cpp',
     'statusbar.cpp',
     'tabbar.cpp',

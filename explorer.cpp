@@ -67,7 +67,10 @@ void fileitem_t::load(std::string p)
     }
    
     app_t::instance()->log("load %s", fullPath.c_str());
-    
+    std::vector<std::string>& excludeFiles = app_t::instance()->excludeFiles;
+    std::vector<std::string>& excludeFolders = app_t::instance()->excludeFolders;
+
+    int safety = 0;
     DIR* dir;
     struct dirent* ent;
     if ((dir = opendir(fullPath.c_str())) != NULL) {
@@ -75,6 +78,7 @@ void fileitem_t::load(std::string p)
             if (ent->d_name[0] == '.') {
                 continue;
             }
+
             std::string filePath = ent->d_name;
             std::string fullPath = path + "/" + filePath;
 
@@ -82,10 +86,34 @@ void fileitem_t::load(std::string p)
             if (pos != std::string::npos) {
                 fullPath.replace(fullPath.begin() + pos, fullPath.begin() + pos + 2, "/");
             }
-
             std::shared_ptr<struct fileitem_t> file = std::make_shared<struct fileitem_t>(fullPath);
             file->isDirectory = ent->d_type == DT_DIR;
             file->canLoadMore = file->isDirectory;
+
+            bool exclude = false;
+            if (file->isDirectory) {
+                for (auto pat : excludeFolders) {
+                    if (filePath == pat) {
+                        exclude = true;
+                        break;
+                    }
+                }
+            } else {
+                std::set<char> delims = { '.' };
+                std::vector<std::string> spath = split_path(filePath, delims);
+                std::string suffix = "*." + spath.back();
+                // app_t::instance()->log("%s", suffix)
+                for (auto pat : excludeFiles) {
+                    if (suffix == pat) {
+                        exclude = true;
+                        break;
+                    }
+                }
+            }
+
+            if (exclude) {
+                continue;
+            }
             files.emplace_back(file);
         }
         closedir(dir);
@@ -94,18 +122,25 @@ void fileitem_t::load(std::string p)
     sort(files.begin(), files.end(), compareFile);
 }
 
-static void buildRenderList(std::vector<struct fileitem_t*>& list, struct fileitem_t* files, int depth)
+static void buildFileList(std::vector<struct fileitem_t*>& list, struct fileitem_t* files, int depth, bool deep = false)
 {
     for (auto file : files->files) {
         file->depth = depth;
         file->lineNumber = list.size();
         list.push_back(file.get());
-        if (file->expanded) {
-            buildRenderList(list, file.get(), depth+1);
+        if (file->expanded || deep) {
+            buildFileList(list, file.get(), depth+1, deep);
         }
     }
 }
 
+std::vector<struct fileitem_t*> explorer_t::fileList()
+{
+    allFiles.clear();
+    buildFileList(allFiles, &files, 0, true);
+    return allFiles;
+}
+    
 void explorer_t::setRootFromFile(std::string path)
 {
     fileitem_t file;
@@ -135,16 +170,14 @@ void explorer_t::render()
     wmove(win, 0, 0);
 
     if (renderList.size() == 0) {
-        buildRenderList(renderList, &files, 0);
+        buildFileList(renderList, &files, 0);
     }
     
     bool hasFocus = isFocused();
-
     if (currentItem == -1) {
-        // find first opened file
         currentItem = 0;
     }
-
+    
     // scroll to cursor
     // TODO: use math not loops
     while (true) {
@@ -168,34 +201,56 @@ void explorer_t::render()
         if (skip-- > 0) {
             continue;
         }
+
+        int pair = colorPair;
         wmove(win, y, 0);
         wclrtoeol(win);
 
         if (hasFocus && currentItem == file->lineNumber) {
-            wattron(win, A_REVERSE);
-            wattron(win, A_BOLD);
+            if (hasFocus) {
+                // pair = colorPairSelected;
+                wattron(win, A_REVERSE);
+            } else {
+                wattron(win, A_BOLD);
+            }
             for(int i=0; i<viewWidth; i++) {
                 waddch(win, ' ');
             }
         }
-        
-        wmove(win, y++, 0);
 
-        char toggle = ' ';
+        int x = 0;
+        wmove(win, y++, 0);
+        wattron(win, COLOR_PAIR(pair));
         int indent = file->depth;
-        if (file->isDirectory) {
-            toggle = file->expanded ? '-' : '+';
-        }
-        
         for(int i=0; i<indent; i++) {
             waddch(win, ' ');
+            x++;
         }
-        waddch(win, toggle);
+        if (file->isDirectory) {
+            // waddch(win, file->expanded ? '-' : '+');
+            // waddwstr(win, L"\u276F"); // arrow
+            // waddwstr(win, L"\u2716"); // close
+            // waddwstr(win, file->expanded ? L"\u2303" : L"\u203A");
+            // waddwstr(win, file->expanded ? L"\u25B4" : L"\u25B8");
+            // waddwstr(win, file->expanded ? L"\u25B2" : L"\u25B6");
+            waddwstr(win, file->expanded ? L"\u2191" : L"\u2192");
+        } else {
+            // waddwstr(win, L"\u1F4C4");
+            waddch(win, ' ');
+        }
         waddch(win, ' ');
+        x+=2;
         
-        renderLine(file->name.c_str());
+        renderLine(file->name.c_str(), x);
+        
+        for(int i=0; i<viewWidth-x; i++) {
+            waddch(win, ' ');
+        }
+        
+        wattroff(win, COLOR_PAIR(pair));
         wattroff(win, A_REVERSE);
         wattroff(win, A_BOLD);
+        
         if (y >= viewHeight) {
             break;
         }
@@ -212,13 +267,13 @@ void explorer_t::render()
     wrefresh(win);
 }
 
-void explorer_t::renderLine(const char* line)
+void explorer_t::renderLine(const char* line, int &x)
 {
     char c;
     int idx = 0;
     while ((c = line[idx++])) {
         waddch(win, c);
-        if (idx >= viewWidth) {
+        if (++x >= viewWidth - 1) {
             break;
         }
     }
@@ -287,12 +342,12 @@ bool explorer_t::processCommand(command_e cmd, char ch)
         }
         return true;
     case CMD_MOVE_CURSOR_LEFT:
-        currentItem = parentItem(item, renderList)->lineNumber;
-        if (item->isDirectory) {
+        if (item->isDirectory && item->expanded) {
             item->expanded = false;
             renderList.clear();
             return true;
         }
+        currentItem = parentItem(item, renderList)->lineNumber;
         break;
     case CMD_MOVE_CURSOR_UP:
         currentItem--;

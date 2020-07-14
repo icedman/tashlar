@@ -47,6 +47,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
     if (!line) {
         return;
     }
+
     std::vector<struct cursor_t>* cursors = &document.cursors;
 
     bool hasFocus = isFocused();
@@ -101,7 +102,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
                     cursorScreenY = offsetY;
                 }
             }
-            if (pos == cur.position - wrapOffset && hasFocus) {
+            if (pos == cur.position - wrapOffset) {
                 if (firstCursor) {
                     wattron(win, A_REVERSE);
                 } else {
@@ -197,12 +198,29 @@ void editor_t::highlightBlock(struct block_t& block)
     std::string str = text;
     str += "\n";
 
+    //--------------
+    // free minimap line cache
+    //--------------
+    for(int i=0;i<4;i++) {
+        int ln = block.lineNumber-4+i;
+        if (ln < 0) continue;
+        struct block_t &pb = block.document->blocks[ln];
+        if (pb.data && pb.data->dots) {
+            free(pb.data->dots);
+            pb.data->dots = 0;
+        }
+    }
+
+    //--------------
+    // call the grammar parser
+    //--------------
     bool firstLine = true;
     parse::stack_ptr parser_state = NULL;
     std::map<size_t, scope::scope_t> scopes;
     blockData->scopes.clear();
     blockData->spans.clear();
 
+    
     const char* first = str.c_str();
     const char* last = first + text.length() + 1;
 
@@ -225,8 +243,12 @@ void editor_t::highlightBlock(struct block_t& block)
         firstLine = true;
     }
 
-    parser_state = parse::parse(first, last, parser_state, scopes, firstLine);
-
+    if (text.length() > 500) {
+        // too long to parse
+    } else {
+        parser_state = parse::parse(first, last, parser_state, scopes, firstLine);
+    }
+    
     std::string prevScopeName;
     size_t si = 0;
     size_t n = 0;
@@ -330,6 +352,7 @@ void editor_t::render()
 
 void editor_t::renderCursor()
 {
+    /*
     struct document_t* doc = &document;
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
@@ -341,6 +364,8 @@ void editor_t::renderCursor()
     } else {
         curs_set(0);
     }
+    */
+    curs_set(0);
     // do our own blink?
 }
 

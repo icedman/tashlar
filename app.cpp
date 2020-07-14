@@ -25,7 +25,7 @@ static struct app_t* appInstance = 0;
 
 static std::map<int, int> colorMap;
 
-#define SELECTED_OFFSET 1000
+#define SELECTED_OFFSET 500
 
 int pairForColor(int colorIdx, bool selected)
 {
@@ -35,6 +35,34 @@ int pairForColor(int colorIdx, bool selected)
     return colorMap[colorIdx + (selected ? SELECTED_OFFSET : 0)];
 }
 
+static color_info_t color(int r, int g, int b)
+{
+    color_info_t c(r,g,b);
+    c.index = color_info_t::nearest_color_index(c.red, c.green, c.blue);
+    return c;
+}
+    
+static color_info_t lighter(color_info_t p, int x)
+{
+    color_info_t c;
+    c.red = p.red + x;
+    c.green = p.green + x;
+    c.blue = p.blue + x;
+    if (c.red > 255) c.red = 255;
+    if (c.green > 255) c.green = 255;
+    if (c.blue > 255) c.blue = 255;
+    if (c.red < 0) c.red = 0;
+    if (c.green < 0) c.green = 0;
+    if (c.blue < 0) c.blue = 0;
+    c.index = color_info_t::nearest_color_index(c.red, c.green, c.blue); 
+    return c;
+}
+
+static color_info_t darker(color_info_t c, int x)
+{
+    return lighter(c, -x);
+}
+      
 void app_t::setupColors()
 {
     colorMap.clear();
@@ -42,10 +70,23 @@ void app_t::setupColors()
     style_t s = theme->styles_for_scope("default");
     std::cout << theme->colorIndices.size() << " colors used" << std::endl;
 
-    int bg = -1;
-    int fg = color_info_t::nearest_color_index(250, 250, 250);
-    int selBg = color_info_t::nearest_color_index(250, 250, 250);
-    int selFg = color_info_t::nearest_color_index(50, 50, 50);
+    color_info_t colorFg = color(250, 250, 250);
+    color_info_t colorSelBg = color(250, 250, 250);
+    color_info_t colorSelFg= color(50, 50, 50);
+    if (theme->colorIndices.find(colorFg.index) == theme->colorIndices.end()) {
+        theme->colorIndices.emplace(colorFg.index, colorFg);
+    }
+    if (theme->colorIndices.find(colorSelBg.index) == theme->colorIndices.end()) {
+        theme->colorIndices.emplace(colorSelBg.index, colorSelBg);
+    }
+    if (theme->colorIndices.find(colorSelFg.index) == theme->colorIndices.end()) {
+        theme->colorIndices.emplace(colorSelFg.index, colorSelFg);
+    }
+        
+    bg = -1;
+    fg = colorFg.index;
+    selBg = colorSelBg.index;
+    selFg = colorSelFg.index;
     color_info_t clr;
     theme->theme_color("editor.background", clr);
     if (!clr.is_blank()) {
@@ -59,18 +100,74 @@ void app_t::setupColors()
     if (!s.foreground.is_blank()) {
         fg = s.foreground.index;
     }
+    
     theme->theme_color("editor.selectionBackground", clr);
     if (!clr.is_blank()) {
         selBg = clr.index;
     }
 
+    //----------
+    // tree
+    //----------
+    treeFg = fg;
+    treeBg = bg;
+    theme->theme_color("list.activeSelectionBackground", clr);
+    if (!clr.is_blank()) {
+        treeBg = clr.index;
+    }
+    theme->theme_color("list.activeSelectionForeground", clr);
+    if (!clr.is_blank()) {
+        treeFg = clr.index;
+    }
+
+    //----------
+    // tab
+    //----------
+    theme->theme_color("tab.activeBackground", clr);
+    if (!clr.is_blank()) {
+        tabBg = clr.index;
+    }
+    theme->theme_color("tab.activeForeground", clr);
+    if (!clr.is_blank()) {
+        tabFg = clr.index;
+    }
+    // theme->theme_color("tab.inactiveBackground", clr);
+    // theme->theme_color("tab.inactiveForeground", clr);
+
+    tabHoverFg = fg;
+    tabHoverBg = bg;
+    theme->theme_color("tab.hoverBackground", clr);
+    if (!clr.is_blank()) {
+        tabHoverFg = clr.index;
+    }
+    theme->theme_color("tab.hoverForeground", clr);
+    if (!clr.is_blank()) {
+        tabHoverBg = clr.index;
+    }
+    tabActiveBorder = fg;
+    theme->theme_color("tab.activeBorderTop", clr);
+    if (!clr.is_blank()) {
+        tabActiveBorder = clr.index;
+    }
+
+    //----------
+    // statusbar
+    //----------
+    // theme->theme_color("statusBar.background", clr);
+    // theme->theme_color("statusBar.foreground", clr);
+    
+    app_t::instance()->log("%d registered colors", theme->colorIndices.size());
+
+    //---------------
+    // build the color pairs
+    //---------------
     use_default_colors();
     start_color();
 
     int idx = 32;
     init_pair(color_pair_e::NORMAL, fg, bg);
     init_pair(color_pair_e::SELECTED, selFg, selBg);
-
+    
     auto it = theme->colorIndices.begin();
     while (it != theme->colorIndices.end()) {
         colorMap[it->first] = idx;
@@ -88,12 +185,35 @@ void app_t::setupColors()
     applyColors();
 }
 
+void app_t::applyColors()
+{
+    style_t comment = theme->styles_for_scope("comment");
+    statusbar->colorPair = pairForColor(comment.foreground.index, false);
+    gutter->colorPair = pairForColor(comment.foreground.index, false);
+    minimap->colorPair = pairForColor(comment.foreground.index, false);
+    minimap->colorPairIndicator = pairForColor(tabActiveBorder, false);
+
+    tabbar->colorPair = pairForColor(comment.foreground.index, false);
+    tabbar->colorPairIndicator = pairForColor(tabActiveBorder, false);
+    explorer->colorPair = pairForColor(comment.foreground.index, false);
+    explorer->colorPairIndicator = pairForColor(tabActiveBorder, false);
+    
+    popup->colorPair = pairForColor(comment.foreground.index, false);
+    popup->colorPairIndicator = pairForColor(tabActiveBorder, false);
+    
+    // tabbar->colorPair = pairForColor(tabFg, false);
+    // tabbar->colorPairSelected = pairForColor(tabHoverFg, true);
+    // tabbar->colorPairIndicator = pairForColor(tabActiveBorder, false);
+    // explorer->colorPair = pairForColor(treeFg, false);
+    // explorer->colorPairSelected = pairForColor(treeFg, true);
+}
+
 app_t::app_t()
     : lineWrap(false)
     , statusbar(0)
     , gutter(0)
     , explorer(0)
-    , buffer(0)
+    , refreshLoop(0)
 {
     appInstance = this;
 
@@ -109,7 +229,6 @@ app_t::app_t()
 
 app_t::~app_t()
 {
-    free(buffer);
 }
     
 struct app_t* app_t::instance()
@@ -253,14 +372,24 @@ void app_t::configure(int argc, char** argv)
     statusbar->theme = theme;
     gutter->theme = theme;
     explorer->theme = theme;
-}
 
-void app_t::applyColors()
-{
-    style_t s = theme->styles_for_scope("comment");
-    statusbar->colorPair = pairForColor(s.foreground.index, false);
-    gutter->colorPair = pairForColor(s.foreground.index, false);
-    minimap->colorPair = pairForColor(s.foreground.index, false);
+    //---------------
+
+    Json::Value file_exclude_patterns = settings["file_exclude_patterns"];
+    if (file_exclude_patterns.isArray() && file_exclude_patterns.size()) {
+        for (int j = 0; j < file_exclude_patterns.size(); j++) {
+            std::string pat = file_exclude_patterns[j].asString();
+            excludeFiles.push_back(pat);
+        }
+    }
+
+    Json::Value folder_exclude_patterns = settings["folder_exclude_patterns"];
+    if (folder_exclude_patterns.isArray() && folder_exclude_patterns.size()) {
+        for (int j = 0; j < folder_exclude_patterns.size(); j++) {
+            std::string pat = folder_exclude_patterns[j].asString();
+            excludeFolders.push_back(pat);
+        }
+    }
 }
 
 editor_ptr app_t::openEditor(std::string path)
@@ -292,6 +421,7 @@ editor_ptr app_t::openEditor(std::string path)
 
 void app_t::refresh()
 {
+    refreshLoop = 2;
 }
 
 void app_t::close()

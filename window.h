@@ -30,6 +30,7 @@ struct window_t {
     theme_ptr theme;
     int colorPair;
     int colorPairSelected;
+    int colorPairIndicator;
 };
 
 #endif // WINDOW_H

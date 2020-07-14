@@ -12,6 +12,7 @@ enum KEY_ACTION {
     ENTER = 13, /* Enter */
     ESC = 27, /* Escape */
     BACKSPACE = 127, /* Backspace */
+    RESIZE = 150, /* Backspace */
     /* The following are just soft codes, not really reported by the terminal directly. */
     ALT_ = 1000,
     CTRL_,

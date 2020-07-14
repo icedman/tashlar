@@ -14,9 +14,14 @@ static std::map<std::string, command_e> keybindings;
 
 void bindDefaults()
 {
+    bindKeySequence("ctrl+f", CMD_POPUP_SEARCH);
+    bindKeySequence("ctrl+p", CMD_POPUP_FILES);
+    bindKeySequence("ctrl+p+ctrl+c", CMD_POPUP_COMMANDS);
+    
     bindKeySequence("ctrl+b", CMD_TOGGLE_EXPLORER);
     // bindKeySequence("ctrl+e+ctrl+e", CMD_CYCLE_FOCUS);
 
+    bindKeySequence("resize", CMD_RESIZE);
     bindKeySequence("ctrl+s", CMD_SAVE);
     // bindKeySequence("alt+t",  CMD_OPEN_TAB);
     bindKeySequence("alt+w",  CMD_CLOSE_TAB);
@@ -371,6 +376,7 @@ int readKey(std::string& keySequence)
             case KEY_BACKSPACE:
                 keySequence = "backspace";
                 return c;
+            case RESIZE:
             case KEY_RESIZE:
                 keySequence = "resize";
                 return c;
@@ -389,7 +395,7 @@ int readKey(std::string& keySequence)
                 return c;
             }
 
-            // app_t::log("key:%d\n", c);
+            // app_t::log("key:%d %c\n", c, (char)c);
 
             return c;
         }

@@ -34,4 +34,6 @@ struct search_t {
     std::vector<search_result_t> find(std::string str, std::string word);
 };
 
+int levenshtein_distance(char *s1, char *s2);
+    
 #endif // SEARCH_H

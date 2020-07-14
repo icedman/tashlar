@@ -43,11 +43,14 @@ struct explorer_t : public window_t {
     void layout(int w, int h) override;
     void render() override;
     void renderCursor() override;
-    void renderLine(const char* line);
+    void renderLine(const char* line, int& offsetX);
     void setRootFromFile(std::string path);
 
+    std::vector<struct fileitem_t*> fileList();
+    
     fileitem_t files;
     std::vector<struct fileitem_t*> renderList;
+    std::vector<struct fileitem_t*> allFiles;
 
     int currentItem;
 };

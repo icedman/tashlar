@@ -69,13 +69,18 @@ enum command_e {
     CMD_UNDO,
     CMD_REDO,
 
+    CMD_RESIZE,
     CMD_ENTER,
     CMD_DELETE,
     CMD_BACKSPACE,
     CMD_INSERT,
 
     CMD_CYCLE_FOCUS,
-    CMD_TOGGLE_EXPLORER
+    CMD_TOGGLE_EXPLORER,
+
+    CMD_POPUP_SEARCH,
+    CMD_POPUP_COMMANDS,
+    CMD_POPUP_FILES
 };
 
 bool processEditorCommand(command_e cmd, char ch);

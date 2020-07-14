@@ -10,21 +10,10 @@
 
 #define STATUS_ITEMS 4
 
-void statusbar_t::setText(std::string text, int pos)
+void statusbar_t::setText(std::string s, int pos, int size)
 {
-    if (!start.size()) {
-        for (int i = 0; i < STATUS_ITEMS; i++) {
-            start.push_back("");
-            end.push_back("");
-        }
-    }
-
-    if (pos < 0) {
-        pos += STATUS_ITEMS + 1;
-        end[pos % STATUS_ITEMS] = text;
-    } else {
-        start[pos % STATUS_ITEMS] = text;
-    }
+    sizes[pos] = size;
+    text[pos] = s;
 }
 
 void statusbar_t::setStatus(std::string s, int f)
@@ -51,12 +40,11 @@ void statusbar_t::render()
     mvwin(win, viewY, viewX);
     wresize(win, viewHeight, viewWidth);
 
-    static char tmp[512];
-    sprintf(tmp, "Line: %d Col: %d",
-        1 + (int)(block.lineNumber),
-        1 + (int)(cursor.position - block.position));
-
     setText(doc->fileName, 0);
+    static char tmp[512];
+    sprintf(tmp, "Line: %d", 1 + (int)(block.lineNumber));
+    setText(tmp, -3);
+    sprintf(tmp, "Col: %d", 1 + (int)(cursor.position - block.position));
     setText(tmp, -2);
     if (editor->lang) {
         setText(editor->lang->id, -1);
@@ -81,16 +69,19 @@ void statusbar_t::render()
     if (status.length()) {
         renderLine(status.c_str(), offset);
     } else {
-        for (auto s : start) {
-            renderLine(s.c_str(), offset);
+        for(int i=0;i<STATUS_ITEMS;i++) {
+            std::string s = text[i];
+            renderLine(s.c_str(), offset, sizes[i]);
             offset += s.length() + 2;
         }
     }
 
     offset = 2;
-    for (auto s : end) {
+    for(int i=0;i<STATUS_ITEMS;i++) {
+        int idx = -1 + (i*-1);
+        std::string s = text[idx];
         offset += s.length();
-        renderLine(s.c_str(), viewWidth - offset);
+        renderLine(s.c_str(), viewWidth - offset, sizes[idx]);
         offset += 2;
     }
     wattroff(win, COLOR_PAIR(colorPair));
@@ -98,13 +89,20 @@ void statusbar_t::render()
     wrefresh(win);
 }
 
-void statusbar_t::renderLine(const char* line, int offsetX)
+void statusbar_t::renderLine(const char* line, int offsetX, int size)
 {
+    // app_t::instance()->log("%s %d", line, size);
     wmove(win, 0, offsetX);
     char c;
     int idx = 0;
     while ((c = line[idx++])) {
         waddch(win, c);
+        if (size != 0 && idx >= size) {
+            return;
+        }
+        if (offsetX + idx >= viewWidth) {
+            return;
+        }
     }
 }
 

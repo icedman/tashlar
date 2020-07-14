@@ -37,7 +37,8 @@ void tabbar_t::render()
     if (!tabs.size()) {
         for(auto e : app->editors) {
             struct tabitem_t item = {
-                .name = " " + e->document.fileName + " ",
+                // .name = " " + e->document.fileName + " ",
+                .name = e->document.fileName,
                 .itemNumber = tabs.size(),
                 .width = e->document.fileName.length() + 2,
                 .editor = e
@@ -72,13 +73,40 @@ void tabbar_t::render()
     wmove(win, 0,0);
     wclrtoeol(win);
     for(auto t : tabs) {
+        int pair = colorPair;
         if (t.editor->id == app->currentEditor->id) {
-            wattron(win, hasFocus ? A_REVERSE : A_BOLD);
+            
+            // wattron(win, A_BOLD);
+            wattron(win, COLOR_PAIR(colorPairIndicator));
+            wattron(win, A_BOLD);
+            renderLine("[", offsetX);
+            wattroff(win, COLOR_PAIR(colorPairIndicator));
+            wattroff(win, A_BOLD);
+
+            if (hasFocus) {
+                wattron(win, A_REVERSE);
+                // pair = colorPairSelected;
+            }
+            // wattron(win, hasFocus ? A_REVERSE : A_BOLD);
+        } else {
+            renderLine(" ", offsetX);
         }
-        
+        wattron(win, COLOR_PAIR(pair));
         renderLine(t.name.c_str(), offsetX);
+        wattroff(win, COLOR_PAIR(pair));
+        
         wattroff(win, A_REVERSE);
-        wattroff(win, A_BOLD);
+        
+        if (t.editor->id == app->currentEditor->id) {
+            // wattron(win, A_BOLD);
+            wattron(win, COLOR_PAIR(colorPairIndicator));
+            wattron(win, A_BOLD);
+            renderLine("]", offsetX);
+            wattroff(win, COLOR_PAIR(colorPairIndicator));
+            wattroff(win, A_BOLD);
+        } else {
+            renderLine(" ", offsetX);
+        }
     }
 
     wrefresh(win);

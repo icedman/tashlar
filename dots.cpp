@@ -342,9 +342,10 @@ int* buildUpDotsForLines(char *row1, char *row2, char *row3, char *row4, float t
         if (r == 3) row = row4;
         int len = strlen(row);
         memset(compressedLine, 0, 50*sizeof(char));
-        for(int i=0;i<len && i<50;i++) {
+        for(int i=0;i<len;i++) {
             int idx = i/textCompress;
             if (row[i] != ' ' && row[i] != '\t') {
+                if (idx >= 50) break;
                 compressedLine[idx]=row[i];
             }
         }

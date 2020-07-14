@@ -29,8 +29,8 @@ void buildUpDotsForBlock(struct block_t *block, float textCompress, int bufferWi
         block->data->dirty = true;
     }
     
-    struct blockdata_t *data = block->data.get();
-    if (data->dots) {
+    struct blockdata_t *blockData = block->data.get();
+    if (blockData->dots) {
         return;
     }
     
@@ -54,12 +54,7 @@ void buildUpDotsForBlock(struct block_t *block, float textCompress, int bufferWi
         }
     }
     
-    // app_t::instance()->log(line1.c_str());
-    // app_t::instance()->log(line2.c_str());
-    // app_t::instance()->log(line3.c_str());
-    // app_t::instance()->log(line4.c_str());
-    
-    data->dots = buildUpDotsForLines(
+    blockData->dots = buildUpDotsForLines(
         (char*)line1.c_str(), 
         (char*)line2.c_str(), 
         (char*)line3.c_str(), 
@@ -88,8 +83,16 @@ void minimap_t::render()
     wresize(win, viewHeight, viewWidth);
     wmove(win, 0, 0);
 
-    int offsetY = editor->scrollY/4;
+    int scroll = editor->scrollY + (-viewHeight*0.8);
+    int offsetY = scroll/4;
     int currentLine = block.lineNumber;
+
+    // try disable scroll
+    int lastLine = doc->blocks.back().lineNumber;
+    if (lastLine/4 < viewHeight) {
+        offsetY = 0;
+    }
+    
 
     int wc = 0;
     wc = buildUpDots(wc, 1, 1, 1);
@@ -101,27 +104,38 @@ void minimap_t::render()
         auto& b = doc->blocks[idx];
         if (offsetY > 0) {
             offsetY -= 1; // b.lineCount;
-            if (b.data) {
-                if (b.data->dots) {
-                    free(b.data->dots);
-                    b.data->dots = 0;
-                }
-            }
             continue;
         }
-
-        wattron(win, COLOR_PAIR(colorPair));
+        
+        int pair = colorPair;
         wmove(win, y++, 0);
         wclrtoeol(win);    
 
         if (currentLine >= b.lineNumber && currentLine < b.lineNumber + 4) {
             wattron(win, A_BOLD);
+            wattron(win, COLOR_PAIR(colorPairIndicator));
+            waddwstr(win, L"\u2192");
+            wattroff(win, COLOR_PAIR(colorPairIndicator));
+            // wattron(win, A_REVERSE);
+        } else {
+            waddch(win, ' ');
         }
-        
+
         buildUpDotsForBlock(&b, MINIMAP_TEXT_COMPRESS, 25);
         for(int x=0;x<25;x++) {
+            // int cx = 1 + (x * 4);
+            // for (auto span : b.data->spans) {
+                // if (cx >= span.start && cx < span.start + span.length) {
+                    // pair = pairForColor(span.colorIndex, false);
+                    // break;
+                // }
+            // }
+            
+            wattron(win, COLOR_PAIR(pair));
             waddwstr(win, wcharFromDots(b.data->dots[x]));
-            if (x >= viewWidth) {
+            wattroff(win, COLOR_PAIR(pair));
+            
+            if (x >= viewWidth - 1) {
                 break;
             }
         }

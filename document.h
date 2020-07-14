@@ -137,6 +137,7 @@ struct block_t {
 struct document_t {
     document_t()
         : file(0)
+        , runOn(false)
     {
     }
 
@@ -182,7 +183,10 @@ struct document_t {
 
     std::map<size_t, struct block_t&> cursorBlockCache;
     std::vector<struct history_t> snapShots;
+
+    bool runOn;
 };
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block);
+    
 #endif // DOCUMENT_H

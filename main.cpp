@@ -23,6 +23,7 @@
 
 #include "extension.h"
 
+#include "popup.h"
 #include "explorer.h"
 #include "gutter.h"
 #include "statusbar.h"
@@ -129,43 +130,6 @@ static void renderEditor(struct editor_t& editor)
 
 int main(int argc, char** argv)
 {   
-    if (0) {
-    setlocale(LC_ALL, "");
-    initscr();
-    clear();
-    
-    char *line1 = "hello world";
-    char *line2 = "      hello world";
-    char *line3 = "  hello          world";
-    char *line4 = "hello world";
-
-    int y = 0;
-    move(y++, 0);
-    addstr(line1);
-    move(y++, 0);
-    addstr(line2);
-    move(y++, 0);
-    addstr(line3);
-    move(y++, 0);
-    addstr(line4);
-
-    for(int i=0;i<4;i++) {
-        y++;
-        int *dots = buildUpDotsForLines(line1, line2, line3, line4, 1+i, 25);
-        move(y++,0);
-        for(int i=0;i<25;i++) {
-            addwstr(wcharFromDots(dots[i]));
-        }
-        free(dots);
-    }
-        
-    refresh();
-
-    getch();
-    endwin();
-    return 0;
-    }
-    
     setlocale(LC_ALL, "");
     
     struct editor_proxy_t _editor;
@@ -174,6 +138,7 @@ int main(int argc, char** argv)
     struct statusbar_t statusbar;
     struct minimap_t minimap;
     struct explorer_t explorer;
+    struct popup_t popup;
 
     struct app_t app;
     app.statusbar = &statusbar;
@@ -181,6 +146,7 @@ int main(int argc, char** argv)
     app.tabbar = &tabbar;
     app.explorer = &explorer;
     app.minimap = &minimap;
+    app.popup = &popup;
 
     app.windows.push_back(&statusbar);
     app.windows.push_back(&explorer);
@@ -188,6 +154,8 @@ int main(int argc, char** argv)
     app.windows.push_back(&gutter);
     app.windows.push_back(&_editor);
     app.windows.push_back(&minimap);
+    
+    app.windows.push_back(&popup);
     
     char* filename = 0;
     if (argc > 1) {
@@ -228,17 +196,24 @@ int main(int argc, char** argv)
         struct block_t block = doc->block(cursor);
 
         bool disableRefresh = app.commandBuffer.size() || app.inputBuffer.length();
-
         if (!disableRefresh) {
             doc->update();
-
             app.layout();
 
             curs_set(0);
-            
-            renderEditor(editor);
-            for(int i=0; i<app.windows.size(); i++) {
-                app.windows[i]->render();
+
+            if (popup.isFocused() && app.refreshLoop <= 0) {
+                popup.render();
+            } else {
+                renderEditor(editor);
+                for(int i=0; i<app.windows.size(); i++) {
+                    app.windows[i]->render();
+                }
+            }
+
+            if (app.refreshLoop > 0) {
+                app.refreshLoop--;
+                continue;
             }
         }
 
@@ -343,6 +318,21 @@ int main(int argc, char** argv)
             }
             app.refresh();
             continue;
+        case CMD_POPUP_FILES:
+            popup.files();
+            app.refresh();
+            break;
+        case CMD_POPUP_COMMANDS:
+            popup.commands();
+            app.refresh();
+            break;
+        case CMD_POPUP_SEARCH: {
+            std::string selectedText = cursor.selectedText();
+            doc->clearCursors();
+            popup.search(selectedText);
+            app.refresh();
+            break;
+        }
         case CMD_QUIT:
             end = true;
             continue;

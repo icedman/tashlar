@@ -11,6 +11,7 @@ static size_t cursor_uid = 1;
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block)
 {
+    app_t::log("find block!");
     std::vector<struct block_t>::iterator it = blocks.begin();
     while (it != blocks.end()) {
         struct block_t& blk = *it;
@@ -50,9 +51,17 @@ bool document_t::open(const char* path)
         blocks.emplace_back(b);
         pos = file.tellg();
         tmp << line << std::endl;
+
+        if (b.length > 2000) {
+            runOn = true;
+        }
     }
 
     tmp.close();
+
+    // if (runOn) {
+        // blocks.clear();
+    // }
 
     if (!blocks.size()) {
         struct block_t b;
@@ -125,6 +134,10 @@ void document_t::close()
 
 void document_t::save()
 {
+    if (runOn) {
+        return;
+    }
+    
     std::ofstream tmp(filePath, std::ofstream::out);
     for (auto b : blocks) {
         std::string text = b.text();
