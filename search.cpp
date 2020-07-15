@@ -111,7 +111,8 @@ std::vector<search_result_t> search_t::findCompletion(std::string str)
         if (b.data && b.data->state == BLOCK_STATE_COMMENT) {
             continue;
         }
-        if (!b.data && skipWatch++>1000) break;
+        if (!b.data && skipWatch++ > 1000)
+            break;
         std::vector<search_result_t> res = findWords(b.text(), &word);
         for (int j = 0; j < res.size(); j++) {
             auto r = res[j];

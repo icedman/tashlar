@@ -75,41 +75,47 @@ void tabbar_t::render()
     int x = 0;
     wmove(win, 0, 0);
     wclrtoeol(win);
+    
+    int tabNo = 1;
     for (auto t : tabs) {
         int pair = colorPair;
         if (t.editor->id == app->currentEditor->id) {
 
             // wattron(win, A_BOLD);
+            if (hasFocus) {
+                wattron(win, A_REVERSE);
+                // pair = colorPairSelected;
+            }
+
             wattron(win, COLOR_PAIR(colorPairIndicator));
             wattron(win, A_BOLD);
             renderLine("[", offsetX, x);
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             wattroff(win, A_BOLD);
-
-            if (hasFocus) {
-                wattron(win, A_REVERSE);
-                // pair = colorPairSelected;
-            }
+            
             // wattron(win, hasFocus ? A_REVERSE : A_BOLD);
         } else {
             renderLine(" ", offsetX, x);
         }
-        wattron(win, COLOR_PAIR(pair));
+
+        wattron(win, COLOR_PAIR(pair));        
         renderLine(t.name.c_str(), offsetX, x);
         wattroff(win, COLOR_PAIR(pair));
-
-        wattroff(win, A_REVERSE);
 
         if (t.editor->id == app->currentEditor->id) {
             // wattron(win, A_BOLD);
             wattron(win, COLOR_PAIR(colorPairIndicator));
             wattron(win, A_BOLD);
-            renderLine("]", offsetX, x);
+                renderLine("]", offsetX, x);
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             wattroff(win, A_BOLD);
         } else {
             renderLine(" ", offsetX, x);
         }
+
+        wattroff(win, A_REVERSE);
+        
+        tabNo++;
     }
 
     // renderWidget();

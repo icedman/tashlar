@@ -17,6 +17,7 @@ struct popup_t : public window_t {
     enum popup_e {
         POPUP_UNKNOWN,
         POPUP_SEARCH,
+        POPUP_SEARCH_LINE,
         POPUP_COMMANDS,
         POPUP_FILES,
         POPUP_COMPLETION

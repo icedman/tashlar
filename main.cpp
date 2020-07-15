@@ -329,8 +329,12 @@ int main(int argc, char** argv)
             popup.commands();
             app.refresh();
             break;
+        case CMD_POPUP_SEARCH_LINE:
         case CMD_POPUP_SEARCH: {
             std::string selectedText = cursor.selectedText();
+            if (cmd == CMD_POPUP_SEARCH_LINE) {
+                selectedText = ":";
+            }
             doc->clearCursors();
             popup.search(selectedText);
             app.refresh();

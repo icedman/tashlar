@@ -41,6 +41,10 @@ struct editor_t : public window_t {
     void renderBlock(struct block_t& block, int offsetX, int offsetY);
     void renderLine(const char* line, int offsetX = 0, int offsetY = 0, struct block_t* block = 0, int relativeLine = 0);
 
+    bracket_info_t bracketAtCursor(struct cursor_t& cursor);
+    struct cursor_t cursorAtBracket(bracket_info_t bracket);
+    struct cursor_t findLastOpenBracketCursor(struct block_t block);
+
     struct document_t document;
     language_info_ptr lang;
     theme_ptr theme;

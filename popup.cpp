@@ -5,6 +5,8 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <regex>
+#include <sstream>
 
 #include "app.h"
 #include "command.h"
@@ -58,6 +60,9 @@ bool popup_t::processCommand(command_e cmd, char ch)
     case CMD_MOVE_CURSOR_DOWN:
         currentItem++;
         return true;
+    case CMD_MOVE_CURSOR_RIGHT:
+        hide();
+        return true;
     case CMD_MOVE_CURSOR_LEFT:
     case CMD_DELETE:
     case CMD_BACKSPACE:
@@ -85,7 +90,7 @@ bool popup_t::processCommand(command_e cmd, char ch)
 
 void popup_t::layout(int w, int h)
 {
-    if (type == POPUP_SEARCH || type == POPUP_COMPLETION) {
+    if (type == POPUP_SEARCH || type == POPUP_COMPLETION || type == POPUP_SEARCH_LINE) {
         viewWidth = POPUP_SEARCH_WIDTH;
     } else {
         viewWidth = POPUP_PALETTE_WIDTH;
@@ -110,7 +115,7 @@ void popup_t::layout(int w, int h)
     viewX = 0; // w - viewWidth;
     viewY = 0;
 
-    if (type != POPUP_SEARCH) {
+    if (true ||  type != POPUP_SEARCH) {
         viewX = w / 2 - viewWidth / 2;
     } else {
         viewX = w - viewWidth;
@@ -257,13 +262,9 @@ void popup_t::renderLine(const char* line, int offsetX, int& x)
 
 void popup_t::hide()
 {
-    request = 0;
     struct app_t* app = app_t::instance();
     app->focused = app->currentEditor.get();
     app->refresh();
-
-    struct cursor_t c;
-    cursor = c;
 }
 
 void popup_t::search(std::string t)
@@ -275,6 +276,13 @@ void popup_t::search(std::string t)
     text = t;
     type = POPUP_SEARCH;
     placeholder = "search words";
+
+    if (t == ":") {
+       placeholder = "goto line";
+       text = "";
+       type =  POPUP_SEARCH_LINE;
+    }
+
     items.clear();
     app_t::instance()->focused = this;
 }
@@ -306,8 +314,7 @@ void popup_t::commands()
 void popup_t::update(int frames)
 {
     if (request > 0) {
-        app_t::instance()->log("auto %d", request);
-        if (request-=frames == 0) {
+        if ((request -= frames) <= 0) {
             showCompletion();
         }
     }
@@ -315,7 +322,10 @@ void popup_t::update(int frames)
 
 void popup_t::completion()
 {
-    request = 2000;
+    request = 10000;
+    struct editor_t* editor = app_t::instance()->currentEditor.get();
+    struct document_t* doc = &editor->document;
+    //cursor = doc->cursor();
 }
 
 void popup_t::showCompletion()
@@ -329,7 +339,9 @@ void popup_t::showCompletion()
     struct editor_t* editor = app_t::instance()->currentEditor.get();
     struct document_t* doc = &editor->document;
 
+    struct cursor_t request_cursor = cursor;
     cursor = doc->cursor();
+
     struct block_t block = doc->block(cursor);
 
     if (doc->cursors.size() == 1) {
@@ -374,8 +386,26 @@ void popup_t::showCompletion()
 void popup_t::onInput()
 {
     struct app_t* app = app_t::instance();
+    struct editor_t* editor = app->currentEditor.get();
+    struct document_t* doc = &editor->document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);
 
     items.clear();
+
+    if (type == POPUP_SEARCH_LINE) {
+        std::string sInput = R"(AA #-0233 338982-FFB /ADR1 2)";
+        text  = std::regex_replace(text, std::regex(R"([\D])"), "");
+        int line = 0;
+        std::stringstream(text) >> line;
+        for(auto &b : doc->blocks) {
+            if (b.lineNumber == line - 1) {
+                cursor.setPosition(b.position);
+                doc->setCursor(cursor);
+            }
+        }        
+    }
+
     if (type == POPUP_FILES) {
         if (text.length() > 2) {
             char* searchString = (char*)text.c_str();
@@ -415,13 +445,23 @@ void popup_t::onSubmit()
     struct cursor_t cursor = doc->cursor();
     struct block_t block = doc->block(cursor);
 
+    if (type == POPUP_SEARCH_LINE) {
+        hide();
+        return;
+    }
+
     if (type == POPUP_SEARCH) {
         if (!text.length()) {
             hide();
             return;
         }
 
-        if (cursorFindWord(&cursor, text)) {
+        bool found = cursorFindWord(&cursor, text);
+        if (!found) {
+            cursor.setPosition(0);
+            found = cursorFindWord(&cursor, text);
+        }
+        if (found) {
             cursorSelectWord(&cursor);
             doc->updateCursor(cursor);
 
@@ -462,3 +502,5 @@ void popup_t::onSubmit()
         hide();
     }
 }
+
+

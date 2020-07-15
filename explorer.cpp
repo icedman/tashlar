@@ -233,7 +233,10 @@ void explorer_t::render()
             // waddwstr(win, file->expanded ? L"\u2303" : L"\u203A");
             // waddwstr(win, file->expanded ? L"\u25B4" : L"\u25B8");
             // waddwstr(win, file->expanded ? L"\u25B2" : L"\u25B6");
+            wattron(win, COLOR_PAIR(colorPairIndicator));
             waddwstr(win, file->expanded ? L"\u2191" : L"\u2192");
+            wattroff(win, COLOR_PAIR(colorPairIndicator));
+            wattron(win, COLOR_PAIR(pair));
         } else {
             // waddwstr(win, L"\u1F4C4");
             waddch(win, ' ');

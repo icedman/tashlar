@@ -50,6 +50,11 @@ struct cursor_t {
     bool isNull();
 
     void update();
+    void setPosition(size_t pos)
+    {
+        position = pos;
+        anchorPosition = pos;
+    }
     void clearSelection() { anchorPosition = position; }
 
     std::string selectedText();

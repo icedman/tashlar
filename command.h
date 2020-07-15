@@ -79,8 +79,10 @@ enum command_e {
     CMD_TOGGLE_EXPLORER,
 
     CMD_POPUP_SEARCH,
+    CMD_POPUP_SEARCH_LINE,
     CMD_POPUP_COMMANDS,
-    CMD_POPUP_FILES
+    CMD_POPUP_FILES,
+    CMD_POPUP_COMPLETION
 };
 
 bool processEditorCommand(command_e cmd, char ch);
