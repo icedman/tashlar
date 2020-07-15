@@ -63,7 +63,7 @@ enum command_e {
 
     CMD_NEW_TAB,
     CMD_CLOSE_TAB,
-    
+
     CMD_SAVE,
     CMD_QUIT,
     CMD_UNDO,

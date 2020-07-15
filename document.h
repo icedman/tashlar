@@ -17,25 +17,34 @@
 struct document_t;
 struct block_t;
 
+enum block_state_e {
+    BLOCK_STATE_UNKNOWN = 0,
+    BLOCK_STATE_COMMENT = 1 << 4,
+    BLOCK_STATE_STRING = 1 << 5
+};
+
 struct span_info_t {
     int start;
     int length;
-    int red;
-    int green;
-    int blue;
     int colorIndex;
+    block_state_e state;
 };
 
-enum block_state_e {
-    BLOCK_STATE_UNKNOWN = 0,
-    BLOCK_STATE_COMMENT = 1 << 1,
-    BLOCK_STATE_STRING = 1 << 2
+struct bracket_info_t {
+    size_t line;
+    size_t position;
+    int bracket;
+    bool open;
+    bool unpaired;
 };
-    
+
 struct blockdata_t {
     blockdata_t()
         : dirty(true)
+        , folded(false)
+        , foldable(false)
         , dots(0)
+        , lastPrevBlockRule(0)
     {
     }
 
@@ -47,14 +56,19 @@ struct blockdata_t {
     }
 
     std::vector<span_info_t> spans;
+    std::vector<bracket_info_t> foldingBrackets;
+    std::vector<bracket_info_t> brackets;
     parse::stack_ptr parser_state;
     std::map<size_t, scope::scope_t> scopes;
 
-    int *dots;
-    
+    int* dots;
+
+    size_t lastRule;
     size_t lastPrevBlockRule;
     block_state_e state;
     bool dirty;
+    bool folded;
+    bool foldable;
 };
 
 struct block_t {
@@ -119,6 +133,7 @@ struct block_t {
     struct document_t* document;
     size_t position;
     size_t screenLine;
+    size_t renderedLine;
 
     std::string content;
     size_t length;
@@ -188,5 +203,5 @@ struct document_t {
 };
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block);
-    
+
 #endif // DOCUMENT_H

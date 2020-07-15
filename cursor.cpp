@@ -6,8 +6,6 @@
 
 #include <algorithm>
 
-static struct search_t search;
-
 void cursor_t::update()
 {
     block = &document->block(*this);
@@ -62,7 +60,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     }
 
     if (extractWords) {
-        search_results = search.findWords(block.text());
+        search_results = search_t::instance()->findWords(block.text());
     }
 
     switch (move) {
@@ -166,7 +164,7 @@ void cursorSelectWord(struct cursor_t* cursor)
 
     size_t relativePosition = cursor->position - block.position;
 
-    std::vector<search_result_t> search_results = search.findWords(block.text());
+    std::vector<search_result_t> search_results = search_t::instance()->findWords(block.text());
     for (auto i : search_results) {
         if (i.begin <= relativePosition && relativePosition < i.end) {
             cursor->anchorPosition = block.position + i.begin;
@@ -384,7 +382,7 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t)
         size_t relativePosition = cur.position - block.position;
 
         std::string text = block.text();
-        std::vector<search_result_t> res = search.find(text, t);
+        std::vector<search_result_t> res = search_t::instance()->find(text, t);
         if (res.size()) {
             search_result_t found;
             if (firstCursor) {

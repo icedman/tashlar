@@ -69,7 +69,7 @@ void statusbar_t::render()
     if (status.length()) {
         renderLine(status.c_str(), offset);
     } else {
-        for(int i=0;i<STATUS_ITEMS;i++) {
+        for (int i = 0; i < STATUS_ITEMS; i++) {
             std::string s = text[i];
             renderLine(s.c_str(), offset, sizes[i]);
             offset += s.length() + 2;
@@ -77,8 +77,8 @@ void statusbar_t::render()
     }
 
     offset = 2;
-    for(int i=0;i<STATUS_ITEMS;i++) {
-        int idx = -1 + (i*-1);
+    for (int i = 0; i < STATUS_ITEMS; i++) {
+        int idx = -1 + (i * -1);
         std::string s = text[idx];
         offset += s.length();
         renderLine(s.c_str(), viewWidth - offset, sizes[idx]);
@@ -111,7 +111,7 @@ void statusbar_t::update(int tick)
     if (!app_t::instance()->showStatusBar) {
         return;
     }
-    
+
     if (frames < 0) {
         return;
     }
@@ -138,4 +138,3 @@ void statusbar_t::layout(int w, int h)
     viewWidth = w;
     viewHeight = 1;
 }
-

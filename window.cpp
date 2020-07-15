@@ -9,6 +9,7 @@ window_t::window_t(bool f)
     , scrollX(0)
     , scrollY(0)
     , win(0)
+    , shown(false)
 {
     id = windowId++;
     focusable = f;
@@ -28,5 +29,11 @@ bool window_t::isFocused()
     return app_t::instance()->focused->id == id;
 }
 
+bool window_t::isShown()
+{
+    return isFocused() || shown;
+}
+
 void window_t::update(int frames)
-{}
+{
+}

@@ -47,7 +47,7 @@ struct explorer_t : public window_t {
     void setRootFromFile(std::string path);
 
     std::vector<struct fileitem_t*> fileList();
-    
+
     fileitem_t files;
     std::vector<struct fileitem_t*> renderList;
     std::vector<struct fileitem_t*> allFiles;

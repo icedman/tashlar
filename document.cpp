@@ -1,9 +1,9 @@
-#include <stdio.h>
 #include <cstring>
+#include <stdio.h>
 
-#include "document.h"
 #include "app.h"
 #include "cursor.h"
+#include "document.h"
 #include "editor.h"
 #include "util.h"
 
@@ -11,7 +11,6 @@ static size_t cursor_uid = 1;
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block)
 {
-    app_t::log("find block!");
     std::vector<struct block_t>::iterator it = blocks.begin();
     while (it != blocks.end()) {
         struct block_t& blk = *it;
@@ -60,7 +59,7 @@ bool document_t::open(const char* path)
     tmp.close();
 
     // if (runOn) {
-        // blocks.clear();
+    // blocks.clear();
     // }
 
     if (!blocks.size()) {
@@ -86,7 +85,7 @@ bool document_t::open(const char* path)
     expand_path((char**)(&cpath));
     fullPath = std::string(cpath);
     free(cpath);
-    
+
     tmpPaths.push_back(tmpPath);
 
     addSnapshot();
@@ -137,7 +136,7 @@ void document_t::save()
     if (runOn) {
         return;
     }
-    
+
     std::ofstream tmp(filePath, std::ofstream::out);
     for (auto b : blocks) {
         std::string text = b.text();
@@ -147,6 +146,11 @@ void document_t::save()
 
 struct cursor_t document_t::cursor()
 {
+    cursors[0].update();
+    if (cursors[0].isNull()) {
+        cursors[0].position = 0;
+        cursors[0].anchorPosition = 0;
+    }
     return cursors[0];
 }
 

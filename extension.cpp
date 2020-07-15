@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string.h>
 
+#include "app.h"
 #include "theme.h"
 #include "util.h"
 
@@ -246,18 +247,20 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
                 lang->id = resolvedLanguage;
 
                 // language configuration
-                // if (!resolvedConfiguration.empty()) {
-                // path = QDir(resolvedExtension.path).filePath(resolvedConfiguration.asString().c_str());
-                // } else {
-                // path = QDir(resolvedExtension.path).filePath("language-configuration.json");
-                // }
-                // load_language_configuration(path, lang);
+                if (!resolvedConfiguration.empty()) {
+                    path = resolvedExtension.path + "/" + resolvedConfiguration.asString();
+                } else {
+                    path = resolvedExtension.path + "/language-configuration.json";
+                }
 
+                load_language_configuration(path, lang);
+
+                // app_t::instance()->log("language configuration: %s", path.c_str());
                 // std::cout << "langauge matched" << lang->id << std::endl;
                 // std::cout << path << std::endl;
 
-                // cache.emplace(suffix, lang);
-                // return lang;
+                cache.emplace(suffix, lang);
+                return lang;
             }
         }
     }

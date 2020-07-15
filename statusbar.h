@@ -19,7 +19,7 @@ struct statusbar_t : public window_t {
     std::string status;
     std::map<int, std::string> text;
     std::map<int, int> sizes;
-    
+
     void setText(std::string text, int pos = 0, int size = 12);
     void setStatus(std::string status, int frames = 2000);
 

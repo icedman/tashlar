@@ -42,6 +42,25 @@ bool editor_proxy_t::isFocused()
     app_t::instance()->currentEditor->isFocused();
 }
 
+static struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
+{
+    span_info_t res;
+    res.length = 0;
+    for (auto span : blockData->spans) {
+        if (span.length == 0) {
+            continue;
+        }
+        if (pos >= span.start && pos < span.start + span.length) {
+            res = span;
+            if (res.state != BLOCK_STATE_UNKNOWN) {
+                return res;
+            }
+        }
+    }
+
+    return res;
+}
+
 void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct block_t* block, int relativeLine)
 {
     if (!line) {
@@ -73,19 +92,17 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
         if (c == '\t') {
             c = ' ';
         }
-        
+
         int rpos = idx - 1;
         int pos = block->position + idx - 1;
         int colorIdx = -1;
-        
+
         // syntax here
         if (block && block->data) {
-            for (auto span : blockData->spans) {
-                if (rpos + wrapOffset >= span.start && rpos + wrapOffset < span.start + span.length) {
-                    colorPair = pairForColor(span.colorIndex, false);
-                    colorPairSelected = pairForColor(span.colorIndex, true);
-                    break;
-                }
+            struct span_info_t span = spanAtBlock(blockData, rpos + wrapOffset);
+            if (span.length) {
+                colorPair = pairForColor(span.colorIndex, false);
+                colorPairSelected = pairForColor(span.colorIndex, true);
             }
         }
 
@@ -142,7 +159,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
         } else {
             waddch(win, c);
         }
-        
+
         wattroff(win, COLOR_PAIR(colorPair));
         wattroff(win, A_REVERSE);
         wattroff(win, A_UNDERLINE);
@@ -153,6 +170,16 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
 static void setFormatFromStyle(size_t start, size_t length, style_t& style, const char* line, struct blockdata_t* blockData, std::string scope)
 {
     int s = -1;
+
+    block_state_e state;
+    if (scope.find("comment") != std::string::npos) {
+        state = BLOCK_STATE_COMMENT;
+    } else if (scope.find("string") != std::string::npos) {
+        state = BLOCK_STATE_STRING;
+    } else {
+        state = BLOCK_STATE_UNKNOWN;
+    }
+
     for (int i = start; i < start + length; i++) {
         if (s == -1) {
             if (line[i] != ' ' && line[i] != '\t') {
@@ -165,9 +192,10 @@ static void setFormatFromStyle(size_t start, size_t length, style_t& style, cons
                 span_info_t span = {
                     .start = s,
                     .length = i - s + 1,
-                    .colorIndex = style.foreground.index
+                    .colorIndex = style.foreground.index,
+                    .state = state
                 };
-                blockData->spans.push_back(span);
+                blockData->spans.insert(blockData->spans.begin(), 1, span);
             }
             s = -1;
         }
@@ -189,22 +217,29 @@ void editor_t::highlightBlock(struct block_t& block)
         return;
     }
 
-    std::string text = block.text();
-
     struct blockdata_t* blockData = block.data.get();
-    
+
+    bool previousState = blockData->state;
     block_state_e previousBlockState = BLOCK_STATE_UNKNOWN;
 
+    struct block_t* prevBlock = block.previous;
+    struct blockdata_t* prevBlockData = NULL;
+    if (prevBlock) {
+        prevBlockData = prevBlock->data.get();
+    }
+
+    std::string text = block.text();
     std::string str = text;
     str += "\n";
 
     //--------------
     // free minimap line cache
     //--------------
-    for(int i=0;i<4;i++) {
-        int ln = block.lineNumber-4+i;
-        if (ln < 0) continue;
-        struct block_t &pb = block.document->blocks[ln];
+    for (int i = 0; i < 4; i++) {
+        int ln = block.lineNumber - 4 + i;
+        if (ln < 0)
+            continue;
+        struct block_t& pb = block.document->blocks[ln];
         if (pb.data && pb.data->dots) {
             free(pb.data->dots);
             pb.data->dots = 0;
@@ -220,19 +255,13 @@ void editor_t::highlightBlock(struct block_t& block)
     blockData->scopes.clear();
     blockData->spans.clear();
 
-    
     const char* first = str.c_str();
     const char* last = first + text.length() + 1;
 
-    struct block_t* prevBlock = block.previous;
-    struct blockdata_t* prevBlockData = NULL;
-    if (prevBlock) {
-        prevBlockData = prevBlock->data.get();
-    }
     if (prevBlockData) {
         previousBlockState = prevBlockData->state;
         parser_state = prevBlockData->parser_state;
-        if (parser_state->rule) {
+        if (parser_state && parser_state->rule) {
             blockData->lastPrevBlockRule = parser_state->rule->rule_id;
         }
         firstLine = !(parser_state != NULL);
@@ -248,7 +277,7 @@ void editor_t::highlightBlock(struct block_t& block)
     } else {
         parser_state = parse::parse(first, last, parser_state, scopes, firstLine);
     }
-    
+
     std::string prevScopeName;
     size_t si = 0;
     size_t n = 0;
@@ -307,18 +336,120 @@ void editor_t::highlightBlock(struct block_t& block)
         }
     }
 
+    //----------------------
+    // gather brackets
+    //----------------------
+    blockData->brackets.clear();
+    blockData->foldable = false;
+    blockData->foldingBrackets.clear();
+    if (lang->brackets) {
+        std::vector<bracket_info_t> brackets;
+        for (char* c = (char*)first; c < last;) {
+            bool found = false;
+
+            struct span_info_t span = spanAtBlock(blockData, c - first);
+            if (span.length && (span.state == BLOCK_STATE_COMMENT || span.state == BLOCK_STATE_STRING)) {
+                c++;
+                continue;
+            }
+
+            // opening
+            int i = 0;
+            for (auto b : lang->bracketOpen) {
+                if (strstr(c, b.c_str()) == c) {
+                    found = true;
+                    size_t l = (c - first);
+                    brackets.push_back({ .line = block.lineNumber,
+                        .position = l,
+                        .bracket = i,
+                        .open = true });
+                    c += b.length();
+                    break;
+                }
+            }
+
+            if (found) {
+                continue;
+            }
+
+            // closing
+            i = 0;
+            for (auto b : lang->bracketClose) {
+                if (strstr(c, b.c_str()) == c) {
+                    found = true;
+                    size_t l = (c - first);
+                    brackets.push_back({ .line = block.lineNumber,
+                        .position = l,
+                        .bracket = i,
+                        .open = false });
+                    c += b.length();
+                    break;
+                }
+            }
+
+            if (found) {
+                continue;
+            }
+
+            c++;
+        }
+
+        blockData->brackets = brackets;
+
+        // bracket pairing
+        for (auto b : brackets) {
+            if (!b.open && blockData->foldingBrackets.size()) {
+                auto l = blockData->foldingBrackets.back();
+                if (l.open && l.bracket == b.bracket) {
+                    blockData->foldingBrackets.pop_back();
+                } else {
+                    // std::cout << "error brackets" << std::endl;
+                }
+                continue;
+            }
+            blockData->foldingBrackets.push_back(b);
+        }
+
+        // hack for if-else-
+        if (blockData->foldingBrackets.size() == 2) {
+            if (blockData->foldingBrackets[0].open != blockData->foldingBrackets[1].open && blockData->foldingBrackets[0].bracket == blockData->foldingBrackets[1].bracket) {
+                blockData->foldingBrackets.clear();
+            }
+        }
+
+        // format brackets with scope
+        // style_t s = theme->styles_for_scope("bracket");
+        // for (auto b : blockData->brackets) {
+        // setFormatFromStyle(b.position, 1, s, first, blockData, "bracket");
+        // }
+
+        if (blockData->foldingBrackets.size()) {
+            auto l = blockData->foldingBrackets.back();
+            blockData->foldable = l.open;
+        }
+
+        // app_t::instance()->log("brackets %d %d", blockData->brackets.size(), blockData->foldingBrackets.size());
+    }
+
     blockData->parser_state = parser_state;
     blockData->dirty = false;
+    blockData->lastRule = parser_state->rule->rule_id;
+    if (blockData->state == BLOCK_STATE_COMMENT) {
+        blockData->lastRule = BLOCK_STATE_COMMENT;
+    }
 
     //----------------------
     // mark next block for highlight
     // .. if necessary
     //----------------------
-    if (parser_state->rule) {
+    if (blockData->lastRule) {
         struct block_t* next = block.next;
         if (next && next->isValid()) {
             struct blockdata_t* nextBlockData = next->data.get();
-            if (nextBlockData && parser_state->rule->rule_id != nextBlockData->lastPrevBlockRule) {
+            //if (nextBlockData && blockData->lastRule != nextBlockData->lastPrevBlockRule) {
+            //    nextBlockData->dirty = true;
+            //}
+            if (nextBlockData) {
                 nextBlockData->dirty = true;
             }
         }
@@ -376,7 +507,7 @@ void editor_t::layout(int w, int h)
     viewWidth = w;
     viewHeight = h;
 
-    struct app_t *app = app_t::instance();
+    struct app_t* app = app_t::instance();
     if (app->showStatusBar) {
         viewHeight -= app->statusbar->viewHeight;
     }

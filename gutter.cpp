@@ -8,8 +8,8 @@
 #include "editor.h"
 #include "explorer.h"
 #include "gutter.h"
-#include "tabbar.h"
 #include "statusbar.h"
+#include "tabbar.h"
 
 void gutter_t::render()
 {
@@ -52,6 +52,10 @@ void gutter_t::render()
 
         std::string lineNo = std::to_string(1 + b.lineNumber);
         int x = viewWidth - (lineNo.length() + 1);
+
+        if (b.data && b.data->foldable) {
+            lineNo += "-";
+        }
 
         wattron(win, COLOR_PAIR(colorPair));
         wmove(win, y, 0);
@@ -118,12 +122,12 @@ void gutter_t::layout(int w, int h)
     viewY = 0;
     viewWidth = gutterWidth;
     viewHeight = h;
-    
+
     if (app_t::instance()->showStatusBar) {
         int statusbarHeight = app_t::instance()->statusbar->viewHeight;
         viewHeight -= statusbarHeight;
     }
-    
+
     if (app_t::instance()->showTabbar) {
         int tabbarHeight = app_t::instance()->tabbar->viewHeight;
         viewHeight -= tabbarHeight;

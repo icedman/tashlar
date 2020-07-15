@@ -6,8 +6,8 @@
 
 #include "command.h"
 #include "editor.h"
-#include "popup.h"
 #include "extension.h"
+#include "popup.h"
 #include "theme.h"
 #include "window.h"
 
@@ -40,7 +40,7 @@ struct app_t {
 
     std::vector<command_e> commandBuffer;
     std::string inputBuffer;
-    
+
     std::string clipBoard;
 
     theme_ptr theme;
@@ -75,7 +75,7 @@ struct app_t {
     void refresh();
     void layout();
     bool processCommand(command_e cmd, char ch);
-        
+
     // log
     static void initLog();
     static void log(const char* format, ...);

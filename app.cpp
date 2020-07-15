@@ -12,9 +12,9 @@
 
 #include "explorer.h"
 #include "gutter.h"
-#include "tabbar.h"
 #include "minimap.h"
 #include "statusbar.h"
+#include "tabbar.h"
 
 #include "extension.h"
 
@@ -37,24 +37,30 @@ int pairForColor(int colorIdx, bool selected)
 
 static color_info_t color(int r, int g, int b)
 {
-    color_info_t c(r,g,b);
+    color_info_t c(r, g, b);
     c.index = color_info_t::nearest_color_index(c.red, c.green, c.blue);
     return c;
 }
-    
+
 static color_info_t lighter(color_info_t p, int x)
 {
     color_info_t c;
     c.red = p.red + x;
     c.green = p.green + x;
     c.blue = p.blue + x;
-    if (c.red > 255) c.red = 255;
-    if (c.green > 255) c.green = 255;
-    if (c.blue > 255) c.blue = 255;
-    if (c.red < 0) c.red = 0;
-    if (c.green < 0) c.green = 0;
-    if (c.blue < 0) c.blue = 0;
-    c.index = color_info_t::nearest_color_index(c.red, c.green, c.blue); 
+    if (c.red > 255)
+        c.red = 255;
+    if (c.green > 255)
+        c.green = 255;
+    if (c.blue > 255)
+        c.blue = 255;
+    if (c.red < 0)
+        c.red = 0;
+    if (c.green < 0)
+        c.green = 0;
+    if (c.blue < 0)
+        c.blue = 0;
+    c.index = color_info_t::nearest_color_index(c.red, c.green, c.blue);
     return c;
 }
 
@@ -62,7 +68,7 @@ static color_info_t darker(color_info_t c, int x)
 {
     return lighter(c, -x);
 }
-      
+
 void app_t::setupColors()
 {
     colorMap.clear();
@@ -72,7 +78,7 @@ void app_t::setupColors()
 
     color_info_t colorFg = color(250, 250, 250);
     color_info_t colorSelBg = color(250, 250, 250);
-    color_info_t colorSelFg= color(50, 50, 50);
+    color_info_t colorSelFg = color(50, 50, 50);
     if (theme->colorIndices.find(colorFg.index) == theme->colorIndices.end()) {
         theme->colorIndices.emplace(colorFg.index, colorFg);
     }
@@ -82,7 +88,7 @@ void app_t::setupColors()
     if (theme->colorIndices.find(colorSelFg.index) == theme->colorIndices.end()) {
         theme->colorIndices.emplace(colorSelFg.index, colorSelFg);
     }
-        
+
     bg = -1;
     fg = colorFg.index;
     selBg = colorSelBg.index;
@@ -100,7 +106,7 @@ void app_t::setupColors()
     if (!s.foreground.is_blank()) {
         fg = s.foreground.index;
     }
-    
+
     theme->theme_color("editor.selectionBackground", clr);
     if (!clr.is_blank()) {
         selBg = clr.index;
@@ -155,7 +161,7 @@ void app_t::setupColors()
     //----------
     // theme->theme_color("statusBar.background", clr);
     // theme->theme_color("statusBar.foreground", clr);
-    
+
     app_t::instance()->log("%d registered colors", theme->colorIndices.size());
 
     //---------------
@@ -167,7 +173,7 @@ void app_t::setupColors()
     int idx = 32;
     init_pair(color_pair_e::NORMAL, fg, bg);
     init_pair(color_pair_e::SELECTED, selFg, selBg);
-    
+
     auto it = theme->colorIndices.begin();
     while (it != theme->colorIndices.end()) {
         colorMap[it->first] = idx;
@@ -197,10 +203,10 @@ void app_t::applyColors()
     tabbar->colorPairIndicator = pairForColor(tabActiveBorder, false);
     explorer->colorPair = pairForColor(comment.foreground.index, false);
     explorer->colorPairIndicator = pairForColor(tabActiveBorder, false);
-    
+
     popup->colorPair = pairForColor(comment.foreground.index, false);
     popup->colorPairIndicator = pairForColor(tabActiveBorder, false);
-    
+
     // tabbar->colorPair = pairForColor(tabFg, false);
     // tabbar->colorPairSelected = pairForColor(tabHoverFg, true);
     // tabbar->colorPairIndicator = pairForColor(tabActiveBorder, false);
@@ -213,7 +219,7 @@ app_t::app_t()
     , statusbar(0)
     , gutter(0)
     , explorer(0)
-    , refreshLoop(0)
+    , refreshLoop(8)
 {
     appInstance = this;
 
@@ -230,7 +236,7 @@ app_t::app_t()
 app_t::~app_t()
 {
 }
-    
+
 struct app_t* app_t::instance()
 {
     return appInstance;
@@ -257,7 +263,7 @@ bool app_t::processCommand(command_e cmd, char ch)
     }
     return handled;
 }
-    
+
 void app_t::initLog()
 {
     FILE* log_file = fopen("/tmp/ashlar.log", "w");
@@ -365,7 +371,7 @@ void app_t::configure(int argc, char** argv)
         showTabbar = settings["tabbar"].asBool();
     }
     if (settings.isMember("mini_map")) {
-        showMinimap =  settings["mini_map"].asBool();
+        showMinimap = settings["mini_map"].asBool();
     }
 
     minimap->theme = theme;
@@ -395,7 +401,7 @@ void app_t::configure(int argc, char** argv)
 editor_ptr app_t::openEditor(std::string path)
 {
     log("open: %s", path.c_str());
-    for(auto e : editors) {
+    for (auto e : editors) {
         if (e->document.fullPath == path) {
             log("reopening existing tab");
             currentEditor = e;
@@ -403,7 +409,7 @@ editor_ptr app_t::openEditor(std::string path)
             return e;
         }
     }
-    
+
     const char* filename = path.c_str();
     editor_ptr editor = std::make_shared<struct editor_t>();
     editor->lang = language_from_file(filename, extensions);
@@ -427,7 +433,7 @@ void app_t::refresh()
 void app_t::close()
 {
     std::vector<editor_ptr>::iterator it = editors.begin();
-    while(it != editors.end()) {
+    while (it != editors.end()) {
         if ((*it)->id == currentEditor->id) {
             editors.erase(it);
             break;
@@ -438,7 +444,7 @@ void app_t::close()
         currentEditor = editors.front();
         focused = currentEditor.get();
     }
-    
+
     tabbar->tabs.clear();
     refresh();
 }

@@ -1,5 +1,5 @@
-#include <locale.h>
 #include <curses.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -19,16 +19,17 @@
 #include "document.h"
 #include "editor.h"
 #include "keybinding.h"
+#include "search.h"
 #include "util.h"
 
 #include "extension.h"
 
-#include "popup.h"
 #include "explorer.h"
 #include "gutter.h"
+#include "minimap.h"
+#include "popup.h"
 #include "statusbar.h"
 #include "tabbar.h"
-#include "minimap.h"
 #include "window.h"
 
 #include "dots.h"
@@ -113,6 +114,7 @@ static void renderEditor(struct editor_t& editor)
             continue;
         }
         editor.highlightBlock(b);
+        b.renderedLine = y;
         editor.renderBlock(b, offsetX, y);
         y += b.lineCount;
 
@@ -129,9 +131,9 @@ static void renderEditor(struct editor_t& editor)
 }
 
 int main(int argc, char** argv)
-{   
+{
     setlocale(LC_ALL, "");
-    
+
     struct editor_proxy_t _editor;
     struct tabbar_t tabbar;
     struct gutter_t gutter;
@@ -140,6 +142,7 @@ int main(int argc, char** argv)
     struct explorer_t explorer;
     struct popup_t popup;
 
+    struct search_t search;
     struct app_t app;
     app.statusbar = &statusbar;
     app.gutter = &gutter;
@@ -154,9 +157,9 @@ int main(int argc, char** argv)
     app.windows.push_back(&gutter);
     app.windows.push_back(&_editor);
     app.windows.push_back(&minimap);
-    
+
     app.windows.push_back(&popup);
-    
+
     char* filename = 0;
     if (argc > 1) {
         filename = argv[argc - 1];
@@ -202,11 +205,11 @@ int main(int argc, char** argv)
 
             curs_set(0);
 
-            if (popup.isFocused() && app.refreshLoop <= 0) {
+            if (popup.isFocused() && popup.text.length() > 3 && app.refreshLoop <= 0) {
                 popup.render();
             } else {
                 renderEditor(editor);
-                for(int i=0; i<app.windows.size(); i++) {
+                for (int i = 0; i < app.windows.size(); i++) {
                     app.windows[i]->render();
                 }
             }
@@ -257,8 +260,8 @@ int main(int argc, char** argv)
             if (ch != -1) {
                 break;
             }
-            
-            for(int i=0; i<app.windows.size(); i++) {
+
+            for (int i = 0; i < app.windows.size(); i++) {
                 app.windows[i]->update(150);
             }
 
@@ -389,6 +392,17 @@ int main(int argc, char** argv)
                     c.anchorPosition += advance;
                 }
                 doc->updateCursor(c);
+            }
+
+            if (cursors.size() == 1) {
+                struct cursor_t c = cur;
+                if (cursorMovePosition(&c, cursor_t::Move::Left)) {
+                    cursorSelectWord(&c);
+                    std::string prefix = c.selectedText();
+                    if (prefix.length() > 2) {
+                        popup.completion();
+                    }
+                }
             }
         }
     }

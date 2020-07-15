@@ -42,12 +42,12 @@ fileitem_t::fileitem_t(std::string p)
 }
 
 void fileitem_t::setPath(std::string p)
-{    
+{
     path = p;
     std::set<char> delims = { '\\', '/' };
     std::vector<std::string> spath = split_path(p, delims);
     name = spath.back();
-    
+
     char* cpath = (char*)malloc(path.length() + 1 * sizeof(char));
     strcpy(cpath, path.c_str());
     expand_path((char**)(&cpath));
@@ -65,7 +65,7 @@ void fileitem_t::load(std::string p)
     if (p != "") {
         setPath(p);
     }
-   
+
     app_t::instance()->log("load %s", fullPath.c_str());
     std::vector<std::string>& excludeFiles = app_t::instance()->excludeFiles;
     std::vector<std::string>& excludeFolders = app_t::instance()->excludeFolders;
@@ -129,7 +129,7 @@ static void buildFileList(std::vector<struct fileitem_t*>& list, struct fileitem
         file->lineNumber = list.size();
         list.push_back(file.get());
         if (file->expanded || deep) {
-            buildFileList(list, file.get(), depth+1, deep);
+            buildFileList(list, file.get(), depth + 1, deep);
         }
     }
 }
@@ -140,7 +140,7 @@ std::vector<struct fileitem_t*> explorer_t::fileList()
     buildFileList(allFiles, &files, 0, true);
     return allFiles;
 }
-    
+
 void explorer_t::setRootFromFile(std::string path)
 {
     fileitem_t file;
@@ -172,12 +172,12 @@ void explorer_t::render()
     if (renderList.size() == 0) {
         buildFileList(renderList, &files, 0);
     }
-    
+
     bool hasFocus = isFocused();
     if (currentItem == -1) {
         currentItem = 0;
     }
-    
+
     // scroll to cursor
     // TODO: use math not loops
     while (true) {
@@ -213,7 +213,7 @@ void explorer_t::render()
             } else {
                 wattron(win, A_BOLD);
             }
-            for(int i=0; i<viewWidth; i++) {
+            for (int i = 0; i < viewWidth; i++) {
                 waddch(win, ' ');
             }
         }
@@ -222,7 +222,7 @@ void explorer_t::render()
         wmove(win, y++, 0);
         wattron(win, COLOR_PAIR(pair));
         int indent = file->depth;
-        for(int i=0; i<indent; i++) {
+        for (int i = 0; i < indent; i++) {
             waddch(win, ' ');
             x++;
         }
@@ -239,18 +239,18 @@ void explorer_t::render()
             waddch(win, ' ');
         }
         waddch(win, ' ');
-        x+=2;
-        
+        x += 2;
+
         renderLine(file->name.c_str(), x);
-        
-        for(int i=0; i<viewWidth-x; i++) {
+
+        for (int i = 0; i < viewWidth - x; i++) {
             waddch(win, ' ');
         }
-        
+
         wattroff(win, COLOR_PAIR(pair));
         wattroff(win, A_REVERSE);
         wattroff(win, A_BOLD);
-        
+
         if (y >= viewHeight) {
             break;
         }
@@ -259,7 +259,7 @@ void explorer_t::render()
     while (y < viewHeight) {
         wmove(win, y++, 0);
         // wclrtoeol(win);
-        for(int i=0; i<viewWidth; i++) {
+        for (int i = 0; i < viewWidth; i++) {
             waddch(win, ' ');
         }
     }
@@ -267,7 +267,7 @@ void explorer_t::render()
     wrefresh(win);
 }
 
-void explorer_t::renderLine(const char* line, int &x)
+void explorer_t::renderLine(const char* line, int& x)
 {
     char c;
     int idx = 0;
@@ -296,11 +296,11 @@ void explorer_t::renderCursor()
     wmove(win, 0, 0);
 }
 
-static struct fileitem_t *parentItem(struct fileitem_t* item, std::vector<struct fileitem_t*>& list)
+static struct fileitem_t* parentItem(struct fileitem_t* item, std::vector<struct fileitem_t*>& list)
 {
     int depth = item->depth;
     int i = item->lineNumber;
-    while(i-- > 0) {
+    while (i-- > 0) {
         struct fileitem_t* res = list[i];
         if (!res) {
             break;
@@ -319,8 +319,8 @@ bool explorer_t::processCommand(command_e cmd, char ch)
         return false;
     }
 
-    struct app_t *app = app_t::instance();
-    struct fileitem_t *item = renderList[currentItem];
+    struct app_t* app = app_t::instance();
+    struct fileitem_t* item = renderList[currentItem];
 
     switch (cmd) {
     case CMD_MOVE_CURSOR_RIGHT:
@@ -378,12 +378,12 @@ bool explorer_t::processCommand(command_e cmd, char ch)
     if (currentItem >= renderList.size()) {
         currentItem = renderList.size() - 1;
     }
-        
-    struct fileitem_t *nextItem = renderList[currentItem];
+
+    struct fileitem_t* nextItem = renderList[currentItem];
     if (nextItem != item) {
         app->statusbar->setStatus(nextItem->name, 3500);
         return true;
     }
-    
+
     return false;
 }

@@ -14,6 +14,7 @@ struct window_t {
     virtual void renderCursor();
     virtual bool processCommand(command_e cmd, char ch);
     virtual bool isFocused();
+    virtual bool isShown();
 
     int id;
     bool focusable;
@@ -26,6 +27,8 @@ struct window_t {
     int cursorScreenX;
     int cursorScreenY;
     WINDOW* win;
+
+    bool shown;
 
     theme_ptr theme;
     int colorPair;

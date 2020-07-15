@@ -7,17 +7,19 @@
 #include "app.h"
 #include "editor.h"
 #include "explorer.h"
-#include "tabbar.h"
 #include "gutter.h"
 #include "statusbar.h"
+#include "tabbar.h"
 
 #include <algorithm>
+
+#define TABBAR_HEIGHT 1
 
 static bool compareFile(struct tabitem_t& f1, struct tabitem_t& f2)
 {
     return f1.name < f2.name;
 }
-    
+
 void tabbar_t::render()
 {
     if (!app_t::instance()->showTabbar) {
@@ -31,11 +33,11 @@ void tabbar_t::render()
     mvwin(win, viewY, viewX);
     wresize(win, viewHeight, viewWidth);
 
-    struct app_t * app = app_t::instance();
+    struct app_t* app = app_t::instance();
     bool hasFocus = isFocused();
-    
+
     if (!tabs.size()) {
-        for(auto e : app->editors) {
+        for (auto e : app->editors) {
             struct tabitem_t item = {
                 // .name = " " + e->document.fileName + " ",
                 .name = e->document.fileName,
@@ -49,17 +51,17 @@ void tabbar_t::render()
     }
 
     // compute
-    int x = 0;
+    int tabX = 0;
     int totalWidth = 0;
     int currentTabX = 0;
     int currentTabWidth = 0;
-    for(auto t : tabs) {
+    for (auto t : tabs) {
         if (t.editor->id == app->currentEditor->id) {
-            currentTabX = x;
-            currentTabWidth = t.width;            
+            currentTabX = tabX;
+            currentTabWidth = t.width;
         }
         totalWidth += t.width;
-        x += t.width;
+        tabX += t.width;
     }
 
     while (currentTabX + currentTabWidth + 1 - scrollX > viewWidth) {
@@ -68,18 +70,19 @@ void tabbar_t::render()
     while (scrollX > 0 && currentTabX - scrollX <= 0) {
         scrollX--;
     }
-    
+
     int offsetX = scrollX;
-    wmove(win, 0,0);
+    int x = 0;
+    wmove(win, 0, 0);
     wclrtoeol(win);
-    for(auto t : tabs) {
+    for (auto t : tabs) {
         int pair = colorPair;
         if (t.editor->id == app->currentEditor->id) {
-            
+
             // wattron(win, A_BOLD);
             wattron(win, COLOR_PAIR(colorPairIndicator));
             wattron(win, A_BOLD);
-            renderLine("[", offsetX);
+            renderLine("[", offsetX, x);
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             wattroff(win, A_BOLD);
 
@@ -89,30 +92,78 @@ void tabbar_t::render()
             }
             // wattron(win, hasFocus ? A_REVERSE : A_BOLD);
         } else {
-            renderLine(" ", offsetX);
+            renderLine(" ", offsetX, x);
         }
         wattron(win, COLOR_PAIR(pair));
-        renderLine(t.name.c_str(), offsetX);
+        renderLine(t.name.c_str(), offsetX, x);
         wattroff(win, COLOR_PAIR(pair));
-        
+
         wattroff(win, A_REVERSE);
-        
+
         if (t.editor->id == app->currentEditor->id) {
             // wattron(win, A_BOLD);
             wattron(win, COLOR_PAIR(colorPairIndicator));
             wattron(win, A_BOLD);
-            renderLine("]", offsetX);
+            renderLine("]", offsetX, x);
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             wattroff(win, A_BOLD);
         } else {
-            renderLine(" ", offsetX);
+            renderLine(" ", offsetX, x);
         }
     }
+
+    // renderWidget();
 
     wrefresh(win);
 }
 
-void tabbar_t::renderLine(const char* line, int& offsetX)
+void tabbar_t::renderWidget()
+{
+    /*
+    struct app_t *app = app_t::instance();
+    struct editor_t* editor = app->currentEditor.get();
+    struct document_t* doc = &editor->document;
+    struct cursor_t cursor = doc->cursor();
+    struct block_t block = doc->block(cursor);  
+
+    std::vector<std::string> levels;
+
+    struct block_t *cur = &block;
+    for(int i=0;i<20;i++) {
+       struct blockdata_t *data = cur->data.get();
+       if (!data) break;
+
+           app->log("----------");
+
+       const char *text = cur->text().c_str();
+       std::vector<span_info_t>::reverse_iterator it = data->spans.rbegin();
+       int j=0;
+       while(it != data->spans.rend()) {
+           span_info_t span = *it;
+           app->log("%d %s;", j++, span.scope.c_str());
+           levels.insert(levels.begin(), 1, span.scope);
+           it++;
+       }
+
+       cur = cur->previous;
+       if (!cur) {
+           break;
+       }
+
+           app->log("!");
+       break;
+    }
+
+    std::string s;
+    int x = 0;
+    int offsetX = 0;
+    wmove(win, 1, 0);
+    wclrtoeol(win);
+    renderLine(s.c_str(), offsetX, x);
+    */
+}
+
+void tabbar_t::renderLine(const char* line, int& offsetX, int& x)
 {
     char c;
     int idx = 0;
@@ -121,6 +172,9 @@ void tabbar_t::renderLine(const char* line, int& offsetX)
             continue;
         }
         waddch(win, c);
+        if (x++ >= viewWidth) {
+            return;
+        }
     }
 }
 
@@ -137,7 +191,7 @@ void tabbar_t::layout(int w, int h)
     viewX = 0;
     viewY = 0;
     viewWidth = w;
-    viewHeight = 1;
+    viewHeight = TABBAR_HEIGHT;
 
     if (app_t::instance()->showSidebar) {
         int explorerWidth = app_t::instance()->explorer->viewWidth;
@@ -147,26 +201,26 @@ void tabbar_t::layout(int w, int h)
 }
 
 bool tabbar_t::processCommand(command_e cmd, char ch)
-{    
+{
     // proceed only if got focus
     if (app_t::instance()->focused->id != id) {
         return false;
     }
 
-    struct app_t * app = app_t::instance();
-    
-    switch(cmd) {
+    struct app_t* app = app_t::instance();
+
+    switch (cmd) {
     case CMD_MOVE_CURSOR_LEFT:
     case CMD_MOVE_CURSOR_RIGHT: {
         std::vector<struct tabitem_t>::iterator it = tabs.begin();
         std::vector<struct tabitem_t>::iterator prev = it;
         std::vector<struct tabitem_t>::iterator next = it;
-        while(it != tabs.end()) {
+        while (it != tabs.end()) {
             if (it != tabs.begin()) {
-                prev = it-1;
+                prev = it - 1;
             }
             if (it + 1 != tabs.end()) {
-                next = it+1;
+                next = it + 1;
             }
             if (it->editor->id == app->currentEditor->id) {
                 if (cmd == CMD_MOVE_CURSOR_LEFT) {
@@ -183,7 +237,7 @@ bool tabbar_t::processCommand(command_e cmd, char ch)
             it++;
         }
         break;
-    };  
+    };
     case CMD_ENTER:
     case CMD_MOVE_CURSOR_DOWN:
         app->focused = app->currentEditor.get();
@@ -191,6 +245,6 @@ bool tabbar_t::processCommand(command_e cmd, char ch)
     default:
         break;
     }
-    
+
     return false;
 }

@@ -35,7 +35,7 @@ struct editor_t : public window_t {
     void render() override;
     void renderCursor() override;
     void update(int frames);
-    
+
     void highlightBlock(struct block_t& block);
     void layoutBlock(struct block_t& block);
     void renderBlock(struct block_t& block, int offsetX, int offsetY);

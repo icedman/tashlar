@@ -10,8 +10,8 @@
 #include "editor.h"
 #include "explorer.h"
 #include "minimap.h"
-#include "tabbar.h"
 #include "statusbar.h"
+#include "tabbar.h"
 
 #include "dots.h"
 
@@ -19,27 +19,28 @@
 #define MINIMAP_TEXT_COMPRESS 5
 
 minimap_t::minimap_t()
-        : window_t(false)
-{}
+    : window_t(false)
+{
+}
 
-void buildUpDotsForBlock(struct block_t *block, float textCompress, int bufferWidth)
-{        
+void buildUpDotsForBlock(struct block_t* block, float textCompress, int bufferWidth)
+{
     if (!block->data) {
         block->data = std::make_shared<blockdata_t>();
         block->data->dirty = true;
     }
-    
-    struct blockdata_t *blockData = block->data.get();
+
+    struct blockdata_t* blockData = block->data.get();
     if (blockData->dots) {
         return;
     }
-    
+
     std::string line1;
     std::string line2;
     std::string line3;
     std::string line4;
 
-    struct block_t *it = block;
+    struct block_t* it = block;
     line1 = it->text();
     if (it->next) {
         it = it->next;
@@ -53,17 +54,16 @@ void buildUpDotsForBlock(struct block_t *block, float textCompress, int bufferWi
             }
         }
     }
-    
+
     blockData->dots = buildUpDotsForLines(
-        (char*)line1.c_str(), 
-        (char*)line2.c_str(), 
-        (char*)line3.c_str(), 
+        (char*)line1.c_str(),
+        (char*)line2.c_str(),
+        (char*)line3.c_str(),
         (char*)line4.c_str(),
         textCompress,
-        bufferWidth
-    );
+        bufferWidth);
 }
-        
+
 void minimap_t::render()
 {
     if (!app_t::instance()->showMinimap) {
@@ -83,33 +83,32 @@ void minimap_t::render()
     wresize(win, viewHeight, viewWidth);
     wmove(win, 0, 0);
 
-    int scroll = editor->scrollY + (-viewHeight*0.8);
-    int offsetY = scroll/4;
+    int scroll = editor->scrollY + (-viewHeight * 0.8);
+    int offsetY = scroll / 4;
     int currentLine = block.lineNumber;
 
     // try disable scroll
     int lastLine = doc->blocks.back().lineNumber;
-    if (lastLine/4 < viewHeight) {
+    if (lastLine / 4 < viewHeight) {
         offsetY = 0;
     }
-    
 
     int wc = 0;
     wc = buildUpDots(wc, 1, 1, 1);
     wc = buildUpDots(wc, 2, 1, 1);
-    
+
     // todo: jump to first visible block
     int y = 0;
-    for(int idx=0; idx<doc->blocks.size(); idx+=4) {
+    for (int idx = 0; idx < doc->blocks.size(); idx += 4) {
         auto& b = doc->blocks[idx];
         if (offsetY > 0) {
             offsetY -= 1; // b.lineCount;
             continue;
         }
-        
+
         int pair = colorPair;
         wmove(win, y++, 0);
-        wclrtoeol(win);    
+        wclrtoeol(win);
 
         if (currentLine >= b.lineNumber && currentLine < b.lineNumber + 4) {
             wattron(win, A_BOLD);
@@ -122,19 +121,19 @@ void minimap_t::render()
         }
 
         buildUpDotsForBlock(&b, MINIMAP_TEXT_COMPRESS, 25);
-        for(int x=0;x<25;x++) {
+        for (int x = 0; x < 25; x++) {
             // int cx = 1 + (x * 4);
             // for (auto span : b.data->spans) {
-                // if (cx >= span.start && cx < span.start + span.length) {
-                    // pair = pairForColor(span.colorIndex, false);
-                    // break;
-                // }
+            // if (cx >= span.start && cx < span.start + span.length) {
+            // pair = pairForColor(span.colorIndex, false);
+            // break;
             // }
-            
+            // }
+
             wattron(win, COLOR_PAIR(pair));
             waddwstr(win, wcharFromDots(b.data->dots[x]));
             wattroff(win, COLOR_PAIR(pair));
-            
+
             if (x >= viewWidth - 1) {
                 break;
             }
@@ -143,7 +142,7 @@ void minimap_t::render()
         wattroff(win, COLOR_PAIR(colorPair));
         wattroff(win, A_BOLD);
         // wattroff(win, A_REVERSE);
-    
+
         if (y >= viewHeight) {
             break;
         }
@@ -178,12 +177,12 @@ void minimap_t::layout(int w, int h)
     viewY = 0;
     viewWidth = minimapWidth;
     viewHeight = h;
-    
+
     if (app_t::instance()->showStatusBar) {
         int statusbarHeight = app_t::instance()->statusbar->viewHeight;
         viewHeight -= statusbarHeight;
     }
-    
+
     if (app_t::instance()->showTabbar) {
         int tabbarHeight = app_t::instance()->tabbar->viewHeight;
         viewHeight -= tabbarHeight;
