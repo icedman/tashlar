@@ -394,6 +394,8 @@ void popup_t::showCompletion()
 
     if (items.size()) {
         app->focused = this;
+        app->layout();
+        app->render();
         app->refresh();
     }
 }

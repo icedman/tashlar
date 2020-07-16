@@ -27,6 +27,8 @@ static std::map<int, int> colorMap;
 
 #define SELECTED_OFFSET 500
 
+void renderEditor(struct editor_t& editor);
+
 int pairForColor(int colorIdx, bool selected)
 {
     if (selected && colorIdx == color_pair_e::NORMAL) {
@@ -196,6 +198,7 @@ void app_t::applyColors()
     style_t comment = theme->styles_for_scope("comment");
     statusbar->colorPair = pairForColor(comment.foreground.index, false);
     gutter->colorPair = pairForColor(comment.foreground.index, false);
+    gutter->colorPairIndicator = pairForColor(tabActiveBorder, false);
     minimap->colorPair = pairForColor(comment.foreground.index, false);
     minimap->colorPairIndicator = pairForColor(tabActiveBorder, false);
 
@@ -250,6 +253,14 @@ void app_t::layout()
     height = w.ws_row;
     for (auto window : windows) {
         window->layout(w.ws_col, w.ws_row);
+    }
+}
+
+void app_t::render()
+{
+    renderEditor(*currentEditor);
+    for (int i = 0; i < windows.size(); i++) {
+        windows[i]->render();
     }
 }
 

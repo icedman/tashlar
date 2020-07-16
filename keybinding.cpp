@@ -50,6 +50,8 @@ void bindDefaults()
     bindKeySequence("ctrl+l+ctrl+up", CMD_MOVE_LINE_UP);
     bindKeySequence("ctrl+l+ctrl+down", CMD_MOVE_LINE_DOWN);
 
+    bindKeySequence("ctrl+l+ctrl+f", CMD_TOGGLE_FOLD);
+
     bindKeySequence("ctrl+a", CMD_SELECT_ALL);
     // bindKeySequence("ctrl+?", CMD_SELECT_WORD);
 
@@ -410,7 +412,7 @@ int readKey(std::string& keySequence)
                 return c;
             }
 
-            app_t::log("key:%d %c\n", c, (char)c);
+            // app_t::log("key:%d %c\n", c, (char)c);
 
             return c;
         }

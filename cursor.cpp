@@ -120,7 +120,6 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         if (wrap && block.length > viewWidth) {
             int p = cursor->position - viewWidth;
             if (p >= block.position && p > 0) {
-                //app_t::instance()->log("%d %d %d", cursor->position, block.position, p);
                 cursor->position = p;
                 break;
             }
@@ -215,6 +214,11 @@ int cursorInsertText(struct cursor_t* cursor, std::string t)
     if (!block.isValid()) {
         return 0;
     }
+ 
+    struct blockdata_t *data = block.data.get();
+    if (data && data->folded && data->foldable) {
+        app_t::instance()->currentEditor->toggleFold(block.lineNumber);
+    }
 
     std::string blockText = block.text();
     blockText.insert(cursor->position - block.position, t);
@@ -228,6 +232,11 @@ void cursorEraseText(struct cursor_t* cursor, int c)
     struct block_t& block = cursor->document->block(*cursor);
     if (!block.isValid()) {
         return;
+    }
+
+    struct blockdata_t *data = block.data.get();
+    if (data && data->folded && data->foldable) {
+        app_t::instance()->currentEditor->toggleFold(block.lineNumber);
     }
 
     std::string blockText = block.text();
@@ -253,6 +262,11 @@ void cursorSplitBlock(struct cursor_t* cursor)
     struct block_t& block = cursor->document->block(*cursor);
     if (!block.isValid()) {
         return;
+    }
+
+    struct blockdata_t *data = block.data.get();
+    if (data && data->folded && data->foldable) {
+        app_t::instance()->currentEditor->toggleFold(block.lineNumber);
     }
 
     std::string blockText = block.text();

@@ -34,7 +34,7 @@
 
 #include "dots.h"
 
-static void renderEditor(struct editor_t& editor)
+void renderEditor(struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
     struct cursor_t cursor = doc->cursor();
@@ -116,9 +116,14 @@ static void renderEditor(struct editor_t& editor)
             continue;
         }
         editor.highlightBlock(b);
-        b.renderedLine = y;
-        editor.renderBlock(b, offsetX, y);
-        y += b.lineCount;
+        struct blockdata_t *data = b.data.get();
+        if (data && data->folded && !data->foldable) {
+            // render folded indicator
+        } else {
+            b.renderedLine = y;
+            editor.renderBlock(b, offsetX, y);
+            y += b.lineCount;
+        }
 
         if (y >= editor.viewHeight) {
             break;
@@ -207,13 +212,12 @@ int main(int argc, char** argv)
 
             curs_set(0);
 
-            if (popup.isFocused() && popup.text.length() > 3 && app.refreshLoop <= 0) {
+            if (popup.isFocused() &&
+                (popup.items.size() || popup.text.length() > 3) && 
+                app.refreshLoop <= 0) {
                 popup.render();
             } else {
-                renderEditor(editor);
-                for (int i = 0; i < app.windows.size(); i++) {
-                    app.windows[i]->render();
-                }
+                app.render();
             }
 
             if (app.refreshLoop > 0) {
@@ -302,10 +306,6 @@ int main(int argc, char** argv)
             popup.request = -1;
             popup.items.clear();
             break;
-        case CMD_TAB:
-            app.inputBuffer = "    ";
-            continue;
-            ;
         case CMD_CLOSE_TAB:
             app.close();
             if (app.editors.size() == 0) {

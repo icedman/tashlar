@@ -53,11 +53,15 @@ void gutter_t::render()
         std::string lineNo = std::to_string(1 + b.lineNumber);
         int x = viewWidth - (lineNo.length() + 1);
 
+        int pair = colorPair;
         if (b.data && b.data->foldable) {
-            lineNo += "-";
+            if (b.data->folded) {
+                lineNo += "+";
+                pair = colorPairIndicator;
+            } else {
+                lineNo += "-";
+            } 
         }
-
-        wattron(win, COLOR_PAIR(colorPair));
         wmove(win, y, 0);
         wclrtoeol(win);
 
@@ -65,7 +69,12 @@ void gutter_t::render()
             wattron(win, A_BOLD);
         }
 
+        if (b.data && b.data->folded && !b.data->foldable) {
+            continue;
+        }
+
         wmove(win, y, x);
+        wattron(win, COLOR_PAIR(pair));
         renderLine(lineNo.c_str());
 
         wattroff(win, COLOR_PAIR(colorPair));

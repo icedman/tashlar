@@ -94,6 +94,11 @@ bool document_t::open(const char* path)
 
 void document_t::addSnapshot()
 {
+    // discard any unmarked edits
+    if (snapShots.size()) {
+        snapShots.back().editBatch.clear();
+    }
+
     struct history_t _history;
     _history.initialize(this);
     snapShots.emplace_back(_history);

@@ -16,8 +16,18 @@ bool processEditorCommand(command_e cmd, char ch)
     // main cursor
     //-----------------
     switch (cmd) {
+    case CMD_TOGGLE_FOLD:
+        editor->toggleFold(block.lineNumber);
+        return true;
+
     case CMD_HISTORY_SNAPSHOT:
         doc->addSnapshot();
+        return true;
+
+    case CMD_TAB:
+        if (!app->inputBuffer.length() && !app->commandBuffer.size()) {
+            app->inputBuffer = "    ";
+        }
         return true;
 
     case CMD_PASTE:
@@ -172,6 +182,9 @@ bool processEditorCommand(command_e cmd, char ch)
     bool markHistory = false;
     std::vector<struct cursor_t> cursors = doc->cursors;
 
+    struct block_t *targetBlock = 0;
+    struct blockdata_t *targetBlockData = 0;
+
     for (int i = 0; i < cursors.size(); i++) {
         struct cursor_t& cur = cursors[i];
         int advance = 0;
@@ -212,18 +225,32 @@ bool processEditorCommand(command_e cmd, char ch)
 
         case CMD_MOVE_CURSOR_UP:
         case CMD_MOVE_CURSOR_UP_ANCHORED:
-            // editor->scrollY--;
             cursorMovePosition(&cur, cursor_t::Up, cmd == CMD_MOVE_CURSOR_UP_ANCHORED);
             doc->history().mark();
             handled = true;
+            
+            targetBlock = &doc->block(cur);
+            targetBlockData = targetBlock->data.get();
+            if (targetBlockData && targetBlockData->folded && !targetBlockData->foldable && targetBlock->previous) {
+                // repeat the command -- to skip folded block
+                app->commandBuffer.clear();
+                app->commandBuffer.push_back(cmd);
+            }            
             break;
 
         case CMD_MOVE_CURSOR_DOWN:
         case CMD_MOVE_CURSOR_DOWN_ANCHORED:
-            // editor->scrollY++;
             cursorMovePosition(&cur, cursor_t::Down, cmd == CMD_MOVE_CURSOR_DOWN_ANCHORED);
             doc->history().mark();
             handled = true;
+
+            targetBlock = &doc->block(cur);
+            targetBlockData = targetBlock->data.get();
+            if (targetBlockData && targetBlockData->folded && !targetBlockData->foldable && targetBlock->next) {
+                // repeat the command -- to skip folded block
+                app->commandBuffer.clear();
+                app->commandBuffer.push_back(cmd);
+            }            
             break;
 
         case CMD_MOVE_CURSOR_LEFT:
