@@ -42,6 +42,11 @@ bool editor_proxy_t::isFocused()
     app_t::instance()->currentEditor->isFocused();
 }
 
+void editor_proxy_t::update(int frames)
+{
+    app_t::instance()->currentEditor->update(frames);
+}
+
 static struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
 {
     span_info_t res;
@@ -81,7 +86,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
     int c;
     int idx = 0;
     int x = 0;
-    while (c = line[idx++]) {
+    while (c = line[wrapOffset + idx++]) {
         if (skip-- > 0) {
             continue;
         }
@@ -99,8 +104,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
 
         // syntax here
         if (block && block->data) {
-            int wpos = rpos + wrapOffset;
-            struct span_info_t span = spanAtBlock(blockData, wpos);
+            struct span_info_t span = spanAtBlock(blockData, rpos + wrapOffset);
             if (span.length) {
                 colorPair = pairForColor(span.colorIndex, false);
                 colorPairSelected = pairForColor(span.colorIndex, true);
@@ -135,6 +139,13 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
             }
             firstCursor = false;
 
+            // brackets matching
+            if (cursorBracket1.line != -1 && cursorBracket2.line != -1) {
+                if ((pos == cursorBracket1.absolutePosition - wrapOffset) || (pos == cursorBracket2.absolutePosition - wrapOffset)) {
+                    wattron(win, A_UNDERLINE);
+                }
+            }
+
             if (!cur.hasSelection()) {
                 continue;
             }
@@ -144,7 +155,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
                 startSel = cur.position + 1;
                 endSel = cur.anchorPosition + 1;
             }
-            if (pos >= startSel - wrapOffset && pos < endSel - wrapOffset) {
+            if (pos + wrapOffset >= startSel && pos + wrapOffset < endSel) {
                 colorPair = colorPairSelected;
             }
         }
@@ -362,6 +373,7 @@ void editor_t::highlightBlock(struct block_t& block)
                     size_t l = (c - first);
                     brackets.push_back({ .line = block.lineNumber,
                         .position = l,
+                        .absolutePosition = block.position + l,
                         .bracket = i,
                         .open = true });
                     c += b.length();
@@ -381,6 +393,7 @@ void editor_t::highlightBlock(struct block_t& block)
                     size_t l = (c - first);
                     brackets.push_back({ .line = block.lineNumber,
                         .position = l,
+                        .absolutePosition = block.position + l,
                         .bracket = i,
                         .open = false });
                     c += b.length();
@@ -474,7 +487,7 @@ void editor_t::renderBlock(struct block_t& block, int offsetX, int offsetY)
         wmove(win, offsetY + i, 0);
         wclrtoeol(win);
         renderLine(str, offsetX, offsetY + i, &block, i);
-        str += viewWidth;
+        // str += viewWidth;
     }
 }
 
@@ -587,12 +600,27 @@ bool editor_t::processCommand(command_e cmd, char ch)
 
 void editor_t::update(int frames)
 {
-    if (isFocused()) {
-        renderCursor();
+}
+
+void editor_t::matchBracketsUnderCursor()
+{
+    struct cursor_t cursor = app_t::instance()->currentEditor->document.cursor();
+    if (cursor.position != cursorBracket1.absolutePosition) {
+        cursorBracket1 = bracketAtCursor(cursor);
+        if (cursorBracket1.position != -1) {
+            struct cursor_t matchCursor = findBracketMatchCursor(cursorBracket1, cursor);
+            cursorBracket2 = bracketAtCursor(matchCursor);
+            cursorBracket1.absolutePosition = cursor.position;
+            cursorBracket2.absolutePosition = matchCursor.position;
+            cursorBracket1.line = 0;
+            cursorBracket2.line = 0;
+            app_t::instance()->refresh();
+            // app_t::instance()->log("brackets %d %d", cursorBracket1.absolutePosition, cursorBracket2.absolutePosition);
+        }
     }
 }
 
-bracket_info_t editor_t::bracketAtCursor(struct cursor_t& cursor)
+struct bracket_info_t editor_t::bracketAtCursor(struct cursor_t& cursor)
 {
     bracket_info_t b;
     b.line = -1;
@@ -618,7 +646,7 @@ bracket_info_t editor_t::bracketAtCursor(struct cursor_t& cursor)
     return b;
 }
 
-struct cursor_t editor_t::cursorAtBracket(bracket_info_t bracket)
+struct cursor_t editor_t::cursorAtBracket(struct bracket_info_t bracket)
 {
     struct cursor_t cursor;
 
@@ -662,18 +690,17 @@ struct cursor_t editor_t::findLastOpenBracketCursor(struct block_t block)
     return res;
 }
 
-/*
-QTextCursor Editor::findBracketMatchCursor(bracket_info_t bracket, QTextCursor cursor)
+struct cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, struct cursor_t cursor)
 {
-    QTextCursor cs(cursor);
+    struct cursor_t cs = cursor;
 
     std::vector<bracket_info_t> brackets;
-    QTextBlock block = cursor.block();
+    struct block_t* block = cursor.block;
 
     if (bracket.open) {
 
-        while (block.isValid()) {
-            HighlightBlockData* blockData = reinterpret_cast<HighlightBlockData*>(block.userData());
+        while (block) {
+            struct blockdata_t* blockData = block->data.get();
             if (!blockData) {
                 break;
             }
@@ -689,12 +716,12 @@ QTextCursor Editor::findBracketMatchCursor(bracket_info_t bracket, QTextCursor c
                         brackets.pop_back();
                     } else {
                         // error .. unpaired?
-                        return QTextCursor();
+                        return cursor_t();
                     }
 
                     if (!brackets.size()) {
                         // std::cout << "found end!" << std::endl;
-                        cursor.setPosition(block.position() + b.position);
+                        cursor.setPosition(block->position + b.position);
                         return cursor;
                     }
                     continue;
@@ -702,14 +729,17 @@ QTextCursor Editor::findBracketMatchCursor(bracket_info_t bracket, QTextCursor c
                 brackets.push_back(b);
             }
 
-            block = block.next();
+            block = block->next;
+            if (block) {
+                app_t::instance()->log("next!");
+            }
         }
 
     } else {
 
         // reverse
-        while (block.isValid()) {
-            HighlightBlockData* blockData = reinterpret_cast<HighlightBlockData*>(block.userData());
+        while (block) {
+            struct blockdata_t* blockData = block->data.get();
             if (!blockData) {
                 break;
             }
@@ -727,12 +757,12 @@ QTextCursor Editor::findBracketMatchCursor(bracket_info_t bracket, QTextCursor c
                         brackets.pop_back();
                     } else {
                         // error .. unpaired?
-                        return QTextCursor();
+                        return cursor_t();
                     }
 
                     if (!brackets.size()) {
                         // std::cout << "found begin!" << std::endl;
-                        cursor.setPosition(block.position() + b.position);
+                        cursor.setPosition(block->position + b.position);
                         return cursor;
                     }
                     continue;
@@ -740,13 +770,13 @@ QTextCursor Editor::findBracketMatchCursor(bracket_info_t bracket, QTextCursor c
                 brackets.push_back(b);
             }
 
-            block = block.previous();
+            block = block->previous;
         }
     }
-
-    return QTextCursor();
+    return cursor_t();
 }
 
+/*
 void Editor::toggleFold(size_t line)
 {
     QTextDocument* doc = editor->document();
@@ -792,7 +822,5 @@ void Editor::toggleFold(size_t line)
         block = block.next();
     }
 
-    editor->update();
-    updateGutter();
 }
 */

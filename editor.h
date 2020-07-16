@@ -34,20 +34,25 @@ struct editor_t : public window_t {
     void layout(int w, int h) override;
     void render() override;
     void renderCursor() override;
-    void update(int frames);
+    void update(int frames) override;
 
     void highlightBlock(struct block_t& block);
     void layoutBlock(struct block_t& block);
     void renderBlock(struct block_t& block, int offsetX, int offsetY);
     void renderLine(const char* line, int offsetX = 0, int offsetY = 0, struct block_t* block = 0, int relativeLine = 0);
 
-    bracket_info_t bracketAtCursor(struct cursor_t& cursor);
-    struct cursor_t cursorAtBracket(bracket_info_t bracket);
+    void matchBracketsUnderCursor();
+    struct bracket_info_t bracketAtCursor(struct cursor_t& cursor);
+    struct cursor_t cursorAtBracket(struct bracket_info_t bracket);
     struct cursor_t findLastOpenBracketCursor(struct block_t block);
+    struct cursor_t findBracketMatchCursor(struct bracket_info_t bracket, struct cursor_t cursor);
 
     struct document_t document;
     language_info_ptr lang;
     theme_ptr theme;
+
+    struct bracket_info_t cursorBracket1;
+    struct bracket_info_t cursorBracket2;
 };
 
 struct editor_proxy_t : public window_t {
@@ -61,6 +66,7 @@ struct editor_proxy_t : public window_t {
     void render() override;
     void renderCursor() override;
     bool isFocused() override;
+    void update(int frames) override;
 };
 
 typedef std::shared_ptr<struct editor_t> editor_ptr;

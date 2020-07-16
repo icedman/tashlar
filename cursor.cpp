@@ -18,6 +18,10 @@ bool cursor_t::isNull()
 
 bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool keepAnchor, int count)
 {
+    struct app_t* app = app_t::instance();
+    int viewWidth = app->currentEditor->viewWidth;
+    bool wrap = app->lineWrap;
+
     struct block_t& block = cursor->document->block(*cursor);
     if (!block.isValid()) {
         return false;
@@ -113,6 +117,14 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     }
 
     case cursor_t::Move::Up:
+        if (wrap && block.length > viewWidth) {
+            int p = cursor->position - viewWidth;
+            if (p >= block.position && p > 0) {
+                //app_t::instance()->log("%d %d %d", cursor->position, block.position, p);
+                cursor->position = p;
+                break;
+            }
+        }
         if (!block.previous) {
             return false;
         }
@@ -121,7 +133,16 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         }
         cursor->position = block.previous->position + relativePosition;
         break;
+
     case cursor_t::Move::Down:
+        if (wrap && block.length > viewWidth) {
+            int p = cursor->position + viewWidth;
+            if (p < block.position + block.length) {
+                cursor->position = p;
+                break;
+            }
+        }
+
         if (!block.next) {
             return false;
         }
@@ -140,6 +161,20 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         if (cursor->position >= block.position + block.length && !block.next) {
             cursor->position--;
         }
+        break;
+
+    case cursor_t::Move::PrevBlock:
+        if (cursor->block && cursor->block->previous) {
+            cursor->position = cursor->block->previous->position;
+        }
+        break;
+    case cursor_t::Move::NextBlock:
+        if (cursor->block && cursor->block->next) {
+            cursor->position = cursor->block->next->position;
+        }
+        break;
+
+    default:
         break;
     }
 
@@ -374,6 +409,7 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t)
     bool firstCursor = true;
     struct cursor_t cur = *cursor;
 
+    size_t prevPos = cur.position;
     for (;;) {
         struct block_t& block = cur.document->block(cur);
         if (!block.isValid()) {
@@ -404,13 +440,18 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t)
             }
         }
 
-        if (!cursorMovePosition(&cur, cursor_t::Move::Down)) {
+        if (!cursorMovePosition(&cur, cursor_t::Move::NextBlock)) {
             return false;
         }
 
         cursorMovePosition(&cur, cursor_t::Move::StartOfLine);
         firstCursor = false;
+        if (cur.position == prevPos) {
+            app_t::instance()->log("this shouldn't have happened: %s", text.c_str());
+            break;
+        }
+        prevPos = cur.position;
     }
 
-    return true;
+    return false;
 }

@@ -115,7 +115,7 @@ void popup_t::layout(int w, int h)
     viewX = 0; // w - viewWidth;
     viewY = 0;
 
-    if (true ||  type != POPUP_SEARCH) {
+    if (true || type != POPUP_SEARCH) {
         viewX = w / 2 - viewWidth / 2;
     } else {
         viewX = w - viewWidth;
@@ -278,9 +278,9 @@ void popup_t::search(std::string t)
     placeholder = "search words";
 
     if (t == ":") {
-       placeholder = "goto line";
-       text = "";
-       type =  POPUP_SEARCH_LINE;
+        placeholder = "goto line";
+        text = "";
+        type = POPUP_SEARCH_LINE;
     }
 
     items.clear();
@@ -395,15 +395,15 @@ void popup_t::onInput()
 
     if (type == POPUP_SEARCH_LINE) {
         std::string sInput = R"(AA #-0233 338982-FFB /ADR1 2)";
-        text  = std::regex_replace(text, std::regex(R"([\D])"), "");
+        text = std::regex_replace(text, std::regex(R"([\D])"), "");
         int line = 0;
         std::stringstream(text) >> line;
-        for(auto &b : doc->blocks) {
+        for (auto& b : doc->blocks) {
             if (b.lineNumber == line - 1) {
                 cursor.setPosition(b.position);
                 doc->setCursor(cursor);
             }
-        }        
+        }
     }
 
     if (type == POPUP_FILES) {
@@ -458,9 +458,10 @@ void popup_t::onSubmit()
 
         bool found = cursorFindWord(&cursor, text);
         if (!found) {
-            cursor.setPosition(0);
+            cursorMovePosition(&cursor, cursor_t::Move::StartOfDocument);
             found = cursorFindWord(&cursor, text);
         }
+
         if (found) {
             cursorSelectWord(&cursor);
             doc->updateCursor(cursor);
@@ -472,8 +473,9 @@ void popup_t::onSubmit()
 
             doc->setCursor(cursor);
             app->refresh();
-            app_t::instance()->log("found %s", text.c_str());
             return;
+        } else {
+            app->statusbar->setStatus("no match found", 2500);
         }
     }
 
@@ -484,14 +486,14 @@ void popup_t::onSubmit()
         }
 
         struct item_t& item = items[currentItem];
-        app->log("open file %s", item.fullPath.c_str());
+        // app->log("open file %s", item.fullPath.c_str());
         app->openEditor(item.fullPath);
         app->refresh();
     }
 
     if (type == POPUP_COMPLETION && currentItem >= 0 && currentItem < items.size()) {
         struct item_t& item = items[currentItem];
-        app->log("insert %s", item.name.c_str());
+        // app->log("insert %s", item.name.c_str());
         if (cursorMovePosition(&cursor, cursor_t::Move::Left)) {
             cursorSelectWord(&cursor);
             cursorDeleteSelection(&cursor);
@@ -502,5 +504,3 @@ void popup_t::onSubmit()
         hide();
     }
 }
-
-

@@ -318,7 +318,7 @@ static struct fileitem_t* parentItem(struct fileitem_t* item, std::vector<struct
 bool explorer_t::processCommand(command_e cmd, char ch)
 {
     // proceed only if got focus
-    if (app_t::instance()->focused->id != id) {
+    if (!isFocused()) {
         return false;
     }
 

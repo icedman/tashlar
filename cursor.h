@@ -15,6 +15,8 @@ struct cursor_t {
         Down,
         Left,
         Right,
+        PrevBlock,
+        NextBlock,
         WordLeft,
         WordRight,
         StartOfLine,

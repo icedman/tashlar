@@ -75,7 +75,6 @@ std::vector<search_result_t> search_t::findWords(std::string str, regexp::patter
         res.text = o;
 
         result.emplace_back(res);
-
         start += m.begin() + o.length();
         // start ++;
     }

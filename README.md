@@ -10,16 +10,18 @@ terminal version of the ashlar text editor
 * textmate themes support (json)
 * undo
 * utf-8
-
-# to improve
-* large file support
-
-# todo
-* redo
 * gutter
 * word wrap (layout)
 * file explorer
 * file search (ctrl+p)
 * document search (ctrl+f)
 
+# to improve
+* large file support
+* undo/history
+* tabs
+* auto indent
+
+# todo
+* redo
 

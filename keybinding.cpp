@@ -24,9 +24,20 @@ void bindDefaults()
 
     bindKeySequence("resize", CMD_RESIZE);
     bindKeySequence("ctrl+s", CMD_SAVE);
-    // bindKeySequence("alt+t",  CMD_OPEN_TAB);
+    bindKeySequence("alt+t", CMD_NEW_TAB);
     bindKeySequence("alt+w", CMD_CLOSE_TAB);
     bindKeySequence("ctrl+q", CMD_QUIT);
+
+    bindKeySequence("alt+0", CMD_TAB_0);
+    bindKeySequence("alt+1", CMD_TAB_1);
+    bindKeySequence("alt+2", CMD_TAB_2);
+    bindKeySequence("alt+3", CMD_TAB_3);
+    bindKeySequence("alt+4", CMD_TAB_4);
+    bindKeySequence("alt+5", CMD_TAB_5);
+    bindKeySequence("alt+6", CMD_TAB_6);
+    bindKeySequence("alt+7", CMD_TAB_7);
+    bindKeySequence("alt+8", CMD_TAB_8);
+    bindKeySequence("alt+9", CMD_TAB_9);
 
     bindKeySequence("ctrl+c", CMD_COPY);
     bindKeySequence("ctrl+x", CMD_CUT);

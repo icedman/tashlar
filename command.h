@@ -14,6 +14,17 @@ enum command_e {
     CMD_PASTE,
     CMD_SELECT_WORD,
 
+    CMD_TAB_0,
+    CMD_TAB_1,
+    CMD_TAB_2,
+    CMD_TAB_3,
+    CMD_TAB_4,
+    CMD_TAB_5,
+    CMD_TAB_6,
+    CMD_TAB_7,
+    CMD_TAB_8,
+    CMD_TAB_9,
+
     CMD_SELECT_ALL,
     CMD_SELECT_LINE,
     CMD_DUPLICATE_LINE,

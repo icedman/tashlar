@@ -74,6 +74,7 @@ struct app_t {
     void close();
     void refresh();
     void layout();
+
     bool processCommand(command_e cmd, char ch);
 
     // log

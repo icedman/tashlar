@@ -44,6 +44,8 @@ static void renderEditor(struct editor_t& editor)
         editor.win = newwin(editor.viewHeight, editor.viewWidth, 0, 0);
     }
 
+    editor.matchBracketsUnderCursor();
+
     mvwin(editor.win, editor.viewY, editor.viewX);
     wresize(editor.win, editor.viewHeight, editor.viewWidth);
 

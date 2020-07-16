@@ -75,7 +75,7 @@ void tabbar_t::render()
     int x = 0;
     wmove(win, 0, 0);
     wclrtoeol(win);
-    
+
     int tabNo = 1;
     for (auto t : tabs) {
         int pair = colorPair;
@@ -92,13 +92,13 @@ void tabbar_t::render()
             renderLine("[", offsetX, x);
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             wattroff(win, A_BOLD);
-            
+
             // wattron(win, hasFocus ? A_REVERSE : A_BOLD);
         } else {
             renderLine(" ", offsetX, x);
         }
 
-        wattron(win, COLOR_PAIR(pair));        
+        wattron(win, COLOR_PAIR(pair));
         renderLine(t.name.c_str(), offsetX, x);
         wattroff(win, COLOR_PAIR(pair));
 
@@ -106,7 +106,7 @@ void tabbar_t::render()
             // wattron(win, A_BOLD);
             wattron(win, COLOR_PAIR(colorPairIndicator));
             wattron(win, A_BOLD);
-                renderLine("]", offsetX, x);
+            renderLine("]", offsetX, x);
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             wattroff(win, A_BOLD);
         } else {
@@ -114,7 +114,7 @@ void tabbar_t::render()
         }
 
         wattroff(win, A_REVERSE);
-        
+
         tabNo++;
     }
 
@@ -208,12 +208,33 @@ void tabbar_t::layout(int w, int h)
 
 bool tabbar_t::processCommand(command_e cmd, char ch)
 {
-    // proceed only if got focus
-    if (app_t::instance()->focused->id != id) {
-        return false;
+    struct app_t* app = app_t::instance();
+
+    switch (cmd) {
+    case CMD_TAB_0:
+    case CMD_TAB_1:
+    case CMD_TAB_2:
+    case CMD_TAB_3:
+    case CMD_TAB_4:
+    case CMD_TAB_5:
+    case CMD_TAB_6:
+    case CMD_TAB_7:
+    case CMD_TAB_8:
+    case CMD_TAB_9: {
+        app->openEditor(tabs[cmd - CMD_TAB_0 - 1].editor->document.fullPath);
+        return true;
+    }
+    case CMD_NEW_TAB:
+        app->openEditor("./untitled");
+        return true;
+    default:
+        break;
     }
 
-    struct app_t* app = app_t::instance();
+    // proceed only if got focus
+    if (!isFocused()) {
+        return false;
+    }
 
     switch (cmd) {
     case CMD_MOVE_CURSOR_LEFT:
