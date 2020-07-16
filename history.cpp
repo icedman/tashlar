@@ -96,4 +96,7 @@ void history_t::initialize(struct document_t* document)
 {
     initialState = document->blocks;
     edits.clear();
+    for (auto& b : initialState) {
+        b.data.reset();
+    }
 }

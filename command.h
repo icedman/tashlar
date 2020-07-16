@@ -81,6 +81,7 @@ enum command_e {
     CMD_REDO,
 
     CMD_RESIZE,
+    CMD_TAB,
     CMD_ENTER,
     CMD_DELETE,
     CMD_BACKSPACE,
@@ -93,7 +94,9 @@ enum command_e {
     CMD_POPUP_SEARCH_LINE,
     CMD_POPUP_COMMANDS,
     CMD_POPUP_FILES,
-    CMD_POPUP_COMPLETION
+    CMD_POPUP_COMPLETION,
+
+    CMD_HISTORY_SNAPSHOT
 };
 
 bool processEditorCommand(command_e cmd, char ch);

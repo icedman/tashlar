@@ -281,6 +281,9 @@ int main(int argc, char** argv)
             app.inputBuffer.erase(0, 1);
         }
 
+        //-----------------
+        // morph some keys
+        //-----------------
         if ((cmd == CMD_UNKNOWN || cmd == CMD_CANCEL) && ch >= ALT_ && ch <= CTRL_SHIFT_ALT_) {
             // drop unhandled;
             continue;
@@ -294,6 +297,15 @@ int main(int argc, char** argv)
         // app commands
         //-----------------
         switch (cmd) {
+        case CMD_UNDO:
+            popup.hide();
+            popup.request = -1;
+            popup.items.clear();
+            break;
+        case CMD_TAB:
+            app.inputBuffer = "    ";
+            continue;
+            ;
         case CMD_CLOSE_TAB:
             app.close();
             if (app.editors.size() == 0) {
@@ -400,7 +412,7 @@ int main(int argc, char** argv)
                 doc->updateCursor(c);
             }
 
-            if (cursors.size() == 1) {
+            if (cursors.size() == 1 && advance > 0) {
                 struct cursor_t c = cur;
                 if (cursorMovePosition(&c, cursor_t::Move::Left)) {
                     cursorSelectWord(&c);

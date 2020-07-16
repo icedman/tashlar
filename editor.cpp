@@ -553,28 +553,6 @@ bool editor_t::processCommand(command_e cmd, char ch)
         app->statusbar->setStatus("saved", 2000);
         return true;
 
-    case CMD_PASTE:
-        if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
-            app->inputBuffer = app->clipBoard;
-        } else {
-            doc->addSnapshot();
-            doc->history().begin();
-            doc->addBufferDocument(app->clipBoard);
-            app->clipBoard = "";
-
-            // cursorInsertText(&cursor, "/* WARNING: pasting very large buffer is not yet ready */");
-
-            doc->insertFromBuffer(cursor, doc->buffers.back());
-
-            cursorMovePosition(&cursor, cursor_t::EndOfDocument);
-            doc->history().addPasteBuffer(cursor, doc->buffers.back());
-
-            doc->history().end();
-            doc->addSnapshot();
-            doc->clearCursors();
-        }
-        return true;
-
     case CMD_UNDO:
         doc->undo();
         return true;
@@ -730,9 +708,6 @@ struct cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, 
             }
 
             block = block->next;
-            if (block) {
-                app_t::instance()->log("next!");
-            }
         }
 
     } else {

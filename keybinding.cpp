@@ -92,6 +92,7 @@ void bindDefaults()
     bindKeySequence("pageup", CMD_MOVE_CURSOR_PREVIOUS_PAGE);
     bindKeySequence("pagedown", CMD_MOVE_CURSOR_NEXT_PAGE);
 
+    bindKeySequence("tab", CMD_TAB);
     bindKeySequence("enter", CMD_ENTER);
     bindKeySequence("delete", CMD_DELETE);
     bindKeySequence("backspace", CMD_BACKSPACE);
@@ -381,6 +382,9 @@ int readKey(std::string& keySequence)
             }
 
             switch (c) {
+            case TAB:
+                keySequence = "tab";
+                return TAB;
             case ENTER:
                 keySequence = "enter";
                 return c;
@@ -403,11 +407,10 @@ int readKey(std::string& keySequence)
                 } else {
                     keySequence += '?';
                 }
-
                 return c;
             }
 
-            // app_t::log("key:%d %c\n", c, (char)c);
+            app_t::log("key:%d %c\n", c, (char)c);
 
             return c;
         }

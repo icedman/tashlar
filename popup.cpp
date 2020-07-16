@@ -35,7 +35,7 @@ static bool compareFile(struct item_t& f1, struct item_t& f2)
 
 bool popup_t::processCommand(command_e cmd, char ch)
 {
-    if (!isShown()) {
+    if (!isFocused()) {
         return false;
     }
 
@@ -77,6 +77,17 @@ bool popup_t::processCommand(command_e cmd, char ch)
         return true;
     default:
         if (type == POPUP_COMPLETION) {
+            const char* endCompletionChars = ";, ()[]{}-";
+            char c;
+            int idx = 0;
+            while (endCompletionChars[idx]) {
+                if (ch == endCompletionChars[idx]) {
+                    hide();
+                    return false;
+                }
+                idx++;
+            }
+
             return false;
         }
         if (isprint(ch)) {
@@ -133,7 +144,7 @@ void popup_t::layout(int w, int h)
 
 void popup_t::render()
 {
-    if (!isShown()) {
+    if (!isFocused()) {
         return;
     }
 
@@ -336,7 +347,8 @@ void popup_t::showCompletion()
 
     std::string prefix;
 
-    struct editor_t* editor = app_t::instance()->currentEditor.get();
+    struct app_t* app = app_t::instance();
+    struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
 
     struct cursor_t request_cursor = cursor;
@@ -351,6 +363,8 @@ void popup_t::showCompletion()
             if (prefix.length() > 2) {
                 cursor.position = cursor.anchorPosition;
             } else {
+                request = 0;
+                hide();
                 return;
             }
         }
@@ -379,7 +393,8 @@ void popup_t::showCompletion()
     }
 
     if (items.size()) {
-        app_t::instance()->focused = this;
+        app->focused = this;
+        app->refresh();
     }
 }
 

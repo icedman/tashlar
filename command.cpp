@@ -16,6 +16,32 @@ bool processEditorCommand(command_e cmd, char ch)
     // main cursor
     //-----------------
     switch (cmd) {
+    case CMD_HISTORY_SNAPSHOT:
+        doc->addSnapshot();
+        return true;
+
+    case CMD_PASTE:
+        if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
+            doc->addSnapshot();
+            app->inputBuffer = app->clipBoard;
+        } else {
+            doc->addSnapshot();
+            doc->history().begin();
+            doc->addBufferDocument(app->clipBoard);
+            app->clipBoard = "";
+
+            // cursorInsertText(&cursor, "/* WARNING: pasting very large buffer is not yet ready */");
+
+            doc->insertFromBuffer(cursor, doc->buffers.back());
+
+            cursorMovePosition(&cursor, cursor_t::EndOfDocument);
+            doc->history().addPasteBuffer(cursor, doc->buffers.back());
+
+            doc->history().end();
+            doc->addSnapshot();
+            doc->clearCursors();
+        }
+        return true;
 
     case CMD_MOVE_CURSOR_START_OF_DOCUMENT:
     case CMD_MOVE_CURSOR_START_OF_DOCUMENT_ANCHORED:
@@ -99,18 +125,19 @@ bool processEditorCommand(command_e cmd, char ch)
         }
         return true;
 
-    // some macros
     case CMD_DUPLICATE_LINE:
         app->commandBuffer.push_back(CMD_SELECT_LINE);
         app->commandBuffer.push_back(CMD_COPY);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
+        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT);
         return true;
 
     case CMD_DELETE_LINE:
         app->commandBuffer.push_back(CMD_SELECT_LINE);
         app->commandBuffer.push_back(CMD_COPY);
         app->commandBuffer.push_back(CMD_DELETE);
+        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT);
         return true;
 
     case CMD_MOVE_LINE_UP:
@@ -120,6 +147,7 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_UP);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
+        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT);
         return true;
 
     case CMD_MOVE_LINE_DOWN:
@@ -129,12 +157,14 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_DOWN);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
+        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT);
         return true;
 
     default:
         break;
     }
 
+    // morph some commands
     //-----------------
     // multi cursor updates
     //-----------------

@@ -9,10 +9,11 @@
 
 enum KEY_ACTION {
     KEY_NULL = 0, /* NULL */
-    ENTER = 13, /* Enter */
-    ESC = 27, /* Escape */
-    BACKSPACE = 127, /* Backspace */
-    RESIZE = 150, /* Backspace */
+    ENTER = 13,
+    TAB = 9,
+    ESC = 27,
+    BACKSPACE = 127,
+    RESIZE = 150,
     /* The following are just soft codes, not really reported by the terminal directly. */
     ALT_ = 1000,
     CTRL_,
