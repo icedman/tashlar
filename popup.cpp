@@ -411,8 +411,15 @@ void popup_t::onInput()
     items.clear();
 
     if (type == POPUP_SEARCH_LINE) {
-        std::string sInput = R"(AA #-0233 338982-FFB /ADR1 2)";
-        text = std::regex_replace(text, std::regex(R"([\D])"), "");
+        // std::string sInput = R"(AA #-0233 338982-FFB /ADR1 2)";
+        // text = std::regex_replace(text, std::regex(R"([\D])"), "");
+        if (text.length()) {
+            char lastChar = text.back();
+            if (lastChar < '0' || lastChar > '9') {
+                text.pop_back();
+            }
+        }
+
         int line = 0;
         std::stringstream(text) >> line;
         for (auto& b : doc->blocks) {
@@ -472,7 +479,8 @@ void popup_t::onSubmit()
             hide();
             return;
         }
-
+        
+        struct cursor_t cur = cursor;
         bool found = cursorFindWord(&cursor, text);
         if (!found) {
             cursorMovePosition(&cursor, cursor_t::Move::StartOfDocument);
@@ -480,14 +488,7 @@ void popup_t::onSubmit()
         }
 
         if (found) {
-            cursorSelectWord(&cursor);
             doc->updateCursor(cursor);
-
-            // reverse the anchor;
-            size_t p = cursor.position;
-            cursor.position = cursor.anchorPosition;
-            cursor.anchorPosition = p;
-
             doc->setCursor(cursor);
             app->refresh();
             return;

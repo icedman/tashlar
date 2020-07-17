@@ -86,6 +86,11 @@ std::vector<search_result_t> search_t::find(std::string str, std::string pat)
 {
     if (lastWord != pat) {
         lastWord = pat;
+        for (int i = 0; i < pat.length(); i++) {
+            if (pat[i] == '(' || pat[i] == ')') {
+                pat[i] = '.';
+            }
+        }
         word = regexp::pattern_t(pat, "is");
     }
 

@@ -4,6 +4,8 @@
 #include "editor.h"
 #include "statusbar.h"
 
+int autoIndent(struct cursor_t cursor);
+
 bool processEditorCommand(command_e cmd, char ch)
 {
     struct app_t* app = app_t::instance();
@@ -330,6 +332,7 @@ bool processEditorCommand(command_e cmd, char ch)
             }
             cursorSplitBlock(&cur);
             cursorMovePosition(&cur, cursor_t::Right);
+            advance += autoIndent(cur);
             advance++;
             update = true;
             handled = true;
@@ -362,4 +365,9 @@ bool processEditorCommand(command_e cmd, char ch)
     }
 
     return handled;
+}
+
+int autoIndent(struct cursor_t cursor)
+{
+    return 0;
 }

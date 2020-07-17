@@ -227,11 +227,11 @@ int cursorInsertText(struct cursor_t* cursor, std::string t)
     return blockText.length();
 }
 
-void cursorEraseText(struct cursor_t* cursor, int c)
+int cursorEraseText(struct cursor_t* cursor, int c)
 {
     struct block_t& block = cursor->document->block(*cursor);
     if (!block.isValid()) {
-        return;
+        return 0;
     }
 
     struct blockdata_t *data = block.data.get();
@@ -255,6 +255,7 @@ void cursorEraseText(struct cursor_t* cursor, int c)
     }
 
     block.setText(blockText);
+    return 1;
 }
 
 void cursorSplitBlock(struct cursor_t* cursor)
