@@ -12,6 +12,8 @@ static size_t cursor_uid = 1;
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block)
 {
     std::vector<struct block_t>::iterator it = blocks.begin();
+    int skip = block.lineNumber > 0 ? (block.lineNumber * 2 / 3) : 0;
+    it += skip;
     while (it != blocks.end()) {
         struct block_t& blk = *it;
         if (&blk == &block) {

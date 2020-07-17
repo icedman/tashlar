@@ -17,6 +17,7 @@ enum cursor_edit_e {
     EDIT_DELETE,
     EDIT_SPLIT,
     EDIT_PASTE_BUFFER,
+    EDIT_BLOCK_SNAPSHOT,
     EDIT_STOP
 };
 
@@ -52,6 +53,7 @@ struct history_t {
     void addInsert(struct cursor_t& c, std::string text);
     void addDelete(struct cursor_t& c, int count);
     void addSplit(struct cursor_t& c);
+    void addBlockSnapshot(struct cursor_t& c);
     void addPasteBuffer(struct cursor_t& c, std::shared_ptr<document_t> buffer);
     void replay();
 

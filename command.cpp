@@ -23,20 +23,25 @@ bool processEditorCommand(command_e cmd, char ch)
         return true;
 
     case CMD_HISTORY_SNAPSHOT:
+        app->inputBuffer = "";
         doc->addSnapshot();
         return true;
 
     case CMD_TAB:
         if (!app->inputBuffer.length() && !app->commandBuffer.size()) {
-            app->inputBuffer = "    ";
+            std::string tab = "";
+            for(int i=0;i<app->tabSize; i++) {
+                tab += " ";
+            }
+            app->inputBuffer = tab;
         }
         return true;
 
     case CMD_PASTE:
         if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
-            doc->addSnapshot();
+            doc->addSnapshot(); // TODO << wasteful of resources
             app->inputBuffer = app->clipBoard;
-        } else {
+        } else if (app->clipBoard.length()) {
             doc->addSnapshot();
             doc->history().begin();
             doc->addBufferDocument(app->clipBoard);
@@ -142,14 +147,14 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_COPY);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
-        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT);
+        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     case CMD_DELETE_LINE:
         app->commandBuffer.push_back(CMD_SELECT_LINE);
-        app->commandBuffer.push_back(CMD_COPY);
+        // app->commandBuffer.push_back(CMD_COPY);
         app->commandBuffer.push_back(CMD_DELETE);
-        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT);
+        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     case CMD_MOVE_LINE_UP:
@@ -159,7 +164,7 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_UP);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
-        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT);
+        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     case CMD_MOVE_LINE_DOWN:
@@ -169,7 +174,7 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_DOWN);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
-        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT);
+        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     default:
@@ -191,6 +196,26 @@ bool processEditorCommand(command_e cmd, char ch)
         struct cursor_t& cur = cursors[i];
         int advance = 0;
         bool update = false;
+
+        if (cur.hasSelection()) {
+            switch(cmd) {
+            case CMD_CUT:
+                // latest cursor will prevail
+                app->clipBoard = cur.selectedText();
+                if (app->clipBoard.length()) {
+                    app->statusbar->setStatus("text copied", 2000);
+                }
+                cmd = CMD_DELETE_SELECTION;
+                break;
+            case CMD_DELETE:
+            case CMD_BACKSPACE:
+            case CMD_SPLIT_LINE:
+                cmd = CMD_DELETE_SELECTION;
+                break;
+            default:
+                break;
+            }
+        }
 
         switch (cmd) {
 
@@ -278,11 +303,7 @@ bool processEditorCommand(command_e cmd, char ch)
         //-----------
         // document edits
         //-----------
-        case CMD_CUT:
-            app->clipBoard = cur.selectedText();
-            if (app->clipBoard.length()) {
-                app->statusbar->setStatus("text copied", 2000);
-            }
+        case CMD_DELETE_SELECTION:
             if (cur.hasSelection()) {
                 int count = cursorDeleteSelection(&cur);
                 if (count) {
@@ -291,16 +312,25 @@ bool processEditorCommand(command_e cmd, char ch)
                 cur.clearSelection();
                 advance -= count;
                 update = true;
-                doc->history().mark();
+                break;
             }
             handled = true;
             break;
 
+        case CMD_CUT:
+            handled = true;
+            break;
+
         case CMD_DELETE:
-            if (cur.hasSelection()) {
-                advance -= cursorDeleteSelection(&cur);
-                cur.clearSelection();
-            } else {
+            doc->history().addDelete(cur, 1);
+            cursorEraseText(&cur, 1);
+            advance--;
+            update = true;
+            handled = true;
+            break;
+
+        case CMD_BACKSPACE:
+            if (cursorMovePosition(&cur, cursor_t::Left)) {
                 doc->history().addDelete(cur, 1);
                 cursorEraseText(&cur, 1);
                 advance--;
@@ -309,30 +339,10 @@ bool processEditorCommand(command_e cmd, char ch)
             handled = true;
             break;
 
-        case CMD_BACKSPACE:
-            if (cur.hasSelection()) {
-                advance -= cursorDeleteSelection(&cur);
-                cur.clearSelection();
-            } else {
-                if (cursorMovePosition(&cur, cursor_t::Left)) {
-                    doc->history().addDelete(cur, 1);
-                    cursorEraseText(&cur, 1);
-                    advance--;
-                }
-            }
-            update = true;
-            handled = true;
-            break;
-
         case CMD_SPLIT_LINE:
             doc->history().addSplit(cur);
-            if (cur.hasSelection()) {
-                advance -= cursorDeleteSelection(&cur);
-                cur.clearSelection();
-            }
             cursorSplitBlock(&cur);
             cursorMovePosition(&cur, cursor_t::Right);
-            advance += autoIndent(cur);
             advance++;
             update = true;
             handled = true;
@@ -367,7 +377,3 @@ bool processEditorCommand(command_e cmd, char ch)
     return handled;
 }
 
-int autoIndent(struct cursor_t cursor)
-{
-    return 0;
-}

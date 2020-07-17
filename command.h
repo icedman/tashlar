@@ -25,6 +25,9 @@ enum command_e {
     CMD_TAB_8,
     CMD_TAB_9,
 
+    CMD_INDENT,
+    CMD_UNINDENT,
+
     CMD_SELECT_ALL,
     CMD_SELECT_LINE,
     CMD_DUPLICATE_LINE,

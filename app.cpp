@@ -384,6 +384,12 @@ void app_t::configure(int argc, char** argv)
     if (settings.isMember("mini_map")) {
         showMinimap = settings["mini_map"].asBool();
     }
+    if (settings.isMember("tab_size")) {
+        tabSize = settings["tab_size"].asInt();
+    }
+    if (tabSize < 2) {
+        tabSize = 2;
+    }
 
     minimap->theme = theme;
     statusbar->theme = theme;

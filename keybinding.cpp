@@ -49,6 +49,8 @@ void bindDefaults()
     bindKeySequence("ctrl+l+ctrl+x", CMD_DELETE_LINE);
     bindKeySequence("ctrl+l+ctrl+up", CMD_MOVE_LINE_UP);
     bindKeySequence("ctrl+l+ctrl+down", CMD_MOVE_LINE_DOWN);
+    bindKeySequence("ctrl+l+ctrl+i", CMD_INDENT);
+    bindKeySequence("ctrl+l+ctrl+u", CMD_UNINDENT);
 
     bindKeySequence("ctrl+l+ctrl+f", CMD_TOGGLE_FOLD);
 

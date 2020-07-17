@@ -70,4 +70,6 @@ void cursorSelectWord(struct cursor_t* cursor);
 bool cursorFindWord(struct cursor_t* cursor, std::string t);
 int cursorDeleteSelection(struct cursor_t* cursor);
 
+int countToTabStop(struct cursor_t* cursor);
+
 #endif // CURSOR_H

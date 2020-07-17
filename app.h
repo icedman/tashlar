@@ -47,7 +47,7 @@ struct app_t {
     std::vector<struct extension_t> extensions;
 
     // settings
-    std::string themeName;
+    int  tabSize;
     bool lineWrap;
     bool showStatusBar;
     bool showGutter;
@@ -56,6 +56,7 @@ struct app_t {
     bool showMinimap;
 
     // colors
+    std::string themeName;
     int fg;
     int bg;
     int selFg;

@@ -76,13 +76,14 @@ struct block_t {
     block_t()
         : document(0)
         , file(0)
+        , lineNumber(0)
         , position(0)
         , screenLine(0)
         , dirty(false)
         , next(0)
         , previous()
-    {
-    }
+    {}
+
 
     std::string text()
     {
@@ -128,6 +129,7 @@ struct block_t {
         }
     }
 
+    size_t uid;
     int lineNumber;
     int lineCount;
 

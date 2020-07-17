@@ -45,6 +45,13 @@ void history_t::addSplit(struct cursor_t& cur)
         .edit = EDIT_SPLIT });
 }
 
+void history_t::addBlockSnapshot(struct cursor_t& cur)
+{
+    editBatch.push_back({ .cursor = cur,
+        .text = cur.block->text(),
+        .edit = EDIT_BLOCK_SNAPSHOT });
+}
+
 void history_t::addPasteBuffer(struct cursor_t& cur, std::shared_ptr<document_t> buffer)
 {
     paused = false;
@@ -66,6 +73,10 @@ void history_t::replay()
 
     for (auto batch : edits) {
         for (auto e : batch) {
+            if (e.cursor.block->data) {
+                e.cursor.block->data->dirty = true;
+            }
+
             switch (e.edit) {
 
             case EDIT_INSERT:
@@ -80,9 +91,16 @@ void history_t::replay()
             case EDIT_PASTE_BUFFER:
                 e.cursor.document->insertFromBuffer(e.cursor, e.buffer);
                 break;
+            case EDIT_BLOCK_SNAPSHOT:
+                e.cursor.update();
+                e.cursor.block->setText(e.text);
+                break;
             }
 
-            e.cursor.document->update();
+            e.cursor.update();
+            if (e.cursor.block->data) {
+                e.cursor.block->data->dirty = true;
+            }
         }
     }
 
@@ -96,7 +114,4 @@ void history_t::initialize(struct document_t* document)
 {
     initialState = document->blocks;
     edits.clear();
-    for (auto& b : initialState) {
-        b.data.reset();
-    }
 }

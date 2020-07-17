@@ -193,8 +193,6 @@ int main(int argc, char** argv)
     clear();
 
     app.setupColors();
-
-    int ch = 0;
     bool end = false;
 
     std::string previousKeySequence;
@@ -233,6 +231,7 @@ int main(int argc, char** argv)
         std::string keySequence;
         std::string expandedSequence;
         int sequenceTick = 0;
+        int ch = -1;
         while (true) {
             if (app.inputBuffer.length()) {
                 break;
@@ -389,10 +388,13 @@ int main(int argc, char** argv)
 
             int advance = 0;
 
-            doc->history().addInsert(cur, s);
             if (cur.hasSelection()) {
+                doc->addSnapshot(); // TODO << wasteful of resources
                 advance -= cursorDeleteSelection(&cur);
+            } else {
+                doc->history().addInsert(cur, s);
             }
+
             cursorInsertText(&cur, s);
             cursorMovePosition(&cur, cursor_t::Right, false, s.length());
             if (s == " " || s == "\t") {

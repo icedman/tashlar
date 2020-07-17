@@ -316,18 +316,25 @@ int cursorDeleteSelection(struct cursor_t* cursor)
     if (startBlock.position != endBlock.position) {
         int count = 0;
 
+        struct block_t* next = startBlock.next;
+        struct block_t* firstNext = next;
+ 
         int d = curEnd.position - endBlock.position;
         curEnd.position = endBlock.position;
         cursorEraseText(&curEnd, d);
         count += d;
+      
+        app_t::instance()->log("end line %d", endBlock.lineNumber);
 
         d = startBlock.position + startBlock.length - cur.position;
-        cursorEraseText(&cur, d);
-        count += d;
+        if (d > 1) {
+            app_t::instance()->log("start line %d %d", startBlock.lineNumber, d);
+            cursorEraseText(&cur, d);
+            count += d;
+        }
 
         cursor->document->update();
 
-        struct block_t* next = startBlock.next;
         int linesToDelete = 0;
         while (next && next != &endBlock) {
             linesToDelete++;
@@ -336,9 +343,8 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         }
 
         // delete blocks in-between
-        next = startBlock.next;
-        if (next && linesToDelete-- > 0) {
-            std::vector<struct block_t>::iterator it = findBlock(cursor->document->blocks, *next);
+        if (firstNext && linesToDelete-- > 0) {
+            std::vector<struct block_t>::iterator it = findBlock(cursor->document->blocks, *firstNext);
             if (it != cursor->document->blocks.end()) {
                 cursor->document->blocks.erase(it, it + linesToDelete + 1);
                 cursor->document->update();
@@ -470,3 +476,118 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t)
 
     return false;
 }
+
+static size_t countIndentSize(std::string s)
+{
+    for (int i = 0; i < s.length(); i++) {
+        if (s[i] != ' ') {
+            return i;
+        }
+    }
+    return 0;
+}
+
+int countToTabStop(struct cursor_t* cursor)
+{
+    int tab_size = 4;
+    bool tab_to_spaces = true;
+    if (!tab_to_spaces) {
+        // cursor.insertText("\t");
+        return 1;
+    }
+
+    int ts = tab_size;
+    struct cursor_t cs = *cursor;
+    cursorMovePosition(&cs, cursor_t::Move::StartOfLine, true);
+    size_t ws = countIndentSize(cs.selectedText() + "?");
+    if (ws != 0 && ws == cursor->position - cursor->block->position) {
+        // magic! (align to tab)
+        ts = (((ws / ts) + 1) * ts) - ws;
+    }
+
+    return ts;
+}
+
+
+int autoIndent(struct cursor_t cursor)
+{
+    /*
+    editor_settings_ptr settings = MainWindow::instance()->editor_settings;
+    int white_spaces = 0;
+
+    HighlightBlockData* blockData;
+    bool beginsWithCloseBracket = false;
+
+    QTextCursor cs(cursor);
+    QTextBlock block = cursor.block();
+
+    if (block.isValid()) {
+        blockData = reinterpret_cast<HighlightBlockData*>(block.userData());
+        if (blockData->brackets.size()) {
+            beginsWithCloseBracket = !blockData->brackets[0].open;
+        }
+    }
+
+    while (block.isValid()) {
+
+        // qDebug() << block.text();
+
+        cs.setPosition(block.position());
+        cs.movePosition(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
+        QString blockText = block.text();
+        size_t ws = countIndentSize(blockText + "?");
+        if (white_spaces < ws) {
+            white_spaces = ws;
+        }
+        if (blockText.length() && ws != 0) {
+            break;
+        }
+        // is line whitespace
+        if (ws == 0) {
+            block = block.previous();
+            continue;
+        }
+
+        break;
+    }
+
+    if (!block.isValid()) {
+        return;
+    }
+
+    blockData = reinterpret_cast<HighlightBlockData*>(block.userData());
+    if (blockData && blockData->brackets.size()) {
+        auto b = blockData->brackets.back();
+        if (b.open) {
+            if (settings->tab_to_spaces) {
+                white_spaces += settings->tab_size;
+            } else {
+                white_spaces++;
+            }
+        }
+    }
+
+    if (beginsWithCloseBracket) {
+        if (settings->tab_to_spaces) {
+            white_spaces -= settings->tab_size;
+        } else {
+            white_spaces--;
+        }
+    }
+
+    // qDebug() << white_spaces;
+
+    cursor.beginEditBlock();
+    cursor.movePosition(QTextCursor::StartOfLine);
+    for (int i = 0; i < white_spaces; i++) {
+        if (settings->tab_to_spaces) {
+            cursor.insertText(" ");
+        } else {
+            cursor.insertText("\t");
+            i += (settings->tab_size - 1);
+        }
+    }
+    cursor.endEditBlock();
+    */
+}
+
