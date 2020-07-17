@@ -25,29 +25,32 @@ std::vector<struct block_t*> cursor_t::selectedBlocks()
 {
     std::vector<struct block_t*> blocks;
 
-        size_t start;
-        size_t end;
-        
-        if (position > anchorPosition) {
-            start = anchorPosition;
-            end = position;
-        } else {
-            start = position;
-            end = anchorPosition;
-        }
+    size_t start;
+    size_t end;
 
-        struct cursor_t cur = *this;
-        struct cursor_t curEnd = *this;
-        cur.setPosition(start);
-        curEnd.setPosition(end);
-        // for selection spanning multiple blocks
-        struct block_t *startBlock = &document->block(cur);
-        struct block_t *endBlock = &document->block(curEnd);
+    if (position > anchorPosition) {
+        start = anchorPosition;
+        end = position;
+    } else {
+        start = position;
+        end = anchorPosition;
+    }
+
+    position = end;
+    anchorPosition = start;
+
+    struct cursor_t cur = *this;
+    struct cursor_t curEnd = *this;
+    cur.setPosition(start);
+    curEnd.setPosition(end);
+
+    struct block_t* startBlock = &document->block(cur);
+    struct block_t* endBlock = &document->block(curEnd);
+    blocks.push_back(startBlock);
+    while (startBlock != endBlock) {
+        startBlock = startBlock->next;
         blocks.push_back(startBlock);
-        while(startBlock != endBlock) {
-            startBlock = startBlock->next;
-            blocks.push_back(startBlock);
-        }
+    }
 
     return blocks;
 }
@@ -554,7 +557,7 @@ static int _cursorIndent(struct cursor_t* cursor)
     struct cursor_t cur = *cursor;
 
     std::string newText = "";
-    for(int i=0;i<inserted;i++) {
+    for (int i = 0; i < inserted; i++) {
         newText += " ";
     }
     newText += text;
@@ -566,11 +569,11 @@ static int _cursorIndent(struct cursor_t* cursor)
 int cursorIndent(struct cursor_t* cursor)
 {
     if (cursor->hasSelection()) {
-        std::vector<struct block_t *> blocks = cursor->selectedBlocks();
+        std::vector<struct block_t*> blocks = cursor->selectedBlocks();
         int count = 0;
         int offset = 0;
         // app_t::instance()->log("blocks: %d", blocks.size());
-        for(auto b : blocks) {
+        for (auto b : blocks) {
             struct cursor_t cur = *cursor;
             cur.block = b;
             count += _cursorIndent(&cur);
@@ -596,7 +599,6 @@ int _cursorUnindent(struct cursor_t* cursor)
 
         std::string newText = (text.c_str() + deleted);
         cursor->block->setText(newText);
-
     }
     return deleted;
 }
@@ -604,11 +606,11 @@ int _cursorUnindent(struct cursor_t* cursor)
 int cursorUnindent(struct cursor_t* cursor)
 {
     if (cursor->hasSelection()) {
-        std::vector<struct block_t *> blocks = cursor->selectedBlocks();
+        std::vector<struct block_t*> blocks = cursor->selectedBlocks();
         int count = 0;
         int offset = 0;
         // app_t::instance()->log("blocks: %d", blocks.size());
-        for(auto b : blocks) {
+        for (auto b : blocks) {
             struct cursor_t cur = *cursor;
             cur.block = b;
             count += _cursorUnindent(&cur);

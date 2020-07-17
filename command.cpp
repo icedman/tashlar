@@ -4,8 +4,6 @@
 #include "editor.h"
 #include "statusbar.h"
 
-int autoIndent(struct cursor_t cursor);
-
 bool processEditorCommand(command_e cmd, char ch)
 {
     struct app_t* app = app_t::instance();
@@ -203,8 +201,9 @@ bool processEditorCommand(command_e cmd, char ch)
             cur2.position = cur2.anchorPosition;
             cur2.update();
             if (cur.block != cur2.block) {
-
                 switch (cmd) {
+                case CMD_INDENT:
+                case CMD_UNINDENT:
                 case CMD_CUT:
                 case CMD_DELETE:
                 case CMD_BACKSPACE:
@@ -214,7 +213,6 @@ bool processEditorCommand(command_e cmd, char ch)
                 default:
                     break;
                 }
-
                 break;
             }
         }
@@ -222,7 +220,6 @@ bool processEditorCommand(command_e cmd, char ch)
 
     if (snapShot) {
         doc->addSnapshot();
-        app->log("snapshot!");
     }
 
     for (int i = 0; i < cursors.size(); i++) {
@@ -258,35 +255,35 @@ bool processEditorCommand(command_e cmd, char ch)
         case CMD_MOVE_CURSOR_PREVIOUS_WORD:
         case CMD_MOVE_CURSOR_PREVIOUS_WORD_ANCHORED:
             cursorMovePosition(&cur, cursor_t::WordLeft, cmd == CMD_MOVE_CURSOR_PREVIOUS_WORD_ANCHORED);
-            doc->history().mark();
+            markHistory = true;
             handled = true;
             break;
 
         case CMD_MOVE_CURSOR_NEXT_WORD:
         case CMD_MOVE_CURSOR_NEXT_WORD_ANCHORED:
             cursorMovePosition(&cur, cursor_t::WordRight, cmd == CMD_MOVE_CURSOR_NEXT_WORD_ANCHORED);
-            doc->history().mark();
+            markHistory = true;
             handled = true;
             break;
 
         case CMD_MOVE_CURSOR_START_OF_LINE:
         case CMD_MOVE_CURSOR_START_OF_LINE_ANCHORED:
             cursorMovePosition(&cur, cursor_t::StartOfLine, cmd == CMD_MOVE_CURSOR_START_OF_LINE_ANCHORED);
-            doc->history().mark();
+            markHistory = true;
             handled = true;
             break;
 
         case CMD_MOVE_CURSOR_END_OF_LINE:
         case CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED:
             cursorMovePosition(&cur, cursor_t::EndOfLine, cmd == CMD_MOVE_CURSOR_END_OF_LINE_ANCHORED);
-            doc->history().mark();
+            markHistory = true;
             handled = true;
             break;
 
         case CMD_MOVE_CURSOR_UP:
         case CMD_MOVE_CURSOR_UP_ANCHORED:
             cursorMovePosition(&cur, cursor_t::Up, cmd == CMD_MOVE_CURSOR_UP_ANCHORED);
-            doc->history().mark();
+            markHistory = true;
             handled = true;
 
             targetBlock = &doc->block(cur);
@@ -301,7 +298,7 @@ bool processEditorCommand(command_e cmd, char ch)
         case CMD_MOVE_CURSOR_DOWN:
         case CMD_MOVE_CURSOR_DOWN_ANCHORED:
             cursorMovePosition(&cur, cursor_t::Down, cmd == CMD_MOVE_CURSOR_DOWN_ANCHORED);
-            doc->history().mark();
+            markHistory = true;
             handled = true;
 
             targetBlock = &doc->block(cur);
@@ -316,14 +313,14 @@ bool processEditorCommand(command_e cmd, char ch)
         case CMD_MOVE_CURSOR_LEFT:
         case CMD_MOVE_CURSOR_LEFT_ANCHORED:
             cursorMovePosition(&cur, cursor_t::Left, cmd == CMD_MOVE_CURSOR_LEFT_ANCHORED);
+            markHistory = true;
             handled = true;
-            doc->history().mark();
             break;
 
         case CMD_MOVE_CURSOR_RIGHT:
         case CMD_MOVE_CURSOR_RIGHT_ANCHORED:
             cursorMovePosition(&cur, cursor_t::Right, cmd == CMD_MOVE_CURSOR_RIGHT_ANCHORED);
-            doc->history().mark();
+            markHistory = true;
             handled = true;
             break;
 
@@ -362,6 +359,7 @@ bool processEditorCommand(command_e cmd, char ch)
                 advance += count;
             }
             handled = true;
+            markHistory = true;
             break;
         }
         case CMD_UNINDENT: {
@@ -372,6 +370,7 @@ bool processEditorCommand(command_e cmd, char ch)
                 advance -= count;
             }
             handled = true;
+            markHistory = true;
             break;
         }
         case CMD_DELETE:

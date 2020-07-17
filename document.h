@@ -68,7 +68,7 @@ struct blockdata_t {
     size_t lastRule;
     size_t lastPrevBlockRule;
     block_state_e state;
-    
+
     bool dirty;
     bool folded;
     bool foldable;
