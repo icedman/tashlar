@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <string>
+#include <vector>
 
 struct document_t;
 struct block_t;
@@ -58,6 +59,7 @@ struct cursor_t {
         anchorPosition = pos;
     }
     void clearSelection() { anchorPosition = position; }
+    std::vector<struct block_t*> selectedBlocks();
 
     std::string selectedText();
 };
@@ -69,6 +71,8 @@ void cursorSplitBlock(struct cursor_t* cursor);
 void cursorSelectWord(struct cursor_t* cursor);
 bool cursorFindWord(struct cursor_t* cursor, std::string t);
 int cursorDeleteSelection(struct cursor_t* cursor);
+int cursorIndent(struct cursor_t* cursor);
+int cursorUnindent(struct cursor_t* cursor);
 
 int countToTabStop(struct cursor_t* cursor);
 

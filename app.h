@@ -47,7 +47,7 @@ struct app_t {
     std::vector<struct extension_t> extensions;
 
     // settings
-    int  tabSize;
+    int tabSize;
     bool lineWrap;
     bool showStatusBar;
     bool showGutter;

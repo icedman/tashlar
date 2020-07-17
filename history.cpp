@@ -47,9 +47,11 @@ void history_t::addSplit(struct cursor_t& cur)
 
 void history_t::addBlockSnapshot(struct cursor_t& cur)
 {
+    /*
     editBatch.push_back({ .cursor = cur,
         .text = cur.block->text(),
         .edit = EDIT_BLOCK_SNAPSHOT });
+    */
 }
 
 void history_t::addPasteBuffer(struct cursor_t& cur, std::shared_ptr<document_t> buffer)
@@ -92,8 +94,7 @@ void history_t::replay()
                 e.cursor.document->insertFromBuffer(e.cursor, e.buffer);
                 break;
             case EDIT_BLOCK_SNAPSHOT:
-                e.cursor.update();
-                e.cursor.block->setText(e.text);
+                // app_t::instance()->log("todo: implement block snapshot");
                 break;
             }
 

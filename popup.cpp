@@ -479,7 +479,7 @@ void popup_t::onSubmit()
             hide();
             return;
         }
-        
+
         struct cursor_t cur = cursor;
         bool found = cursorFindWord(&cursor, text);
         if (!found) {

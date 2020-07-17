@@ -60,7 +60,7 @@ void gutter_t::render()
                 pair = colorPairIndicator;
             } else {
                 lineNo += "-";
-            } 
+            }
         }
         wmove(win, y, 0);
         wclrtoeol(win);

@@ -753,10 +753,11 @@ struct cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, 
 
 void editor_t::toggleFold(size_t line)
 {
-    struct document_t* doc = &document;;
+    struct document_t* doc = &document;
+    ;
     struct block_t folder;
 
-    for(auto b : doc->blocks) {
+    for (auto b : doc->blocks) {
         if (b.lineNumber == line) {
             folder = b;
             break;
@@ -777,8 +778,8 @@ void editor_t::toggleFold(size_t line)
         return;
     }
 
-    struct block_t *block = &doc->block(openBracket);
-    struct block_t *endBlock = &doc->block(endBracket);
+    struct block_t* block = &doc->block(openBracket);
+    struct block_t* endBlock = &doc->block(endBracket);
 
     struct blockdata_t* blockData = block->data.get();
     if (!blockData) {
@@ -795,7 +796,7 @@ void editor_t::toggleFold(size_t line)
             // block.setVisible(false);
             // block.setLineCount(0);
         } else {
-           targetData->dirty = true;
+            targetData->dirty = true;
             // block.setVisible(true);
             // block.setLineCount(1);
         }
@@ -804,6 +805,4 @@ void editor_t::toggleFold(size_t line)
         }
         block = block->next;
     }
-
 }
-

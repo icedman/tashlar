@@ -30,7 +30,7 @@ bool processEditorCommand(command_e cmd, char ch)
     case CMD_TAB:
         if (!app->inputBuffer.length() && !app->commandBuffer.size()) {
             std::string tab = "";
-            for(int i=0;i<app->tabSize; i++) {
+            for (int i = 0; i < app->tabSize; i++) {
                 tab += " ";
             }
             app->inputBuffer = tab;
@@ -187,10 +187,43 @@ bool processEditorCommand(command_e cmd, char ch)
     //-----------------
     bool handled = false;
     bool markHistory = false;
+    bool snapShot = false;
     std::vector<struct cursor_t> cursors = doc->cursors;
 
-    struct block_t *targetBlock = 0;
-    struct blockdata_t *targetBlockData = 0;
+    struct block_t* targetBlock = 0;
+    struct blockdata_t* targetBlockData = 0;
+
+    //----------------
+    // check for multiline selections
+    //----------------
+    for (int i = 0; i < cursors.size(); i++) {
+        struct cursor_t cur = cursors[i];
+        if (cur.hasSelection()) {
+            struct cursor_t cur2 = cur;
+            cur2.position = cur2.anchorPosition;
+            cur2.update();
+            if (cur.block != cur2.block) {
+
+                switch (cmd) {
+                case CMD_CUT:
+                case CMD_DELETE:
+                case CMD_BACKSPACE:
+                case CMD_SPLIT_LINE:
+                    snapShot = true;
+                    break;
+                default:
+                    break;
+                }
+
+                break;
+            }
+        }
+    }
+
+    if (snapShot) {
+        doc->addSnapshot();
+        app->log("snapshot!");
+    }
 
     for (int i = 0; i < cursors.size(); i++) {
         struct cursor_t& cur = cursors[i];
@@ -198,7 +231,7 @@ bool processEditorCommand(command_e cmd, char ch)
         bool update = false;
 
         if (cur.hasSelection()) {
-            switch(cmd) {
+            switch (cmd) {
             case CMD_CUT:
                 // latest cursor will prevail
                 app->clipBoard = cur.selectedText();
@@ -255,14 +288,14 @@ bool processEditorCommand(command_e cmd, char ch)
             cursorMovePosition(&cur, cursor_t::Up, cmd == CMD_MOVE_CURSOR_UP_ANCHORED);
             doc->history().mark();
             handled = true;
-            
+
             targetBlock = &doc->block(cur);
             targetBlockData = targetBlock->data.get();
             if (targetBlockData && targetBlockData->folded && !targetBlockData->foldable && targetBlock->previous) {
                 // repeat the command -- to skip folded block
                 app->commandBuffer.clear();
                 app->commandBuffer.push_back(cmd);
-            }            
+            }
             break;
 
         case CMD_MOVE_CURSOR_DOWN:
@@ -277,7 +310,7 @@ bool processEditorCommand(command_e cmd, char ch)
                 // repeat the command -- to skip folded block
                 app->commandBuffer.clear();
                 app->commandBuffer.push_back(cmd);
-            }            
+            }
             break;
 
         case CMD_MOVE_CURSOR_LEFT:
@@ -321,6 +354,26 @@ bool processEditorCommand(command_e cmd, char ch)
             handled = true;
             break;
 
+        case CMD_INDENT: {
+            int count = cursorIndent(&cur);
+            if (count) {
+                cursorMovePosition(&cur, cursor_t::Right, cursor.hasSelection(), count);
+                update = true;
+                advance += count;
+            }
+            handled = true;
+            break;
+        }
+        case CMD_UNINDENT: {
+            int count = cursorUnindent(&cur);
+            if (count) {
+                cursorMovePosition(&cur, cursor_t::Left, cursor.hasSelection(), count);
+                update = true;
+                advance -= count;
+            }
+            handled = true;
+            break;
+        }
         case CMD_DELETE:
             doc->history().addDelete(cur, 1);
             cursorEraseText(&cur, 1);
@@ -376,4 +429,3 @@ bool processEditorCommand(command_e cmd, char ch)
 
     return handled;
 }
-

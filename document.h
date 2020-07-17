@@ -45,6 +45,7 @@ struct blockdata_t {
         , folded(false)
         , foldable(false)
         , dots(0)
+        , indent(0)
         , lastPrevBlockRule(0)
     {
     }
@@ -67,9 +68,11 @@ struct blockdata_t {
     size_t lastRule;
     size_t lastPrevBlockRule;
     block_state_e state;
+    
     bool dirty;
     bool folded;
     bool foldable;
+    int indent;
 };
 
 struct block_t {
@@ -82,8 +85,8 @@ struct block_t {
         , dirty(false)
         , next(0)
         , previous()
-    {}
-
+    {
+    }
 
     std::string text()
     {

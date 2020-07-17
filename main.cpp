@@ -116,7 +116,7 @@ void renderEditor(struct editor_t& editor)
             continue;
         }
         editor.highlightBlock(b);
-        struct blockdata_t *data = b.data.get();
+        struct blockdata_t* data = b.data.get();
         if (data && data->folded && !data->foldable) {
             // render folded indicator
         } else {
@@ -210,9 +210,7 @@ int main(int argc, char** argv)
 
             curs_set(0);
 
-            if (popup.isFocused() &&
-                (popup.items.size() || popup.text.length() > 3) && 
-                app.refreshLoop <= 0) {
+            if (popup.isFocused() && (popup.items.size() || popup.text.length() > 3) && app.refreshLoop <= 0) {
                 popup.render();
             } else {
                 app.render();

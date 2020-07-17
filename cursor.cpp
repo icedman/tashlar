@@ -1,3 +1,8 @@
+/*
+ todo: decide fixed rules from cursor manipulation
+ todo: move history at cursor level instead of at command level<<?
+ */
+
 #include "cursor.h"
 #include "app.h"
 #include "document.h"
@@ -14,6 +19,37 @@ void cursor_t::update()
 bool cursor_t::isNull()
 {
     return document == 0 || block == 0 || !block->isValid();
+}
+
+std::vector<struct block_t*> cursor_t::selectedBlocks()
+{
+    std::vector<struct block_t*> blocks;
+
+        size_t start;
+        size_t end;
+        
+        if (position > anchorPosition) {
+            start = anchorPosition;
+            end = position;
+        } else {
+            start = position;
+            end = anchorPosition;
+        }
+
+        struct cursor_t cur = *this;
+        struct cursor_t curEnd = *this;
+        cur.setPosition(start);
+        curEnd.setPosition(end);
+        // for selection spanning multiple blocks
+        struct block_t *startBlock = &document->block(cur);
+        struct block_t *endBlock = &document->block(curEnd);
+        blocks.push_back(startBlock);
+        while(startBlock != endBlock) {
+            startBlock = startBlock->next;
+            blocks.push_back(startBlock);
+        }
+
+    return blocks;
 }
 
 bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool keepAnchor, int count)
@@ -214,8 +250,8 @@ int cursorInsertText(struct cursor_t* cursor, std::string t)
     if (!block.isValid()) {
         return 0;
     }
- 
-    struct blockdata_t *data = block.data.get();
+
+    struct blockdata_t* data = block.data.get();
     if (data && data->folded && data->foldable) {
         app_t::instance()->currentEditor->toggleFold(block.lineNumber);
     }
@@ -234,7 +270,7 @@ int cursorEraseText(struct cursor_t* cursor, int c)
         return 0;
     }
 
-    struct blockdata_t *data = block.data.get();
+    struct blockdata_t* data = block.data.get();
     if (data && data->folded && data->foldable) {
         app_t::instance()->currentEditor->toggleFold(block.lineNumber);
     }
@@ -265,7 +301,7 @@ void cursorSplitBlock(struct cursor_t* cursor)
         return;
     }
 
-    struct blockdata_t *data = block.data.get();
+    struct blockdata_t* data = block.data.get();
     if (data && data->folded && data->foldable) {
         app_t::instance()->currentEditor->toggleFold(block.lineNumber);
     }
@@ -318,12 +354,12 @@ int cursorDeleteSelection(struct cursor_t* cursor)
 
         struct block_t* next = startBlock.next;
         struct block_t* firstNext = next;
- 
+
         int d = curEnd.position - endBlock.position;
         curEnd.position = endBlock.position;
         cursorEraseText(&curEnd, d);
         count += d;
-      
+
         app_t::instance()->log("end line %d", endBlock.lineNumber);
 
         d = startBlock.position + startBlock.length - cur.position;
@@ -508,6 +544,79 @@ int countToTabStop(struct cursor_t* cursor)
     return ts;
 }
 
+static int _cursorIndent(struct cursor_t* cursor)
+{
+    std::string text = cursor->block->text();
+    int tab_size = 4;
+    int currentIndent = countIndentSize(text + "?");
+    int newIndent = ((currentIndent / tab_size) + 1) * tab_size;
+    int inserted = newIndent - currentIndent;
+    struct cursor_t cur = *cursor;
+
+    std::string newText = "";
+    for(int i=0;i<inserted;i++) {
+        newText += " ";
+    }
+    newText += text;
+    cursor->block->setText(newText);
+    // app_t::instance()->log("indent %d  %d %s\n", inserted, cursor->block->lineNumber, cursor->block->text().c_str());
+    return inserted;
+}
+
+int cursorIndent(struct cursor_t* cursor)
+{
+    if (cursor->hasSelection()) {
+        std::vector<struct block_t *> blocks = cursor->selectedBlocks();
+        int count = 0;
+        int offset = 0;
+        // app_t::instance()->log("blocks: %d", blocks.size());
+        for(auto b : blocks) {
+            struct cursor_t cur = *cursor;
+            cur.block = b;
+            count += _cursorIndent(&cur);
+        }
+        return count;
+    }
+    return _cursorIndent(cursor);
+}
+
+int _cursorUnindent(struct cursor_t* cursor)
+{
+    std::string text = cursor->block->text();
+    int tab_size = 4;
+    int currentIndent = countIndentSize(text + "?");
+    int newIndent = ((currentIndent / tab_size) - 1) * tab_size;
+    struct cursor_t cur = *cursor;
+    int deleted = currentIndent - newIndent;
+    // app_t::instance()->log("<<%d %d %d", currentIndent, newIndent, deleted);
+    if (newIndent < 0) {
+        deleted = deleted % tab_size;
+    }
+    if (deleted > 0) {
+
+        std::string newText = (text.c_str() + deleted);
+        cursor->block->setText(newText);
+
+    }
+    return deleted;
+}
+
+int cursorUnindent(struct cursor_t* cursor)
+{
+    if (cursor->hasSelection()) {
+        std::vector<struct block_t *> blocks = cursor->selectedBlocks();
+        int count = 0;
+        int offset = 0;
+        // app_t::instance()->log("blocks: %d", blocks.size());
+        for(auto b : blocks) {
+            struct cursor_t cur = *cursor;
+            cur.block = b;
+            count += _cursorUnindent(&cur);
+        }
+        return count;
+    }
+    return _cursorUnindent(cursor);
+}
 
 int autoIndent(struct cursor_t cursor)
 {
@@ -590,4 +699,3 @@ int autoIndent(struct cursor_t cursor)
     cursor.endEditBlock();
     */
 }
-
