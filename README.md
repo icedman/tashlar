@@ -1,6 +1,8 @@
 # tashlar
 terminal version of the ashlar text editor
 
+https://asciinema.org/a/nu2uB4Q0Zz1waLQbynbzsabl1
+
 ![early, version](https://raw.githubusercontent.com/icedman/tashlar/master/screenshots/Screenshot%20from%202020-07-05%2021-10-20.png)
 
 # features
