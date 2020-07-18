@@ -44,6 +44,7 @@ struct blockdata_t {
         : dirty(true)
         , folded(false)
         , foldable(false)
+        , foldedBy(0)
         , dots(0)
         , indent(0)
         , lastPrevBlockRule(0)
@@ -72,6 +73,7 @@ struct blockdata_t {
     bool dirty;
     bool folded;
     bool foldable;
+    size_t foldedBy;
     int indent;
 };
 
@@ -144,7 +146,7 @@ struct document_t {
     void undo();
     struct history_t& history() { return snapShots.back(); }
 
-    void update();
+    void update(bool force = false);
 
     struct block_t& block(struct cursor_t& cursor);
 

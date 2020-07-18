@@ -256,7 +256,7 @@ void app_t::update(int frames)
 
     idleCount++;
     if (idleCount > 20000) {
-        app_t::instance()->log("idle");
+        // app_t::instance()->log("idle");
         idleIndex++;
         if (idleIndex > 4) {
             idleIndex = 1;

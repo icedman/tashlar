@@ -155,8 +155,10 @@ void document_t::addSnapshot()
 
 void document_t::undo()
 {
+    bool dirtyUp = false;
     if (snapShots.size() > 1 && history().edits.size() == 0) {
         snapShots.pop_back();
+        dirtyUp = true;
     }
 
     struct history_t& _history = history();
@@ -171,6 +173,16 @@ void document_t::undo()
     update();
 
     clearSelections();
+
+    // snapshot restore tend to have messed up highlights
+    if (dirtyUp) {
+        for(auto &b : blocks) {
+            if (b.data) {
+                b.data->dirty = true;
+            }
+        }
+        dirty = true;
+    }
 }
 
 void document_t::close()
@@ -257,9 +269,9 @@ void document_t::clearSelections()
     }
 }
 
-void document_t::update()
+void document_t::update(bool force)
 {
-    if (!dirty) {
+    if (!dirty && !force) {
         return;
     }
 

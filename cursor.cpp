@@ -657,8 +657,7 @@ int countToTabStop(struct cursor_t* cursor)
 
 static int _cursorIndent(struct cursor_t* cursor)
 {
-    /*
-    std::string text = cursor->block->text();
+    std::string text = cursor->block()->text();
     int tab_size = 4;
     int currentIndent = countIndentSize(text + "?");
     int newIndent = ((currentIndent / tab_size) + 1) * tab_size;
@@ -670,37 +669,57 @@ static int _cursorIndent(struct cursor_t* cursor)
         newText += " ";
     }
     newText += text;
-    cursor->block->setText(newText);
+    cursor->block()->setText(newText);
     // app_t::instance()->log("indent %d  %d %s\n", inserted, cursor->block->lineNumber, cursor->block->text().c_str());
     return inserted;
-    */
-    return 0;
 }
 
 int cursorIndent(struct cursor_t* cursor)
 {
-    /*
-    if (cursor->hasSelection()) {
-        std::vector<struct block_t*> blocks = cursor->selectedBlocks();
-        int count = 0;
-        int offset = 0;
-        // app_t::instance()->log("blocks: %d", blocks.size());
+    std::vector<struct block_t*> blocks = cursor->selectedBlocks();
+    if (blocks.size() > 1) {
+
+        struct cursor_t posCur = *cursor;
+        posCur._position = cursor->_position;
+        posCur.update();
+
+        struct cursor_t anchorCur = *cursor;
+        anchorCur._position = cursor->_anchorPosition;
+        anchorCur.update();
+
         for (auto b : blocks) {
             struct cursor_t cur = *cursor;
-            cur.block = b;
-            count += _cursorIndent(&cur);
+            cur._position = b->position;
+            cur._block = b;
+
+            bool updatePos = b->uid == posCur._block->uid;
+            bool updateAnchor = b->uid == anchorCur._block->uid;;
+            int count = _cursorIndent(&cur);
+            cursor->document()->update();
+
+            app_t::instance()->log("indent %d %d", updatePos, updateAnchor);
+            if (updatePos) {
+                cursor->_position = posCur._block->position + posCur._relativePosition + count;
+            }
+            if (updateAnchor) {
+                cursor->_anchorPosition = anchorCur._block->position + posCur._relativePosition + count;
+            }
         }
-        return count;
+
+        cursor->update();
+        return 1;
     }
-    return _cursorIndent(cursor);
-    */
-    return 0;
+
+    int count = _cursorIndent(cursor);
+    cursor->_position += count;
+    cursor->_anchorPosition += count;
+    cursor->update();
+    return count;
 }
 
 int _cursorUnindent(struct cursor_t* cursor)
 {
-    /*
-    std::string text = cursor->block->text();
+    std::string text = cursor->block()->text();
     int tab_size = 4;
     int currentIndent = countIndentSize(text + "?");
     int newIndent = ((currentIndent / tab_size) - 1) * tab_size;
@@ -713,31 +732,52 @@ int _cursorUnindent(struct cursor_t* cursor)
     if (deleted > 0) {
 
         std::string newText = (text.c_str() + deleted);
-        cursor->block->setText(newText);
+        cursor->block()->setText(newText);
     }
     return deleted;
-    */
-    return 0;
 }
 
 int cursorUnindent(struct cursor_t* cursor)
 {
-    /*
-    if (cursor->hasSelection()) {
-        std::vector<struct block_t*> blocks = cursor->selectedBlocks();
-        int count = 0;
-        int offset = 0;
-        // app_t::instance()->log("blocks: %d", blocks.size());
+    std::vector<struct block_t*> blocks = cursor->selectedBlocks();
+    if (blocks.size() > 1) {
+
+        struct cursor_t posCur = *cursor;
+        posCur._position = cursor->_position;
+        posCur.update();
+
+        struct cursor_t anchorCur = *cursor;
+        anchorCur._position = cursor->_anchorPosition;
+        anchorCur.update();
+
         for (auto b : blocks) {
             struct cursor_t cur = *cursor;
-            cur.block = b;
-            count += _cursorUnindent(&cur);
+            cur._position = b->position;
+            cur._block = b;
+
+            bool updatePos = b->uid == posCur._block->uid;
+            bool updateAnchor = b->uid == anchorCur._block->uid;;
+            int count = _cursorUnindent(&cur);
+            cursor->document()->update();
+
+            app_t::instance()->log("unindent %d %d", updatePos, updateAnchor);
+            if (updatePos) {
+                cursor->_position = posCur._block->position + posCur._relativePosition - count;
+            }
+            if (updateAnchor) {
+                cursor->_anchorPosition = anchorCur._block->position + posCur._relativePosition - count;
+            }
         }
-        return count;
+
+        cursor->update();
+        return 1;
     }
-    return _cursorUnindent(cursor);
-    */
-    return 0;
+
+    int count = _cursorUnindent(cursor);
+    cursor->_position -= count;
+    cursor->_anchorPosition -= count;
+    cursor->update();
+    return count;
 }
 
 int autoIndent(struct cursor_t cursor)

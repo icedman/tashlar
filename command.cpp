@@ -41,7 +41,6 @@ bool processEditorCommand(command_e cmd, char ch)
             app->inputBuffer = app->clipBoard;
         } else if (app->clipBoard.length()) {
             doc->addSnapshot();
-            /*
             doc->history().begin();
             doc->addBufferDocument(app->clipBoard);
             app->clipBoard = "";
@@ -54,7 +53,7 @@ bool processEditorCommand(command_e cmd, char ch)
             doc->history().end();
             doc->addSnapshot();
             doc->clearCursors();
-            */
+            doc->update(true);
         }
         return true;
 
@@ -82,6 +81,28 @@ bool processEditorCommand(command_e cmd, char ch)
         doc->setCursor(cursor);
         doc->history().mark();
         return true;
+
+        case CMD_INDENT: {
+            doc->addSnapshot();
+            int count = cursorIndent(&cursor);
+            if (count) {
+                // cursorMovePosition(&cursor, cursor_t::Lighteft, cursor.hasSelection(), count);
+                doc->setCursor(cursor);
+                doc->addSnapshot();
+            }
+            return true;
+        }
+
+        case CMD_UNINDENT: {
+            doc->addSnapshot();
+            int count = cursorUnindent(&cursor);
+            if (count) {
+                // cursorMovePosition(&cursor, cursor_t::Left, cursor.hasSelection(), count);
+                doc->setCursor(cursor);
+                doc->addSnapshot();
+            }
+            return true;
+        }
 
     case CMD_COPY:
         app->clipBoard = cursor.selectedText();
@@ -351,28 +372,6 @@ bool processEditorCommand(command_e cmd, char ch)
             handled = true;
             break;
 
-        case CMD_INDENT: {
-            int count = cursorIndent(&cur);
-            if (count) {
-                cursorMovePosition(&cur, cursor_t::Right, cursor.hasSelection(), count);
-                update = true;
-                advance += count;
-            }
-            handled = true;
-            markHistory = true;
-            break;
-        }
-        case CMD_UNINDENT: {
-            int count = cursorUnindent(&cur);
-            if (count) {
-                cursorMovePosition(&cur, cursor_t::Left, cursor.hasSelection(), count);
-                update = true;
-                advance -= count;
-            }
-            handled = true;
-            markHistory = true;
-            break;
-        }
         case CMD_DELETE:
             doc->history().addDelete(cur, 1);
             cursorEraseText(&cur, 1);

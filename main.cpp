@@ -120,7 +120,7 @@ void renderEditor(struct editor_t& editor)
 
         editor.highlightBlock(b);
         struct blockdata_t* data = b.data.get();
-        if (data && data->folded && !data->foldable) {
+        if (data && data->folded && data->foldedBy != 0) {
             // render folded indicator
         } else {
             b.renderedLine = y;

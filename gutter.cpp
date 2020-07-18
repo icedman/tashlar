@@ -69,7 +69,7 @@ void gutter_t::render()
             wattron(win, A_BOLD);
         }
 
-        if (b.data && b.data->folded && !b.data->foldable) {
+        if (b.data && b.data->folded && b.data->foldedBy != 0) {
             continue;
         }
 

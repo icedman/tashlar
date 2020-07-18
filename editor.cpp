@@ -821,6 +821,7 @@ void editor_t::toggleFold(size_t line)
         struct blockdata_t* targetData = block->data.get();
         targetData->folded = blockData->folded;
         targetData->foldable = false;
+        targetData->foldedBy = blockData->folded ? line : 0;
         if (blockData->folded) {
             // block.setVisible(false);
             // block.setLineCount(0);
