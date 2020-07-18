@@ -77,6 +77,10 @@ struct app_t {
     void layout();
     void render();
 
+    void update(int frames);
+    void resetIdle();
+    int isIdle();
+
     bool processCommand(command_e cmd, char ch);
 
     // log
@@ -91,6 +95,10 @@ struct app_t {
 
     std::vector<std::string> excludeFiles;
     std::vector<std::string> excludeFolders;
+
+    bool idle;
+    int idleIndex;
+    int idleCount;
 };
 
 int pairForColor(int colorIdx, bool selected);

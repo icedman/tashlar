@@ -110,11 +110,14 @@ void renderEditor(struct editor_t& editor)
     //-----------------
     // todo: jump to first visible block
     int y = 0;
+
+    // app_t::instance()->log("render blocks");
     for (auto& b : doc->blocks) {
         if (offsetY > 0) {
             offsetY -= b.lineCount;
             continue;
         }
+
         editor.highlightBlock(b);
         struct blockdata_t* data = b.data.get();
         if (data && data->folded && !data->foldable) {
@@ -230,6 +233,9 @@ int main(int argc, char** argv)
         std::string expandedSequence;
         int sequenceTick = 0;
         int ch = -1;
+
+        app.resetIdle();
+
         while (true) {
             if (app.inputBuffer.length()) {
                 break;
@@ -264,9 +270,7 @@ int main(int argc, char** argv)
                 break;
             }
 
-            for (int i = 0; i < app.windows.size(); i++) {
-                app.windows[i]->update(150);
-            }
+            app.update(150);
 
             if (sequenceTick > 0 && (sequenceTick -= 150) < 0) {
                 previousKeySequence = "";

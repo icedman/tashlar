@@ -41,6 +41,7 @@ bool processEditorCommand(command_e cmd, char ch)
             app->inputBuffer = app->clipBoard;
         } else if (app->clipBoard.length()) {
             doc->addSnapshot();
+            /*
             doc->history().begin();
             doc->addBufferDocument(app->clipBoard);
             app->clipBoard = "";
@@ -53,6 +54,7 @@ bool processEditorCommand(command_e cmd, char ch)
             doc->history().end();
             doc->addSnapshot();
             doc->clearCursors();
+            */
         }
         return true;
 
@@ -143,7 +145,7 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_COPY);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
-        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
+        // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     case CMD_DELETE_LINE:
@@ -160,7 +162,7 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_UP);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
-        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
+        // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     case CMD_MOVE_LINE_DOWN:
@@ -170,7 +172,7 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_DOWN);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
-        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
+        // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     default:

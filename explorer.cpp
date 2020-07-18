@@ -15,6 +15,8 @@
 #include "util.h"
 
 #define EXPLORER_WIDTH 20
+#define PRELOAD_LOOP 8
+#define MAX_PRELOAD_DEPTH 3
 
 static bool compareFile(std::shared_ptr<struct fileitem_t> f1, std::shared_ptr<struct fileitem_t> f2)
 {
@@ -136,8 +138,9 @@ static void buildFileList(std::vector<struct fileitem_t*>& list, struct fileitem
 
 std::vector<struct fileitem_t*> explorer_t::fileList()
 {
-    allFiles.clear();
-    buildFileList(allFiles, &files, 0, true);
+    if (!allFiles.size()) {
+        buildFileList(allFiles, &files, 0, true);
+    }
     return allFiles;
 }
 
@@ -158,7 +161,7 @@ void explorer_t::render()
     struct editor_t* editor = app_t::instance()->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
-    struct block_t &block = *cursor.block();
+    struct block_t& block = *cursor.block();
 
     if (!win) {
         win = newwin(viewHeight, viewWidth, 0, 0);
@@ -270,6 +273,40 @@ void explorer_t::render()
     wrefresh(win);
 }
 
+void explorer_t::update(int frames)
+{
+    /*
+    if (!allFilesLoaded && app_t::instance()->isIdle() == 2) {
+        if (!allFiles.size()) {
+            buildFileList(allFiles, &files, 0, true);
+        }
+
+        int loaded = 0;
+        for(auto item : allFiles) {
+            if (item->isDirectory && item->canLoadMore && item->depth == loadDepth) {
+                item->load();
+
+                app_t::instance()->log("load more %d", item->depth);
+                
+                item->canLoadMore = false;
+                if (loaded ++ >= PRELOAD_LOOP) {
+                    break;
+                }
+            }
+        }
+
+        if (loaded == 0) {
+            loadDepth++;
+        }
+        
+        allFilesLoaded = (loaded == 0 && loadDepth >= MAX_PRELOAD_DEPTH);
+        if (loaded > 0) {
+            allFiles.clear();
+        }
+    }
+    */
+}
+
 void explorer_t::renderLine(const char* line, int& x)
 {
     char c;
@@ -335,6 +372,7 @@ bool explorer_t::processCommand(command_e cmd, char ch)
                 item->load();
                 item->canLoadMore = false;
             }
+            allFiles.clear();
             renderList.clear();
             return true;
         }
@@ -347,6 +385,7 @@ bool explorer_t::processCommand(command_e cmd, char ch)
     case CMD_MOVE_CURSOR_LEFT:
         if (item->isDirectory && item->expanded) {
             item->expanded = false;
+            allFiles.clear();
             renderList.clear();
             return true;
         }

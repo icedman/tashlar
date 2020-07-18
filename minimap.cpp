@@ -36,7 +36,7 @@ void buildUpDotsForBlock(struct block_t* block, float textCompress, int bufferWi
     }
 
     // app_t::instance()->log("minimap %d", block->lineNumber);
-    
+
     std::string line1;
     std::string line2;
     std::string line3;

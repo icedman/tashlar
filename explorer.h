@@ -37,6 +37,8 @@ struct explorer_t : public window_t {
         , currentItem(-1)
     {
         focusable = true;
+        loadDepth = 0;
+        allFilesLoaded = false;
     }
 
     bool processCommand(command_e cmd, char ch) override;
@@ -45,12 +47,15 @@ struct explorer_t : public window_t {
     void renderCursor() override;
     void renderLine(const char* line, int& offsetX);
     void setRootFromFile(std::string path);
+    void update(int frames) override;
 
     std::vector<struct fileitem_t*> fileList();
 
     fileitem_t files;
     std::vector<struct fileitem_t*> renderList;
     std::vector<struct fileitem_t*> allFiles;
+    bool allFilesLoaded;
+    int loadDepth;
 
     int currentItem;
 };

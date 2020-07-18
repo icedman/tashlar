@@ -214,6 +214,29 @@ static void setFormatFromStyle(size_t start, size_t length, style_t& style, cons
     }
 }
 
+void editor_t::highlightPreceedingBlocks(struct block_t& block)
+{
+    struct block_t* end = &block;
+    struct block_t* start = &block;
+    for (int i = 0; i < 20; i++) {
+        if (!start->previous) {
+            break;
+        }
+        start = start->previous;
+    }
+
+    while (start && start != end) {
+
+        if (start->data && !start->data->dirty) {
+            break;
+        }
+
+        // app_t::instance()->log("<< %d", start->lineNumber);
+        highlightBlock(*start);
+        start = start->next;
+    }
+}
+
 void editor_t::highlightBlock(struct block_t& block)
 {
     if (!lang) {
@@ -229,7 +252,7 @@ void editor_t::highlightBlock(struct block_t& block)
         return;
     }
 
-    //app_t::instance()->log("highlight %d", block.lineNumber);
+    // app_t::instance()->log("highlight %d", block.uid);
 
     struct blockdata_t* blockData = block.data.get();
 
@@ -580,6 +603,10 @@ bool editor_t::processCommand(command_e cmd, char ch)
 
 void editor_t::update(int frames)
 {
+    if (app_t::instance()->isIdle()) {
+        // app_t::instance()->log("%d", app_t::instance()->isIdle());
+        highlightPreceedingBlocks(*document.cursor().block());
+    }
 }
 
 void editor_t::matchBracketsUnderCursor()

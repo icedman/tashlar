@@ -108,6 +108,8 @@ struct block_t {
 struct document_t {
     document_t()
         : file(0)
+        , blockUid(1)
+        , cursorUid(1)
         , dirty(true)
         , runOn(false)
     {
@@ -157,6 +159,9 @@ struct document_t {
 
     bool runOn;
     bool dirty;
+
+    size_t blockUid;
+    size_t cursorUid;
 };
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block);

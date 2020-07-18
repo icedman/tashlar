@@ -22,7 +22,8 @@ cursor_t::cursor_t()
     , _position(0)
     , _anchorPosition(0)
     , _preferredRelativePosition(0)
-{}
+{
+}
 
 struct document_t* cursor_t::document()
 {
@@ -40,7 +41,7 @@ void cursor_t::update()
     if (!_document) {
         return;
     }
- 
+
     if (!_block) {
         // app_t::instance()->log("initial query");
         _block = &_document->block(*this);
@@ -50,7 +51,7 @@ void cursor_t::update()
         // app_t::instance()->log("reposition query %d %d", _position, _block->position);
         _block = &_document->block(*this);
     }
-    _relativePosition =  _position - _block->position;
+    _relativePosition = _position - _block->position;
 }
 
 bool cursor_t::isNull()
@@ -74,7 +75,7 @@ std::vector<struct block_t*> cursor_t::selectedBlocks()
         start = _anchorPosition;
         end = _position;
     } else {
-        start =_position;
+        start = _position;
         end = _anchorPosition;
     }
 
@@ -98,7 +99,7 @@ std::vector<struct block_t*> cursor_t::selectedBlocks()
 }
 
 void cursor_t::clearSelection()
-{        
+{
     _anchorPosition = _position;
 }
 
@@ -111,13 +112,14 @@ size_t cursor_t::selectionStart()
         start = _anchorPosition;
         end = _position;
     } else {
-        start =_position;
+        start = _position;
         end = _anchorPosition;
     }
 
     _position = end;
     _anchorPosition = start;
-    return _anchorPosition;; 
+    return _anchorPosition;
+    ;
 }
 
 size_t cursor_t::selectionEnd()
@@ -125,7 +127,7 @@ size_t cursor_t::selectionEnd()
     selectionStart();
     return _position;
 }
- 
+
 size_t cursor_t::position()
 {
     return _position;
@@ -298,13 +300,13 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         cursor->_position = block.next->position + relativePosition;
         cursor->_block = block.next;
         break;
-        
+
     case cursor_t::Move::Left:
         if (cursor->_position > 0) {
             cursor->_position--;
         }
         break;
-        
+
     case cursor_t::Move::Right:
         cursor->_position++;
         if (cursor->_position >= block.position + block.length && !block.next) {
@@ -318,7 +320,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
             cursor->_block = cursor->block()->previous;
         }
         break;
-        
+
     case cursor_t::Move::NextBlock:
         if (cursor->block() && cursor->block()->next) {
             cursor->_position = cursor->block()->next->position;
@@ -348,7 +350,7 @@ void cursorSelectWord(struct cursor_t* cursor)
 {
     struct block_t* block = cursor->block();
     size_t relativePosition = cursor->relativePosition();
-    
+
     std::vector<search_result_t> search_results = search_t::instance()->findWords(block->text());
 
     for (auto i : search_results) {
@@ -421,7 +423,7 @@ void cursorSplitBlock(struct cursor_t* cursor)
     struct block_t b;
     b.document = cursor->document();
     b.setText(block1);
-    
+
     std::vector<struct block_t>::iterator it = findBlock(cursor->document()->blocks, *block);
     if (it != cursor->document()->blocks.end()) {
         cursor->document()->blocks.emplace(it, b);
@@ -430,7 +432,7 @@ void cursorSplitBlock(struct cursor_t* cursor)
     cursor->document()->update();
 }
 
-// todo .. this needs history replay
+// todo .. this needs history replay for multiple line deletes
 int cursorDeleteSelection(struct cursor_t* cursor)
 {
     if (!cursor->hasSelection()) {
@@ -454,7 +456,7 @@ int cursorDeleteSelection(struct cursor_t* cursor)
     curEnd._position = end;
     cur.update();
     curEnd.update();
-    
+
     // for selection spanning multiple blocks
     struct block_t& startBlock = *cur.block();
     struct block_t& endBlock = *curEnd.block();
@@ -462,7 +464,6 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         int count = 0;
 
         struct block_t* next = startBlock.next;
-        struct block_t* firstNext = next;
 
         int d = curEnd.position() - endBlock.position;
         curEnd._position = endBlock.position;
@@ -480,7 +481,7 @@ int cursorDeleteSelection(struct cursor_t* cursor)
             count += d;
         }
 
-        cursor->document()->update();
+        doc->update();
 
         int linesToDelete = 0;
         while (next && next != &endBlock) {
@@ -490,12 +491,12 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         }
 
         // delete blocks in-between
-        if (firstNext && linesToDelete-- > 0) {
-            std::vector<struct block_t>::iterator it = findBlock(doc->blocks, *firstNext);
-            if (it != doc->blocks.end()) {
-                doc->blocks.erase(it, it + linesToDelete + 1);
-                doc->update();
-            }
+        app_t::instance()->log("lines to delete %d", linesToDelete);
+
+        if (startBlock.next && linesToDelete-- > 0) {
+            std::vector<struct block_t>::iterator it = findBlock(doc->blocks, *startBlock.next);
+            doc->blocks.erase(it, it + linesToDelete + 1);
+            doc->update();
         }
 
         // merge two block
@@ -539,7 +540,7 @@ std::string cursor_t::selectedText()
     cursor._position = start;
     cursor.update();
     struct block_t* block = cursor.block();
-    
+
     std::string res = "";
     std::string text = block->text();
 

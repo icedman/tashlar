@@ -7,66 +7,63 @@
 #include "editor.h"
 #include "util.h"
 
-static size_t cursor_uid = 1;
-
 block_t::block_t()
-        : document(0)
-        , file(0)
-        , lineNumber(0)
-        , position(0)
-        , screenLine(0)
-        , dirty(false)
-        , next(0)
-        , previous()
-    {
+    : uid(0)
+    , document(0)
+    , file(0)
+    , lineNumber(0)
+    , position(0)
+    , screenLine(0)
+    , dirty(false)
+    , next(0)
+    , previous()
+{
+}
+
+std::string block_t::text()
+{
+    if (dirty) {
+        return content;
     }
 
-    std::string block_t::text()
-    {
-        if (dirty) {
-            return content;
-        }
-
-        std::string text;
-        if (file) {
-            file->seekg(filePosition, file->beg);
-            size_t pos = file->tellg();
-            if (std::getline(*file, text)) {
-                length = text.length() + 1;
-                return text;
-            }
-        }
-
-        return text;
-    }
-
-    void block_t::setText(std::string t)
-    {
-        content = t;
-        length = content.length() + 1;
-        dirty = true;
-        if (data) {
-            data->dirty = true;
-        }
-
-        if (document) {
-            document->dirty = true;
+    std::string text;
+    if (file) {
+        file->seekg(filePosition, file->beg);
+        size_t pos = file->tellg();
+        if (std::getline(*file, text)) {
+            length = text.length() + 1;
+            return text;
         }
     }
 
-    bool block_t::isValid()
-    {
-        if (document == 0) {
-            return false;
-        }
-        return true;
+    return text;
+}
+
+void block_t::setText(std::string t)
+{
+    content = t;
+    length = content.length() + 1;
+    dirty = true;
+    if (data) {
+        data->dirty = true;
     }
+
+    if (document) {
+        document->dirty = true;
+    }
+}
+
+bool block_t::isValid()
+{
+    if (document == 0) {
+        return false;
+    }
+    return true;
+}
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block)
 {
     std::vector<struct block_t>::iterator it = blocks.begin();
-    int skip = (block.lineNumber > 0 ? (block.lineNumber * 4 / 5) : 0) + 1;
-    it += skip;
     while (it != blocks.end()) {
         struct block_t& blk = *it;
         if (&blk == &block) {
@@ -212,7 +209,7 @@ struct cursor_t document_t::cursor()
 void document_t::setCursor(struct cursor_t& cursor)
 {
     if (!cursors[0].uid) {
-        cursors[0].uid = cursor_uid++;
+        cursors[0].uid = cursorUid++;
     }
 
     cursor.uid = cursors[0].uid;
@@ -236,7 +233,7 @@ void document_t::updateCursor(struct cursor_t& cursor)
 void document_t::addCursor(struct cursor_t& cursor)
 {
     struct cursor_t cur = cursor;
-    cur.uid = cursor_uid++;
+    cur.uid = cursorUid++;
     cursors.push_back(cur);
     // std::cout << "add cursor " << cursor.position << std::endl;
 }
@@ -269,7 +266,7 @@ void document_t::update()
     static int updates = 0;
     app_t::instance()->log("update %d", updates++);
     dirty = false;
-    
+
     // TODO: This is used all over.. perpetually improve (update only changed)
     // update block positions
     struct block_t* prev = NULL;
@@ -285,13 +282,15 @@ void document_t::update()
         if (b.content.length()) {
             b.length = b.content.length() + 1;
         }
-        
+
         b.position = pos;
         b.lineNumber = l++;
+        if (!b.uid) {
+            b.uid += blockUid++;
+        }
         pos += b.length;
         prev = &b;
     }
-
 
     if (!cursors.size()) {
         struct cursor_t cursor;
@@ -307,7 +306,7 @@ struct block_t& document_t::block(struct cursor_t& cursor)
 {
     // TODO: This is used all over.. perpetually improve search (divide-conquer? index based?)!
     app_t::instance()->log("block query");
-    
+
     if (!blocks.size()) {
         return nullBlock;
     }

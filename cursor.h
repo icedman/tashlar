@@ -29,15 +29,15 @@ struct cursor_t {
     cursor_t();
 
     size_t uid;
- 
+
     struct document_t* _document;
     struct block_t* _block;
- 
+
     size_t _relativePosition;
     size_t _preferredRelativePosition;
     size_t _position;
     size_t _anchorPosition;
- 
+
     bool hasSelection();
     bool isNull();
     void update();
@@ -50,9 +50,9 @@ struct cursor_t {
     void clearSelection();
     size_t selectionStart();
     size_t selectionEnd();
-    
-    struct document_t *document();
-    struct block_t *block();
+
+    struct document_t* document();
+    struct block_t* block();
     std::vector<struct block_t*> selectedBlocks();
     std::string selectedText();
 };

@@ -223,6 +223,9 @@ app_t::app_t()
     , gutter(0)
     , explorer(0)
     , refreshLoop(8)
+    , idle(false)
+    , idleIndex(0)
+    , idleCount(0)
 {
     appInstance = this;
 
@@ -243,6 +246,37 @@ app_t::~app_t()
 struct app_t* app_t::instance()
 {
     return appInstance;
+}
+
+void app_t::update(int frames)
+{
+    for (int i = 0; i < windows.size(); i++) {
+        windows[i]->update(150);
+    }
+
+    idleCount++;
+    if (idleCount > 20000) {
+        app_t::instance()->log("idle");
+        idleIndex++;
+        if (idleIndex > 4) {
+            idleIndex = 1;
+        }
+        idle = true;
+        idleCount = 0;
+    } else {
+        idle = false;
+    }
+}
+
+void app_t::resetIdle()
+{
+    idleCount = 0;
+    idle = false;
+}
+
+int app_t::isIdle()
+{
+    return idle ? idleIndex : 0;
 }
 
 void app_t::layout()

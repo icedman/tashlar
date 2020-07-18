@@ -197,8 +197,10 @@ void popup_t::render()
     // TODO: use math not loops
     if (items.size()) {
         int viewportHeight = viewHeight - inputOffset;
+
+        // app_t::instance()->log("items:%d current:%d scroll:%d h:%d", items.size(), currentItem, scrollY, viewportHeight);
+
         while (true) {
-            break;
             int blockVirtualLine = currentItem;
             int blockScreenLine = blockVirtualLine - scrollY;
             bool lineVisible = (blockScreenLine >= 0 & blockScreenLine < viewportHeight);
@@ -435,7 +437,7 @@ void popup_t::onInput()
             char* searchString = (char*)text.c_str();
             std::vector<struct fileitem_t*> files = app->explorer->fileList();
             for (auto f : files) {
-                if (f->isDirectory) {
+                if (f->isDirectory || f->name.length() < text.length()) {
                     continue;
                 }
                 int score = levenshtein_distance(searchString, (char*)(f->name.c_str()));
@@ -449,7 +451,7 @@ void popup_t::onInput()
                     .score = score,
                     .depth = f->depth
                 };
-                // item.name += std::to_string(item.score);
+                item.name += std::to_string(item.score);
                 items.push_back(item);
             }
 

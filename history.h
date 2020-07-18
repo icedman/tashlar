@@ -22,6 +22,7 @@ enum cursor_edit_e {
 };
 
 struct cursor_edit_t {
+    size_t block_uid;
     struct cursor_t cursor;
     std::string text;
     int count;
