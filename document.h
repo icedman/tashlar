@@ -76,61 +76,11 @@ struct blockdata_t {
 };
 
 struct block_t {
-    block_t()
-        : document(0)
-        , file(0)
-        , lineNumber(0)
-        , position(0)
-        , screenLine(0)
-        , dirty(false)
-        , next(0)
-        , previous()
-    {
-    }
+    block_t();
 
-    std::string text()
-    {
-        if (dirty) {
-            return content;
-        }
-
-        std::string text;
-        if (file) {
-            file->seekg(filePosition, file->beg);
-            size_t pos = file->tellg();
-            if (std::getline(*file, text)) {
-                length = text.length() + 1;
-                return text;
-            }
-        }
-
-        return text;
-    }
-
-    void setText(std::string t)
-    {
-        content = t;
-        length = content.length() + 1;
-        dirty = true;
-        if (data) {
-            data->dirty = true;
-        }
-    }
-
-    bool isValid()
-    {
-        if (document == 0) {
-            return false;
-        }
-        return true;
-    }
-
-    void update()
-    {
-        if (content.length()) {
-            length = content.length() + 1;
-        }
-    }
+    std::string text();
+    void setText(std::string t);
+    bool isValid();
 
     size_t uid;
     int lineNumber;
@@ -158,6 +108,7 @@ struct block_t {
 struct document_t {
     document_t()
         : file(0)
+        , dirty(true)
         , runOn(false)
     {
     }
@@ -193,7 +144,7 @@ struct document_t {
 
     void update();
 
-    struct block_t& block(struct cursor_t& cursor, bool skipCache = false);
+    struct block_t& block(struct cursor_t& cursor);
 
     struct block_t nullBlock;
     std::string filePath;
@@ -202,10 +153,10 @@ struct document_t {
 
     std::vector<std::string> tmpPaths;
 
-    std::map<size_t, struct block_t&> cursorBlockCache;
     std::vector<struct history_t> snapShots;
 
     bool runOn;
+    bool dirty;
 };
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block);

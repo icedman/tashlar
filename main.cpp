@@ -38,7 +38,7 @@ void renderEditor(struct editor_t& editor)
 {
     struct document_t* doc = &editor.document;
     struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
+    struct block_t& block = *cursor.block();
 
     if (!editor.win) {
         editor.win = newwin(editor.viewHeight, editor.viewWidth, 0, 0);
@@ -89,7 +89,7 @@ void renderEditor(struct editor_t& editor)
         }
     }
 
-    while (cursor.position - block.position + 1 - editor.scrollX > editor.viewWidth) {
+    while (cursor.position() - block.position + 1 - editor.scrollX > editor.viewWidth) {
         if (app_t::instance()->lineWrap)
             break;
         if (editor.scrollX + 1 >= block.length) {
@@ -98,7 +98,7 @@ void renderEditor(struct editor_t& editor)
         }
         editor.scrollX++;
     }
-    while (editor.scrollX > 0 && cursor.position - block.position - editor.scrollX <= 0) {
+    while (editor.scrollX > 0 && cursor.position() - block.position - editor.scrollX <= 0) {
         editor.scrollX--;
     }
 
@@ -201,7 +201,7 @@ int main(int argc, char** argv)
         struct editor_t& editor = *app.currentEditor;
         struct document_t* doc = &editor.document;
         struct cursor_t cursor = doc->cursor();
-        struct block_t block = doc->block(cursor);
+        struct block_t& block = *cursor.block();
 
         bool disableRefresh = app.commandBuffer.size() || app.inputBuffer.length();
         if (!disableRefresh) {
@@ -405,9 +405,11 @@ int main(int argc, char** argv)
 
             for (int j = 0; j < cursors.size(); j++) {
                 struct cursor_t& c = cursors[j];
-                if (c.position > 0 && c.position + advance > cur.position && c.uid != cur.uid) {
-                    c.position += advance;
-                    c.anchorPosition += advance;
+                // todo ... relativePosition rule!
+                if (c.position() > 0 && c.position() + advance > cur.position() && c.uid != cur.uid) {
+                    c._position += advance;
+                    c._anchorPosition += advance;
+                    c.update();
                 }
                 doc->updateCursor(c);
             }

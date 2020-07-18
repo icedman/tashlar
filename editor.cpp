@@ -115,16 +115,16 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
         bool firstCursor = true;
         for (auto cur : *cursors) {
             if (firstCursor) {
-                if (pos + 1 == cur.position - wrapOffset) {
+                if (pos + 1 == cur.position() - wrapOffset) {
                     cursorScreenX = x + 1;
                     cursorScreenY = offsetY;
                 }
-                if (pos == cur.position - wrapOffset) {
+                if (pos == cur.position() - wrapOffset) {
                     cursorScreenX = x;
                     cursorScreenY = offsetY;
                 }
             }
-            if (pos == cur.position - wrapOffset) {
+            if (pos == cur.position() - wrapOffset) {
                 if (firstCursor) {
                     wattron(win, A_REVERSE);
                 } else {
@@ -149,11 +149,11 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
             if (!cur.hasSelection()) {
                 continue;
             }
-            size_t startSel = cur.anchorPosition;
-            size_t endSel = cur.position;
+            size_t startSel = cur.anchorPosition();
+            size_t endSel = cur.position();
             if (startSel > endSel) {
-                startSel = cur.position + 1;
-                endSel = cur.anchorPosition + 1;
+                startSel = cur.position() + 1;
+                endSel = cur.anchorPosition() + 1;
             }
             if (pos + wrapOffset >= startSel && pos + wrapOffset < endSel) {
                 colorPair = colorPairSelected;
@@ -228,6 +228,8 @@ void editor_t::highlightBlock(struct block_t& block)
     if (!block.data->dirty) {
         return;
     }
+
+    //app_t::instance()->log("highlight %d", block.lineNumber);
 
     struct blockdata_t* blockData = block.data.get();
 
@@ -538,7 +540,7 @@ bool editor_t::processCommand(command_e cmd, char ch)
     struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
+    struct block_t& block = *cursor.block();
 
     //-----------------
     // global
@@ -583,13 +585,13 @@ void editor_t::update(int frames)
 void editor_t::matchBracketsUnderCursor()
 {
     struct cursor_t cursor = app_t::instance()->currentEditor->document.cursor();
-    if (cursor.position != cursorBracket1.absolutePosition) {
+    if (cursor.position() != cursorBracket1.absolutePosition) {
         cursorBracket1 = bracketAtCursor(cursor);
         if (cursorBracket1.position != -1) {
             struct cursor_t matchCursor = findBracketMatchCursor(cursorBracket1, cursor);
             cursorBracket2 = bracketAtCursor(matchCursor);
-            cursorBracket1.absolutePosition = cursor.position;
-            cursorBracket2.absolutePosition = matchCursor.position;
+            cursorBracket1.absolutePosition = cursor.position();
+            cursorBracket2.absolutePosition = matchCursor.position();
             cursorBracket1.line = 0;
             cursorBracket2.line = 0;
             app_t::instance()->refresh();
@@ -604,7 +606,7 @@ struct bracket_info_t editor_t::bracketAtCursor(struct cursor_t& cursor)
     b.line = -1;
     b.position = -1;
 
-    struct block_t* block = cursor.block;
+    struct block_t* block = cursor.block();
     if (!block) {
         return b;
     }
@@ -614,7 +616,7 @@ struct bracket_info_t editor_t::bracketAtCursor(struct cursor_t& cursor)
         return b;
     }
 
-    size_t p = cursor.position - block->position;
+    size_t p = cursor.position() - block->position;
     for (auto bracket : blockData->brackets) {
         if (bracket.position == p) {
             return bracket;
@@ -628,11 +630,11 @@ struct cursor_t editor_t::cursorAtBracket(struct bracket_info_t bracket)
 {
     struct cursor_t cursor;
 
-    struct block_t* block = document.cursor().block;
+    struct block_t* block = document.cursor().block();
     while (block) {
         if (block->lineNumber == bracket.line) {
             cursor = document.cursor();
-            cursor.setPosition(block->position + bracket.position);
+            cursorSetPosition(&cursor, block->position + bracket.position);
             break;
         }
         if (block->lineNumber > bracket.line) {
@@ -661,7 +663,7 @@ struct cursor_t editor_t::findLastOpenBracketCursor(struct block_t block)
             if (res.isNull()) {
                 res = document.cursor();
             }
-            res.setPosition(block.position + b.position);
+            cursorSetPosition(&res, block.position + b.position);
         }
     }
 
@@ -673,7 +675,7 @@ struct cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, 
     struct cursor_t cs = cursor;
 
     std::vector<bracket_info_t> brackets;
-    struct block_t* block = cursor.block;
+    struct block_t* block = cursor.block();
 
     if (bracket.open) {
 
@@ -699,7 +701,7 @@ struct cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, 
 
                     if (!brackets.size()) {
                         // std::cout << "found end!" << std::endl;
-                        cursor.setPosition(block->position + b.position);
+                        cursorSetPosition(&cursor, block->position + b.position);
                         return cursor;
                     }
                     continue;
@@ -737,7 +739,7 @@ struct cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, 
 
                     if (!brackets.size()) {
                         // std::cout << "found begin!" << std::endl;
-                        cursor.setPosition(block->position + b.position);
+                        cursorSetPosition(&cursor, block->position + b.position);
                         return cursor;
                     }
                     continue;
@@ -778,8 +780,8 @@ void editor_t::toggleFold(size_t line)
         return;
     }
 
-    struct block_t* block = &doc->block(openBracket);
-    struct block_t* endBlock = &doc->block(endBracket);
+    struct block_t* block = openBracket.block();
+    struct block_t* endBlock = endBracket.block();
 
     struct blockdata_t* blockData = block->data.get();
     if (!blockData) {

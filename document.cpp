@@ -9,19 +9,69 @@
 
 static size_t cursor_uid = 1;
 
+block_t::block_t()
+        : document(0)
+        , file(0)
+        , lineNumber(0)
+        , position(0)
+        , screenLine(0)
+        , dirty(false)
+        , next(0)
+        , previous()
+    {
+    }
+
+    std::string block_t::text()
+    {
+        if (dirty) {
+            return content;
+        }
+
+        std::string text;
+        if (file) {
+            file->seekg(filePosition, file->beg);
+            size_t pos = file->tellg();
+            if (std::getline(*file, text)) {
+                length = text.length() + 1;
+                return text;
+            }
+        }
+
+        return text;
+    }
+
+    void block_t::setText(std::string t)
+    {
+        content = t;
+        length = content.length() + 1;
+        dirty = true;
+        if (data) {
+            data->dirty = true;
+        }
+
+        if (document) {
+            document->dirty = true;
+        }
+    }
+
+    bool block_t::isValid()
+    {
+        if (document == 0) {
+            return false;
+        }
+        return true;
+    }
+
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block)
 {
     std::vector<struct block_t>::iterator it = blocks.begin();
-    int skip = block.lineNumber > 0 ? (block.lineNumber * 2 / 3) : 0;
+    int skip = (block.lineNumber > 0 ? (block.lineNumber * 4 / 5) : 0) + 1;
     it += skip;
     while (it != blocks.end()) {
         struct block_t& blk = *it;
         if (&blk == &block) {
             return it;
         }
-        // if (blk.position == block.position) {
-        // return it;
-        // }
         it++;
     }
     return it;
@@ -115,7 +165,6 @@ void document_t::undo()
     struct history_t& _history = history();
     _history.mark();
 
-    cursorBlockCache.clear();
     clearCursors();
 
     blocks = _history.initialState;
@@ -155,8 +204,7 @@ struct cursor_t document_t::cursor()
 {
     cursors[0].update();
     if (cursors[0].isNull()) {
-        cursors[0].position = 0;
-        cursors[0].anchorPosition = 0;
+        cursorSetPosition(&cursors[0], 0);
     }
     return cursors[0];
 }
@@ -167,19 +215,19 @@ void document_t::setCursor(struct cursor_t& cursor)
         cursors[0].uid = cursor_uid++;
     }
 
-    cursors[0].position = cursor.position;
-    cursors[0].anchorPosition = cursor.anchorPosition;
-    cursors[0].preferredRelativePosition = cursor.preferredRelativePosition;
-    cursors[0].update();
+    cursor.uid = cursors[0].uid;
+    updateCursor(cursor);
 }
 
 void document_t::updateCursor(struct cursor_t& cursor)
 {
     for (auto& c : cursors) {
         if (c.uid == cursor.uid) {
-            c.position = cursor.position;
-            c.anchorPosition = cursor.anchorPosition;
-            c.preferredRelativePosition = cursor.preferredRelativePosition;
+            c._block = cursor.block();
+            c._position = cursor.position();
+            c._anchorPosition = cursor.anchorPosition();
+            c._preferredRelativePosition = cursor.preferredRelativePosition();
+            c.update();
             break;
         }
     }
@@ -208,21 +256,21 @@ void document_t::clearCursors()
 void document_t::clearSelections()
 {
     for (auto& c : cursors) {
-        c.anchorPosition = c.position;
+        c.clearSelection();
     }
 }
 
 void document_t::update()
 {
-    // TODO: This is used all over.. perpetually improve (update only changed)
-
-    if (!cursors.size()) {
-        struct cursor_t cursor;
-        cursor.document = this;
-        cursor.position = 0;
-        cursors.emplace_back(cursor);
+    if (!dirty) {
+        return;
     }
 
+    static int updates = 0;
+    app_t::instance()->log("update %d", updates++);
+    dirty = false;
+    
+    // TODO: This is used all over.. perpetually improve (update only changed)
     // update block positions
     struct block_t* prev = NULL;
     int l = 0;
@@ -233,27 +281,35 @@ void document_t::update()
         }
         b.previous = prev;
         b.next = NULL;
-        b.update();
+
+        if (b.content.length()) {
+            b.length = b.content.length() + 1;
+        }
+        
         b.position = pos;
         b.lineNumber = l++;
         pos += b.length;
         prev = &b;
     }
 
-    cursorBlockCache.clear();
+
+    if (!cursors.size()) {
+        struct cursor_t cursor;
+        cursor._document = this;
+        cursor._position = 0;
+        cursor._anchorPosition = 0;
+        cursor.update();
+        cursors.emplace_back(cursor);
+    }
 }
 
-struct block_t& document_t::block(struct cursor_t& cursor, bool skipCache)
+struct block_t& document_t::block(struct cursor_t& cursor)
 {
     // TODO: This is used all over.. perpetually improve search (divide-conquer? index based?)!
-
+    app_t::instance()->log("block query");
+    
     if (!blocks.size()) {
         return nullBlock;
-    }
-
-    std::map<size_t, struct block_t&>::iterator it = cursorBlockCache.find(cursor.position);
-    if (!skipCache && it != cursorBlockCache.end()) {
-        return it->second;
     }
 
     std::vector<struct block_t>::iterator bit = blocks.begin();
@@ -261,16 +317,10 @@ struct block_t& document_t::block(struct cursor_t& cursor, bool skipCache)
 
     while (bit != blocks.end()) {
         auto& b = *bit;
-        if (b.length == 0 && cursor.position == b.position) {
-            if (!skipCache) {
-                cursorBlockCache.emplace(cursor.position, b);
-            }
+        if (b.length == 0 && cursor.position() == b.position) {
             return b;
         }
-        if (b.position <= cursor.position && cursor.position < b.position + b.length) {
-            if (!skipCache) {
-                cursorBlockCache.emplace(cursor.position, b);
-            }
+        if (b.position <= cursor.position() && cursor.position() < b.position + b.length) {
             return b;
         }
         idx++;

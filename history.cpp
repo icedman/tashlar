@@ -75,8 +75,8 @@ void history_t::replay()
 
     for (auto batch : edits) {
         for (auto e : batch) {
-            if (e.cursor.block->data) {
-                e.cursor.block->data->dirty = true;
+            if (e.cursor.block()->data) {
+                e.cursor.block()->data->dirty = true;
             }
 
             switch (e.edit) {
@@ -91,7 +91,7 @@ void history_t::replay()
                 cursorSplitBlock(&e.cursor);
                 break;
             case EDIT_PASTE_BUFFER:
-                e.cursor.document->insertFromBuffer(e.cursor, e.buffer);
+                e.cursor.document()->insertFromBuffer(e.cursor, e.buffer);
                 break;
             case EDIT_BLOCK_SNAPSHOT:
                 // app_t::instance()->log("todo: implement block snapshot");
@@ -99,14 +99,14 @@ void history_t::replay()
             }
 
             e.cursor.update();
-            if (e.cursor.block->data) {
-                e.cursor.block->data->dirty = true;
+            if (e.cursor.block()->data) {
+                e.cursor.block()->data->dirty = true;
             }
         }
     }
 
     for (auto e : last) {
-        e.cursor.document->setCursor(e.cursor);
+        e.cursor.document()->setCursor(e.cursor);
         break;
     }
 }

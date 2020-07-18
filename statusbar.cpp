@@ -31,7 +31,7 @@ void statusbar_t::render()
     struct editor_t* editor = app_t::instance()->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
+    struct block_t& block = *cursor.block();
 
     if (!win) {
         win = newwin(viewHeight, viewWidth, 0, 0);
@@ -44,7 +44,7 @@ void statusbar_t::render()
     static char tmp[512];
     sprintf(tmp, "Line: %d", 1 + (int)(block.lineNumber));
     setText(tmp, -3);
-    sprintf(tmp, "Col: %d", 1 + (int)(cursor.position - block.position));
+    sprintf(tmp, "Col: %d", 1 + (int)(cursor.position() - block.position));
     setText(tmp, -2);
     if (editor->lang) {
         setText(editor->lang->id, -1);

@@ -108,7 +108,7 @@ std::vector<search_result_t> search_t::findCompletion(std::string str)
     struct editor_t* editor = app_t::instance()->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
+    struct block_t& block = *cursor.block();
 
     int skipWatch = 0;
     for (auto b : doc->blocks) {

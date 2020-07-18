@@ -26,44 +26,39 @@ struct cursor_t {
         EndOfDocument
     };
 
-    cursor_t()
-        : uid(0)
-        , document(0)
-        , block(0)
-        , position(0)
-        , anchorPosition(0)
-        , preferredRelativePosition(0)
-    {
-    }
+    cursor_t();
 
-    struct document_t* document;
-    struct block_t* block;
-
-    size_t position;
-    size_t anchorPosition;
     size_t uid;
-
-    size_t preferredRelativePosition;
-
-    bool hasSelection()
-    {
-        return anchorPosition != position;
-    }
-
+ 
+    struct document_t* _document;
+    struct block_t* _block;
+ 
+    size_t _relativePosition;
+    size_t _preferredRelativePosition;
+    size_t _position;
+    size_t _anchorPosition;
+ 
+    bool hasSelection();
     bool isNull();
-
     void update();
-    void setPosition(size_t pos)
-    {
-        position = pos;
-        anchorPosition = pos;
-    }
-    void clearSelection() { anchorPosition = position; }
-    std::vector<struct block_t*> selectedBlocks();
 
+    size_t position();
+    size_t anchorPosition();
+    size_t relativePosition();
+    size_t preferredRelativePosition();
+
+    void clearSelection();
+    size_t selectionStart();
+    size_t selectionEnd();
+    
+    struct document_t *document();
+    struct block_t *block();
+    std::vector<struct block_t*> selectedBlocks();
     std::string selectedText();
 };
 
+void cursorSetPosition(struct cursor_t* cursor, size_t position);
+void cursorSetAnchorPosition(struct cursor_t* cursor, size_t position);
 bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool keepAnchor = false, int count = 1);
 int cursorInsertText(struct cursor_t* cursor, std::string t);
 int cursorEraseText(struct cursor_t* cursor, int c);

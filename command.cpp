@@ -10,7 +10,7 @@ bool processEditorCommand(command_e cmd, char ch)
     struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
+    struct block_t& block = *cursor.block();
 
     //-----------------
     // main cursor
@@ -44,8 +44,6 @@ bool processEditorCommand(command_e cmd, char ch)
             doc->history().begin();
             doc->addBufferDocument(app->clipBoard);
             app->clipBoard = "";
-
-            // cursorInsertText(&cursor, "/* WARNING: pasting very large buffer is not yet ready */");
 
             doc->insertFromBuffer(cursor, doc->buffers.back());
 
@@ -120,7 +118,7 @@ bool processEditorCommand(command_e cmd, char ch)
         doc->clearCursors();
         for (int i = 0; i < editor->viewHeight + 1; i++) {
             if (cursorMovePosition(&cursor, cursor_t::Up)) {
-                editor->highlightBlock(doc->block(cursor));
+                editor->highlightBlock(*cursor.block());
                 doc->setCursor(cursor);
             } else {
                 break;
@@ -132,7 +130,7 @@ bool processEditorCommand(command_e cmd, char ch)
         doc->clearCursors();
         for (int i = 0; i < editor->viewHeight + 1; i++) {
             if (cursorMovePosition(&cursor, cursor_t::Down)) {
-                editor->highlightBlock(doc->block(cursor));
+                editor->highlightBlock(*cursor.block());
                 doc->setCursor(cursor);
             } else {
                 break;
@@ -198,9 +196,9 @@ bool processEditorCommand(command_e cmd, char ch)
         struct cursor_t cur = cursors[i];
         if (cur.hasSelection()) {
             struct cursor_t cur2 = cur;
-            cur2.position = cur2.anchorPosition;
+            cur2._position = cur2.anchorPosition();
             cur2.update();
-            if (cur.block != cur2.block) {
+            if (cur.block() != cur2.block()) {
                 switch (cmd) {
                 case CMD_INDENT:
                 case CMD_UNINDENT:
@@ -286,7 +284,7 @@ bool processEditorCommand(command_e cmd, char ch)
             markHistory = true;
             handled = true;
 
-            targetBlock = &doc->block(cur);
+            targetBlock = cur.block();
             targetBlockData = targetBlock->data.get();
             if (targetBlockData && targetBlockData->folded && !targetBlockData->foldable && targetBlock->previous) {
                 // repeat the command -- to skip folded block
@@ -301,7 +299,7 @@ bool processEditorCommand(command_e cmd, char ch)
             markHistory = true;
             handled = true;
 
-            targetBlock = &doc->block(cur);
+            targetBlock = cur.block();
             targetBlockData = targetBlock->data.get();
             if (targetBlockData && targetBlockData->folded && !targetBlockData->foldable && targetBlock->next) {
                 // repeat the command -- to skip folded block
@@ -412,9 +410,10 @@ bool processEditorCommand(command_e cmd, char ch)
 
             for (int j = 0; j < cursors.size(); j++) {
                 struct cursor_t& c = cursors[j];
-                if (c.position > 0 && c.position + advance > cur.position && c.uid != cur.uid) {
-                    c.position += advance;
-                    c.anchorPosition += advance;
+                if (c.position() > 0 && c.position() + advance > cur.position() && c.uid != cur.uid) {
+                    c._position += advance;
+                    c._anchorPosition += advance;
+                    c.update();
                     // std::cout << advance << std::endl;
                 }
                 doc->updateCursor(c);

@@ -134,8 +134,8 @@ void popup_t::layout(int w, int h)
 
     if (type == POPUP_COMPLETION && !cursor.isNull()) {
         struct editor_t* editor = app_t::instance()->currentEditor.get();
-        viewX = editor->viewX + cursor.position - cursor.block->position;
-        viewY = editor->viewY + cursor.block->renderedLine + 1;
+        viewX = editor->viewX + cursor.position() - cursor.block()->position;
+        viewY = editor->viewY + cursor.block()->renderedLine + 1;
         if (viewY > (h * 2 / 3)) {
             viewY -= (viewHeight + 1);
         }
@@ -354,14 +354,14 @@ void popup_t::showCompletion()
     struct cursor_t request_cursor = cursor;
     cursor = doc->cursor();
 
-    struct block_t block = doc->block(cursor);
+    struct block_t& block = *cursor.block();
 
     if (doc->cursors.size() == 1) {
         if (cursorMovePosition(&cursor, cursor_t::Move::Left)) {
             cursorSelectWord(&cursor);
             prefix = cursor.selectedText();
             if (prefix.length() > 2) {
-                cursor.position = cursor.anchorPosition;
+                // cursor.position = cursor.anchorPosition;
             } else {
                 request = 0;
                 hide();
@@ -406,7 +406,7 @@ void popup_t::onInput()
     struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
+    struct block_t& block = *cursor.block();
 
     items.clear();
 
@@ -424,7 +424,7 @@ void popup_t::onInput()
         std::stringstream(text) >> line;
         for (auto& b : doc->blocks) {
             if (b.lineNumber == line - 1) {
-                cursor.setPosition(b.position);
+                cursorSetPosition(&cursor, b.position);
                 doc->setCursor(cursor);
             }
         }
@@ -467,7 +467,7 @@ void popup_t::onSubmit()
     struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
+    struct block_t& block = *cursor.block();
 
     if (type == POPUP_SEARCH_LINE) {
         hide();

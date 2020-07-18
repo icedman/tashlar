@@ -20,7 +20,7 @@ void gutter_t::render()
     struct editor_t* editor = app_t::instance()->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
-    struct block_t block = doc->block(cursor);
+    struct block_t& block = *cursor.block();
 
     if (app_t::instance()->showSidebar) {
         int explorerWidth = app_t::instance()->explorer->viewWidth;
