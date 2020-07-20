@@ -42,6 +42,7 @@ struct editor_t : public window_t {
     void renderBlock(struct block_t& block, int offsetX, int offsetY);
     void renderLine(const char* line, int offsetX = 0, int offsetY = 0, struct block_t* block = 0, int relativeLine = 0);
 
+    void gatherBrackets(struct block_t& block, char* first, char* last);
     void matchBracketsUnderCursor();
     struct bracket_info_t bracketAtCursor(struct cursor_t& cursor);
     struct cursor_t cursorAtBracket(struct bracket_info_t bracket);

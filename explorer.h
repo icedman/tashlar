@@ -49,6 +49,8 @@ struct explorer_t : public window_t {
     void setRootFromFile(std::string path);
     void update(int frames) override;
 
+    void preloadFolders();
+
     std::vector<struct fileitem_t*> fileList();
 
     fileitem_t files;

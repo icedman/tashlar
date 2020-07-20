@@ -76,7 +76,7 @@ void app_t::setupColors()
     colorMap.clear();
 
     style_t s = theme->styles_for_scope("default");
-    std::cout << theme->colorIndices.size() << " colors used" << std::endl;
+    // std::cout << theme->colorIndices.size() << " colors used" << std::endl;
 
     color_info_t colorFg = color(250, 250, 250);
     color_info_t colorSelBg = color(250, 250, 250);
@@ -195,6 +195,19 @@ void app_t::setupColors()
 
 void app_t::applyColors()
 {
+    minimap->theme = theme;
+    statusbar->theme = theme;
+    gutter->theme = theme;
+    explorer->theme = theme;
+    popup->theme = theme;
+
+    for (auto e : editors) {
+        e->theme = theme;
+        for (auto& b : e->document.blocks) {
+            b.data = nullptr;
+        }
+    }
+
     style_t comment = theme->styles_for_scope("comment");
     statusbar->colorPair = pairForColor(comment.foreground.index, false);
     gutter->colorPair = pairForColor(comment.foreground.index, false);
@@ -317,11 +330,11 @@ void app_t::initLog()
 
 void app_t::log(const char* format, ...)
 {
-    char string[512] = "";
+    static char string[1024] = "";
 
     va_list args;
     va_start(args, format);
-    vsnprintf(string, 255, format, args);
+    vsnprintf(string, 1024, format, args);
     va_end(args);
 
     FILE* log_file = fopen("/tmp/ashlar.log", "a");
@@ -332,7 +345,6 @@ void app_t::log(const char* format, ...)
     while (token != NULL) {
         fprintf(log_file, token);
         fprintf(log_file, "\n");
-
         token = strtok(NULL, "\n");
     }
     fclose(log_file);
@@ -369,6 +381,7 @@ void app_t::configure(int argc, char** argv)
         Json::Value exts = settings["extensions_paths"];
         if (exts.isArray()) {
             for (auto path : exts) {
+                log("extension dir: %s", path.asString().c_str());
                 load_extensions(path.asString().c_str(), extensions);
             }
         }
@@ -424,11 +437,6 @@ void app_t::configure(int argc, char** argv)
     if (tabSize < 2) {
         tabSize = 2;
     }
-
-    minimap->theme = theme;
-    statusbar->theme = theme;
-    gutter->theme = theme;
-    explorer->theme = theme;
 
     //---------------
 

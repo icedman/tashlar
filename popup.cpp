@@ -14,6 +14,7 @@
 #include "explorer.h"
 #include "keybinding.h"
 #include "popup.h"
+#include "scripting.h"
 #include "search.h"
 #include "statusbar.h"
 
@@ -25,10 +26,7 @@
 static bool compareFile(struct item_t& f1, struct item_t& f2)
 {
     if (f1.score == f2.score) {
-        if (f1.depth < f2.depth) {
-            return f1.name < f2.name;
-        }
-        return f1.depth < f2.depth;
+        return f1.name < f2.name;
     }
     return f1.score < f2.score;
 }
@@ -45,6 +43,9 @@ bool popup_t::processCommand(command_e cmd, char ch)
     s += (char)ch;
 
     switch (cmd) {
+    case CMD_PASTE:
+        text = app_t::instance()->clipBoard;
+        return true;
     case CMD_RESIZE:
     case CMD_UNDO:
     case CMD_CANCEL:
@@ -52,13 +53,22 @@ bool popup_t::processCommand(command_e cmd, char ch)
         hide();
         return true;
     case CMD_ENTER:
+        searchDirection = 0;
         onSubmit();
         return true;
     case CMD_MOVE_CURSOR_UP:
+        searchDirection = 1;
         currentItem--;
+        if (type == POPUP_SEARCH) {
+            onSubmit();
+        }
         return true;
     case CMD_MOVE_CURSOR_DOWN:
+        searchDirection = 0;
         currentItem++;
+        if (type == POPUP_SEARCH) {
+            onSubmit();
+        }
         return true;
     case CMD_MOVE_CURSOR_RIGHT:
         hide();
@@ -114,6 +124,10 @@ void popup_t::layout(int w, int h)
     viewHeight = POPUP_HEIGHT + items.size();
     if (type == POPUP_COMPLETION) {
         viewHeight--;
+    } else {
+        if (items.size()) {
+            viewHeight++;
+        }
     }
 
     if (viewHeight > POPUP_MAX_HEIGHT) {
@@ -136,8 +150,19 @@ void popup_t::layout(int w, int h)
         struct editor_t* editor = app_t::instance()->currentEditor.get();
         viewX = editor->viewX + cursor.position() - cursor.block()->position;
         viewY = editor->viewY + cursor.block()->renderedLine + 1;
+
+        bool reverse = false;
         if (viewY > (h * 2 / 3)) {
             viewY -= (viewHeight + 1);
+            reverse = true;
+            if (viewX + viewWidth >= w) {
+                viewY += 2;
+            }
+        }
+
+        while (viewX + viewWidth >= w) {
+            viewX -= editor->viewWidth;
+            viewY += reverse ? -1 : 1;
         }
     }
 }
@@ -161,13 +186,14 @@ void popup_t::render()
     wmove(win, 0, 0);
     wattron(win, COLOR_PAIR(colorPair));
     box(win, ACS_VLINE, ACS_HLINE);
+    wattroff(win, COLOR_PAIR(colorPair));
+
+    // box(win, ' ', ' ');
 
     if (!text.length()) {
         wmove(win, 1, 2);
         waddstr(win, placeholder.c_str());
     }
-
-    wattroff(win, COLOR_PAIR(colorPair));
 
     wmove(win, 1, 1);
     int offsetX = 0;
@@ -187,33 +213,33 @@ void popup_t::render()
     wattron(win, COLOR_PAIR(colorPairIndicator));
     waddch(win, '|');
     wattroff(win, COLOR_PAIR(colorPairIndicator));
+    wattron(win, COLOR_PAIR(colorPair));
 
     int inputOffset = 4;
     if (type == POPUP_COMPLETION) {
         inputOffset -= 2;
     }
 
+    // app_t::instance()->log("items: %d inputOffset: %d", items.size(), inputOffset);
     // scroll to cursor
     // TODO: use math not loops
     if (items.size()) {
         int viewportHeight = viewHeight - inputOffset;
 
         // app_t::instance()->log("items:%d current:%d scroll:%d h:%d", items.size(), currentItem, scrollY, viewportHeight);
-
         while (true) {
             int blockVirtualLine = currentItem;
             int blockScreenLine = blockVirtualLine - scrollY;
-            bool lineVisible = (blockScreenLine >= 0 & blockScreenLine < viewportHeight);
-            if (lineVisible) {
-                break;
-            }
             if (blockScreenLine >= viewportHeight) {
                 scrollY++;
-            }
-            if (blockScreenLine <= 0) {
+            } else if (blockScreenLine <= 0) {
                 scrollY--;
+            } else {
+                break;
             }
+            break;
         }
+
     } else {
         scrollY = 0;
     }
@@ -247,9 +273,10 @@ void popup_t::render()
         }
     }
 
-    wmove(win, 0, 0);
-    wattron(win, COLOR_PAIR(colorPair));
-    box(win, ACS_VLINE, ACS_HLINE);
+    // wmove(win, 0, 0);
+    // wattron(win, COLOR_PAIR(colorPair));
+    // box(win, ACS_VLINE, ACS_HLINE);
+    // box(win, ' ', '-');
     wattroff(win, COLOR_PAIR(colorPair));
     wrefresh(win);
 }
@@ -291,7 +318,7 @@ void popup_t::search(std::string t)
     placeholder = "search words";
 
     if (t == ":") {
-        placeholder = "goto line";
+        placeholder = "jump to line";
         text = "";
         type = POPUP_SEARCH_LINE;
     }
@@ -305,6 +332,7 @@ void popup_t::files()
     if (isFocused()) {
         hide();
     }
+    text = "";
     wclear(win);
     type = POPUP_FILES;
     placeholder = "search files";
@@ -317,6 +345,33 @@ void popup_t::commands()
     if (isFocused()) {
         hide();
     }
+
+    if (!commandItems.size()) {
+
+        for (auto ext : app_t::instance()->extensions) {
+            Json::Value contribs = ext.package["contributes"];
+
+            if (!contribs.isMember("themes")) {
+                continue;
+            }
+
+            Json::Value themes = contribs["themes"];
+            for (int i = 0; i < themes.size(); i++) {
+                Json::Value theme = themes[i];
+                struct item_t item = {
+                    .name = "Theme: " + theme["label"].asString(),
+                    .description = "",
+                    .fullPath = theme["path"].asString(),
+                    .score = 0,
+                    .depth = 0,
+                    .script = "theme(\"" + theme["label"].asString() + "\")"
+                };
+
+                commandItems.push_back(item);
+            }
+        }
+    }
+
     wclear(win);
     type = POPUP_COMMANDS;
     placeholder = "enter command";
@@ -388,13 +443,15 @@ void popup_t::showCompletion()
             .description = "",
             .fullPath = "",
             .score = 0,
-            .depth = 0
+            .depth = 0,
+            .script = ""
         };
         // item.name += std::to_string(item.score);
         items.push_back(item);
     }
 
     if (items.size()) {
+        currentItem = -1;
         app->focused = this;
         app->layout();
         app->render();
@@ -435,27 +492,55 @@ void popup_t::onInput()
     if (type == POPUP_FILES) {
         if (text.length() > 2) {
             char* searchString = (char*)text.c_str();
+            app->explorer->preloadFolders();
             std::vector<struct fileitem_t*> files = app->explorer->fileList();
             for (auto f : files) {
                 if (f->isDirectory || f->name.length() < text.length()) {
                     continue;
                 }
                 int score = levenshtein_distance(searchString, (char*)(f->name.c_str()));
-                if (score > 10) {
+                if (score > 20) {
                     continue;
                 }
                 struct item_t item = {
                     .name = f->name,
                     .description = "",
                     .fullPath = f->fullPath,
-                    .score = score,
-                    .depth = f->depth
+                    .score = score + f->depth,
+                    .depth = f->depth,
+                    .script = ""
                 };
-                item.name += std::to_string(item.score);
+                // item.name += std::to_string(item.score);
                 items.push_back(item);
             }
 
-            currentItem = 0;
+            currentItem = -1;
+            sort(items.begin(), items.end(), compareFile);
+            app->refresh();
+        }
+    }
+
+    if (type == POPUP_COMMANDS) {
+        if (text.length() > 2) {
+            char* searchString = (char*)text.c_str();
+            for (auto cmd : commandItems) {
+                int score = levenshtein_distance(searchString, (char*)(cmd.name.c_str()));
+                if (score > 20) {
+                    continue;
+                }
+                struct item_t item = {
+                    .name = cmd.name,
+                    .description = "",
+                    .fullPath = cmd.fullPath,
+                    .score = score,
+                    .depth = 0,
+                    .script = cmd.script
+                };
+                // item.name += std::to_string(item.score);
+                items.push_back(item);
+            }
+
+            currentItem = -1;
             sort(items.begin(), items.end(), compareFile);
             app->refresh();
         }
@@ -483,9 +568,9 @@ void popup_t::onSubmit()
         }
 
         struct cursor_t cur = cursor;
-        bool found = cursorFindWord(&cursor, text);
+        bool found = cursorFindWord(&cursor, text, searchDirection);
         if (!found) {
-            cursorMovePosition(&cursor, cursor_t::Move::StartOfDocument);
+            cursorMovePosition(&cursor, searchDirection == 0 ? cursor_t::Move::StartOfDocument : cursor_t::Move::EndOfDocument);
             found = cursorFindWord(&cursor, text);
         }
 
@@ -505,10 +590,12 @@ void popup_t::onSubmit()
             return;
         }
 
-        struct item_t& item = items[currentItem];
-        // app->log("open file %s", item.fullPath.c_str());
-        app->openEditor(item.fullPath);
-        app->refresh();
+        if (items.size() && currentItem >= 0 && currentItem < items.size()) {
+            struct item_t& item = items[currentItem];
+            // app->log("open file %s", item.fullPath.c_str());
+            app->openEditor(item.fullPath);
+            app->refresh();
+        }
     }
 
     if (type == POPUP_COMPLETION && currentItem >= 0 && currentItem < items.size()) {
@@ -521,6 +608,14 @@ void popup_t::onSubmit()
             cursorMovePosition(&cursor, cursor_t::Move::Right, false, item.name.length());
             doc->updateCursor(cursor);
             doc->addSnapshot(); // TODO << wasteful of resources
+        }
+        hide();
+    }
+
+    if (type == POPUP_COMMANDS) {
+        if (items.size() && currentItem >= 0 && currentItem < items.size()) {
+            struct item_t& item = items[currentItem];
+            scripting_t::instance()->runScript(item.script);
         }
         hide();
     }

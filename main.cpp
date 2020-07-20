@@ -19,6 +19,7 @@
 #include "document.h"
 #include "editor.h"
 #include "keybinding.h"
+#include "scripting.h"
 #include "search.h"
 #include "util.h"
 
@@ -75,8 +76,9 @@ void renderEditor(struct editor_t& editor)
     // scroll to cursor
     // TODO: use math not loops
     while (true) {
-        int blockVirtualLine = block.screenLine > block.lineNumber ? block.screenLine : block.lineNumber;
-        int blockScreenLine = blockVirtualLine - editor.scrollY;
+        size_t blockVirtualLine = block.screenLine > block.lineNumber ? block.screenLine : block.lineNumber;
+        size_t blockScreenLine = blockVirtualLine - editor.scrollY;
+
         bool lineVisible = (blockScreenLine >= 0 & blockScreenLine < editor.viewHeight);
         if (lineVisible) {
             break;
@@ -87,6 +89,9 @@ void renderEditor(struct editor_t& editor)
         if (blockScreenLine <= 0) {
             editor.scrollY--;
         }
+
+        app_t::instance()->log(": %d %d %d", block.screenLine, block.lineNumber, editor.scrollY);
+        // break;
     }
 
     while (cursor.position() - block.position + 1 - editor.scrollX > editor.viewWidth) {
@@ -100,6 +105,10 @@ void renderEditor(struct editor_t& editor)
     }
     while (editor.scrollX > 0 && cursor.position() - block.position - editor.scrollX <= 0) {
         editor.scrollX--;
+    }
+
+    if (editor.viewHeight > editor.document.blocks.size()) {
+        editor.scrollY = 0;
     }
 
     offsetY = editor.scrollY;
@@ -153,7 +162,9 @@ int main(int argc, char** argv)
     struct popup_t popup;
 
     struct search_t search;
+    struct scripting_t scripting;
     struct app_t app;
+
     app.statusbar = &statusbar;
     app.gutter = &gutter;
     app.tabbar = &tabbar;
@@ -181,6 +192,11 @@ int main(int argc, char** argv)
 
     app.openEditor(filename);
     explorer.setRootFromFile(filename);
+
+    //-------------------
+    // scripting
+    //-------------------
+    scripting_t::instance()->initialize();
 
     //-------------------
     // keybinding
@@ -391,8 +407,10 @@ int main(int argc, char** argv)
             int advance = 0;
 
             if (cur.hasSelection()) {
-                doc->addSnapshot(); // TODO << wasteful of resources
-                advance -= cursorDeleteSelection(&cur);
+                //doc->addSnapshot(); // TODO << wasteful of resources
+                int count = cursorDeleteSelection(&cur);
+                doc->history().addDelete(cur, count);
+                advance -= count;
             } else {
                 doc->history().addInsert(cur, s);
             }
@@ -405,15 +423,15 @@ int main(int argc, char** argv)
             advance += s.length();
 
             doc->updateCursor(cur);
-            doc->update();
+            doc->update(advance != 0);
 
             for (int j = 0; j < cursors.size(); j++) {
                 struct cursor_t& c = cursors[j];
-                // todo ... relativePosition rule!
-                if (c.position() > 0 && c.position() + advance > cur.position() && c.uid != cur.uid) {
+                if (c.position() > 0 && c.position() > cur.position() && c.uid != cur.uid) {
                     c._position += advance;
                     c._anchorPosition += advance;
                     c.update();
+                    app_t::instance()->log("%d pos: %d adv: %d", j, c._position, advance);
                 }
                 doc->updateCursor(c);
             }

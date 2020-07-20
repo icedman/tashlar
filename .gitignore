@@ -26,3 +26,5 @@ dist
 tm-parser
 libs/*.a
 out.cpp
+
+lua-*

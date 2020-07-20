@@ -97,15 +97,13 @@ void history_t::replay()
     edit_batch_t last = edits.back();
     edits.pop_back();
 
+    app_t::instance()->log("r1");
+
     for (auto batch : edits) {
         for (auto e : batch) {
             if (!rebaseCursor(e, e.cursor)) {
                 edits.clear();
                 return;
-            }
-
-            if (e.cursor.block()->data) {
-                e.cursor.block()->data->dirty = true;
             }
 
             switch (e.edit) {
@@ -127,21 +125,22 @@ void history_t::replay()
                 break;
             }
 
+            e.cursor.block()->data = nullptr;
             e.cursor.update();
-            if (e.cursor.block()->data) {
-                e.cursor.block()->data->dirty = true;
-            }
+            e.cursor.document()->setCursor(e.cursor);
         }
-    }
-
-    for (auto e : last) {
-        e.cursor.document()->setCursor(e.cursor);
-        break;
     }
 }
 
 void history_t::initialize(struct document_t* document)
 {
     initialState = document->blocks;
+    for (auto& b : initialState) {
+        b.previous = 0;
+        b.next = 0;
+        if (b.data) {
+            b.data = nullptr;
+        }
+    }
     edits.clear();
 }

@@ -7,6 +7,8 @@
 #include "editor.h"
 #include "util.h"
 
+static size_t blocksCount = 0;
+
 block_t::block_t()
     : uid(0)
     , document(0)
@@ -16,9 +18,11 @@ block_t::block_t()
     , screenLine(0)
     , dirty(false)
     , next(0)
-    , previous()
-{
-}
+    , previous(0)
+{}
+
+block_t::~block_t()
+{}
 
 std::string block_t::text()
 {
@@ -74,6 +78,20 @@ std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blo
     return it;
 }
 
+document_t::document_t()
+    : file(0)
+    , blockUid(1)
+    , cursorUid(1)
+    , dirty(true)
+    , runOn(false)
+{
+}
+
+document_t::~document_t()
+{
+    close();
+}
+
 bool document_t::open(const char* path)
 {
     bool useStreamBuffer = true;
@@ -99,7 +117,6 @@ bool document_t::open(const char* path)
         blocks.emplace_back(b);
         pos = file.tellg();
         tmp << line << std::endl;
-
         if (b.length > 2000) {
             runOn = true;
         }
@@ -112,17 +129,12 @@ bool document_t::open(const char* path)
     // }
 
     if (!blocks.size()) {
-        struct block_t b;
-        b.document = this;
-        b.position = 0;
-        b.filePosition = 0;
-        b.length = 1;
-        blocks.emplace_back(b);
+        addBlockAtLineNumber(0);
     }
 
     // reopen from tmp
     file = std::ifstream(tmpPath, std::ifstream::in);
-    update();
+    update(true);
 
     std::set<char> delims = { '\\', '/' };
     std::vector<std::string> spath = split_path(filePath, delims);
@@ -141,8 +153,55 @@ bool document_t::open(const char* path)
     return true;
 }
 
+struct block_t& document_t::addBlockAtLineNumber(size_t line)
+{
+    std::vector<struct block_t>::iterator it = blocks.begin();
+    if (line > 0) {
+        if (line < blocks.size()) {
+            it += line;
+        } else {
+            it = blocks.end();
+        }
+    }    
+
+    struct block_t b;
+    b.document = this;
+    b.setText("");
+    if (it == blocks.end()) {
+        blocks.emplace_back(b);
+        return blocks.back();
+    }
+
+    return *blocks.emplace(it, b);
+}
+
+struct block_t& document_t::removeBlockAtLineNumber(size_t line)
+{
+    if (blocks.size() < 2) {
+        return nullBlock;
+    }
+
+    std::vector<struct block_t>::iterator it = blocks.begin();
+    if (line > 0) {
+        if (line >= blocks.size()) {
+            line = blocks.size() - 1;
+        }
+        it += line;
+    }
+
+    if (it == blocks.end()) {
+        return nullBlock;
+    }
+
+    struct block_t& block = *it;
+    blocks.erase(it);
+    return block;
+}
+
 void document_t::addSnapshot()
 {
+    // app_t::instance()->log("addSnapshot");
+
     // discard any unmarked edits
     if (snapShots.size()) {
         snapShots.back().editBatch.clear();
@@ -155,34 +214,21 @@ void document_t::addSnapshot()
 
 void document_t::undo()
 {
-    bool dirtyUp = false;
     if (snapShots.size() > 1 && history().edits.size() == 0) {
         snapShots.pop_back();
-        dirtyUp = true;
     }
 
     struct history_t& _history = history();
     _history.mark();
 
+    blocks = history().initialState;
+    update(true);
     clearCursors();
 
-    blocks = _history.initialState;
-    update();
-
     _history.replay();
-    update();
+    update(true);
 
     clearSelections();
-
-    // snapshot restore tend to have messed up highlights
-    if (dirtyUp) {
-        for(auto &b : blocks) {
-            if (b.data) {
-                b.data->dirty = true;
-            }
-        }
-        dirty = true;
-    }
 }
 
 void document_t::close()
@@ -257,7 +303,10 @@ void document_t::clearCursors()
     }
 
     struct cursor_t cursor = cursors[0];
+    cursor._block = 0;
     cursor.clearSelection();
+    cursor.update();
+
     cursors.clear();
     cursors.push_back(cursor);
 }
@@ -275,8 +324,7 @@ void document_t::update(bool force)
         return;
     }
 
-    static int updates = 0;
-    app_t::instance()->log("update %d", updates++);
+    app_t::instance()->log("document update");
     dirty = false;
 
     // TODO: This is used all over.. perpetually improve (update only changed)
@@ -361,14 +409,15 @@ void document_t::addBufferDocument(const std::string& largeText)
 
 void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer)
 {
+    size_t ln = cursor.block()->lineNumber;
     for (auto bb : buffer->blocks) {
-        struct block_t b;
+        //struct block_t b;
+        struct block_t &b = addBlockAtLineNumber(ln++);
         b.document = buffer.get();
         b.file = &buffer->file;
-        b.position = bb.position;
         b.filePosition = bb.position;
         b.length = bb.length;
-        blocks.emplace_back(b);
+        //blocks.emplace_back(b);
     }
-    update();
+    update(true);
 }

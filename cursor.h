@@ -51,10 +51,14 @@ struct cursor_t {
     size_t selectionStart();
     size_t selectionEnd();
 
+    struct cursor_t selectionStartCursor();
+    struct cursor_t selectionEndCursor();
+
     struct document_t* document();
     struct block_t* block();
     std::vector<struct block_t*> selectedBlocks();
     std::string selectedText();
+    bool isMultiBlockSelection();
 };
 
 void cursorSetPosition(struct cursor_t* cursor, size_t position);
@@ -64,7 +68,7 @@ int cursorInsertText(struct cursor_t* cursor, std::string t);
 int cursorEraseText(struct cursor_t* cursor, int c);
 void cursorSplitBlock(struct cursor_t* cursor);
 void cursorSelectWord(struct cursor_t* cursor);
-bool cursorFindWord(struct cursor_t* cursor, std::string t);
+bool cursorFindWord(struct cursor_t* cursor, std::string t, int direction = 0);
 int cursorDeleteSelection(struct cursor_t* cursor);
 int cursorIndent(struct cursor_t* cursor);
 int cursorUnindent(struct cursor_t* cursor);

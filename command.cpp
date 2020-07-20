@@ -37,7 +37,7 @@ bool processEditorCommand(command_e cmd, char ch)
 
     case CMD_PASTE:
         if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
-            doc->addSnapshot(); // TODO << wasteful of resources
+            // doc->addSnapshot(); // TODO << wasteful of resources
             app->inputBuffer = app->clipBoard;
         } else if (app->clipBoard.length()) {
             doc->addSnapshot();
@@ -62,6 +62,7 @@ bool processEditorCommand(command_e cmd, char ch)
         cursorMovePosition(&cursor, cursor_t::StartOfDocument, cmd == CMD_MOVE_CURSOR_START_OF_DOCUMENT_ANCHORED);
         doc->setCursor(cursor);
         return true;
+
     case CMD_MOVE_CURSOR_END_OF_DOCUMENT:
     case CMD_MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED:
         cursorMovePosition(&cursor, cursor_t::EndOfDocument, cmd == CMD_MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED);
@@ -81,28 +82,6 @@ bool processEditorCommand(command_e cmd, char ch)
         doc->setCursor(cursor);
         doc->history().mark();
         return true;
-
-        case CMD_INDENT: {
-            doc->addSnapshot();
-            int count = cursorIndent(&cursor);
-            if (count) {
-                // cursorMovePosition(&cursor, cursor_t::Lighteft, cursor.hasSelection(), count);
-                doc->setCursor(cursor);
-                doc->addSnapshot();
-            }
-            return true;
-        }
-
-        case CMD_UNINDENT: {
-            doc->addSnapshot();
-            int count = cursorUnindent(&cursor);
-            if (count) {
-                // cursorMovePosition(&cursor, cursor_t::Left, cursor.hasSelection(), count);
-                doc->setCursor(cursor);
-                doc->addSnapshot();
-            }
-            return true;
-        }
 
     case CMD_COPY:
         app->clipBoard = cursor.selectedText();
@@ -139,26 +118,14 @@ bool processEditorCommand(command_e cmd, char ch)
 
     case CMD_MOVE_CURSOR_PREVIOUS_PAGE:
         doc->clearCursors();
-        for (int i = 0; i < editor->viewHeight + 1; i++) {
-            if (cursorMovePosition(&cursor, cursor_t::Up)) {
-                editor->highlightBlock(*cursor.block());
-                doc->setCursor(cursor);
-            } else {
-                break;
-            }
-        }
+        cursorMovePosition(&cursor, cursor_t::Up, false, editor->viewHeight + 1);
+        doc->setCursor(cursor);
         return true;
 
     case CMD_MOVE_CURSOR_NEXT_PAGE:
         doc->clearCursors();
-        for (int i = 0; i < editor->viewHeight + 1; i++) {
-            if (cursorMovePosition(&cursor, cursor_t::Down)) {
-                editor->highlightBlock(*cursor.block());
-                doc->setCursor(cursor);
-            } else {
-                break;
-            }
-        }
+        cursorMovePosition(&cursor, cursor_t::Down, false, editor->viewHeight + 1);
+        doc->setCursor(cursor);
         return true;
 
     case CMD_DUPLICATE_LINE:
@@ -166,6 +133,7 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_COPY);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
+        app->commandBuffer.push_back(CMD_SPLIT_LINE);
         // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
@@ -183,6 +151,8 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_UP);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
+        app->commandBuffer.push_back(CMD_SPLIT_LINE);
+        app->commandBuffer.push_back(CMD_MOVE_CURSOR_UP);
         // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
@@ -193,6 +163,8 @@ bool processEditorCommand(command_e cmd, char ch)
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_DOWN);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
+        app->commandBuffer.push_back(CMD_SPLIT_LINE);
+        app->commandBuffer.push_back(CMD_MOVE_CURSOR_UP);
         // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
@@ -217,25 +189,20 @@ bool processEditorCommand(command_e cmd, char ch)
     //----------------
     for (int i = 0; i < cursors.size(); i++) {
         struct cursor_t cur = cursors[i];
-        if (cur.hasSelection()) {
-            struct cursor_t cur2 = cur;
-            cur2._position = cur2.anchorPosition();
-            cur2.update();
-            if (cur.block() != cur2.block()) {
-                switch (cmd) {
-                case CMD_INDENT:
-                case CMD_UNINDENT:
-                case CMD_CUT:
-                case CMD_DELETE:
-                case CMD_BACKSPACE:
-                case CMD_SPLIT_LINE:
-                    snapShot = true;
-                    break;
-                default:
-                    break;
-                }
+        if (cur.isMultiBlockSelection()) {
+            switch (cmd) {
+            //case CMD_INDENT:
+            //case CMD_UNINDENT:
+            case CMD_CUT:
+            case CMD_DELETE:
+            case CMD_BACKSPACE:
+            case CMD_SPLIT_LINE:
+                snapShot = true;
+                break;
+            default:
                 break;
             }
+            break;
         }
     }
 
@@ -351,9 +318,41 @@ bool processEditorCommand(command_e cmd, char ch)
             handled = true;
             break;
 
-        //-----------
-        // document edits
-        //-----------
+            //-----------
+            // document edits
+            //-----------
+        case CMD_INDENT: {
+            //doc->addSnapshot();
+            if (cursors.size() > 1 && cur.isMultiBlockSelection()) {
+                // cur._position = cur.selectionStart();
+                cur._anchorPosition = cur._position;
+            }
+            int count = cursorIndent(&cur);
+            if (count) {
+                advance += count;
+                update = true;
+            }
+            doc->history().addDelete(cur, 0);
+            handled = true;
+            break;
+        }
+
+        case CMD_UNINDENT: {
+            //doc->addSnapshot();
+            if (cursors.size() > 1 && cur.isMultiBlockSelection()) {
+                // cur._position = cur.selectionStart();
+                cur._anchorPosition = cur._position;
+            }
+            int count = cursorUnindent(&cur);
+            if (count) {
+                advance -= count;
+                update = true;
+            }
+            doc->history().addDelete(cur, 0);
+            handled = true;
+            break;
+        }
+
         case CMD_DELETE_SELECTION:
             if (cur.hasSelection()) {
                 int count = cursorDeleteSelection(&cur);
@@ -407,11 +406,11 @@ bool processEditorCommand(command_e cmd, char ch)
         doc->updateCursor(cur);
 
         if (update) {
-            doc->update();
+            doc->update(advance != 0);
 
             for (int j = 0; j < cursors.size(); j++) {
                 struct cursor_t& c = cursors[j];
-                if (c.position() > 0 && c.position() + advance > cur.position() && c.uid != cur.uid) {
+                if (c.position() > 0 && c.position() > cur.position() && c.uid != cur.uid) {
                     c._position += advance;
                     c._anchorPosition += advance;
                     c.update();

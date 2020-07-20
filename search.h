@@ -23,6 +23,12 @@ struct search_result_t {
 };
 
 struct search_t {
+
+    enum {
+        SEARCH_FORWARD = 0,
+        SEARCH_BACKWARD = 1
+    };
+
     search_t();
     ~search_t();
 

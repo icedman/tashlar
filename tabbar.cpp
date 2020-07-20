@@ -266,6 +266,7 @@ bool tabbar_t::processCommand(command_e cmd, char ch)
         break;
     };
     case CMD_ENTER:
+    case CMD_MOVE_CURSOR_UP:
     case CMD_MOVE_CURSOR_DOWN:
         app->focused = app->currentEditor.get();
         return true;

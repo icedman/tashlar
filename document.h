@@ -31,9 +31,9 @@ struct span_info_t {
 };
 
 struct bracket_info_t {
-    size_t line;
-    size_t position;
-    size_t absolutePosition;
+    long line;
+    long position;
+    long absolutePosition;
     int bracket;
     bool open;
     bool unpaired;
@@ -79,10 +79,7 @@ struct blockdata_t {
 
 struct block_t {
     block_t();
-
-    std::string text();
-    void setText(std::string t);
-    bool isValid();
+    ~block_t();
 
     size_t uid;
     int lineNumber;
@@ -105,22 +102,16 @@ struct block_t {
     bool dirty;
 
     std::shared_ptr<blockdata_t> data;
+
+    std::string text();
+    void setText(std::string t);
+    bool isValid();
 };
 
 struct document_t {
-    document_t()
-        : file(0)
-        , blockUid(1)
-        , cursorUid(1)
-        , dirty(true)
-        , runOn(false)
-    {
-    }
-
-    ~document_t()
-    {
-        close();
-    }
+    
+    document_t();
+    ~document_t();
 
     std::vector<struct block_t> blocks;
     std::vector<struct cursor_t> cursors;
@@ -138,6 +129,9 @@ struct document_t {
     void addCursor(struct cursor_t& cursor);
     void clearCursors();
     void clearSelections();
+
+    struct block_t& addBlockAtLineNumber(size_t line);
+    struct block_t& removeBlockAtLineNumber(size_t line);
 
     void addBufferDocument(const std::string& largeText);
     void insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer);

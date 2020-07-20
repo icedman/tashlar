@@ -50,13 +50,17 @@ std::vector<search_result_t> search_t::findWords(std::string str, regexp::patter
         pattern = &words;
     }
 
+    std::vector<search_result_t> result;
+    if (!str.length()) {
+        return result;
+    }
+
     for (int i = 0; i < str.length(); i++) {
         if (str[i] == '(' || str[i] == ')') {
             str[i] = '.';
         }
     }
 
-    std::vector<search_result_t> result;
     char* cstr = (char*)str.c_str();
     char* start = cstr;
     char* end = start + str.length();
@@ -67,6 +71,8 @@ std::vector<search_result_t> search_t::findWords(std::string str, regexp::patter
             break;
         }
 
+        // app_t::instance()->log("%d %d", m.begin(), m.end());
+
         std::string o(start + m.begin(), m.end() - m.begin());
 
         search_result_t res;
@@ -76,7 +82,6 @@ std::vector<search_result_t> search_t::findWords(std::string str, regexp::patter
 
         result.emplace_back(res);
         start += m.begin() + o.length();
-        // start ++;
     }
 
     return result;
@@ -115,8 +120,11 @@ std::vector<search_result_t> search_t::findCompletion(std::string str)
         if (b.data && b.data->state == BLOCK_STATE_COMMENT) {
             continue;
         }
+
+        // search only words within the first 1000 lines
         if (!b.data && skipWatch++ > 1000)
             break;
+
         std::vector<search_result_t> res = findWords(b.text(), &word);
         for (int j = 0; j < res.size(); j++) {
             auto r = res[j];

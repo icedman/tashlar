@@ -10,6 +10,7 @@ struct item_t {
     std::string fullPath;
     int score;
     int depth;
+    std::string script;
 };
 
 struct popup_t : public window_t {
@@ -52,8 +53,10 @@ struct popup_t : public window_t {
     popup_e type;
     struct cursor_t cursor;
     std::vector<struct item_t> items;
+    std::vector<struct item_t> commandItems;
 
     int request;
+    int searchDirection;
 };
 
 #endif // POPUP_H

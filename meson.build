@@ -23,6 +23,7 @@ tashlar_files = [
     'popup.cpp',
     'search.cpp',
     'statusbar.cpp',
+    'scripting.cpp',
     'tabbar.cpp',
     'util.cpp',
     'window.cpp'
@@ -45,12 +46,19 @@ onigmo_dep = declare_dependency(
     include_directories : onigmo_inc
 )
 
+lua_inc = include_directories('lua-5.4.0/src')
+lua_lib = cc.find_library('liblua', dirs:[pwd + '/libs'])
+lua_dep = declare_dependency(
+    dependencies: lua_lib,
+    include_directories : lua_inc
+)
+
 textmate_inc = include_directories('tm-parser/textmate')
 subdir('tm-parser/textmate')
   
 executable('tashlar',
     tashlar_files,
     include_directories: [ parser_inc, scopes_inc, theme_inc ],
-    dependencies: [ curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
+    dependencies: [ lua_dep, curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
     install : true
 )

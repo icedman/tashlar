@@ -349,8 +349,8 @@ theme_ptr theme_from_name(const std::string path, std::vector<struct extension_t
             Json::Value theme = themes[i];
             if (theme["id"].asString() == theme_path || theme["label"].asString() == theme_path) {
                 theme_path = ext.path + "/" + theme["path"].asString();
-                std::cout << ext.path << "..." << std::endl;
-                std::cout << theme_path << std::endl;
+                // std::cout << ext.path << "..." << std::endl;
+                // std::cout << theme_path << std::endl;
                 found = true;
                 break;
             }

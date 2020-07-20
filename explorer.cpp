@@ -68,7 +68,7 @@ void fileitem_t::load(std::string p)
         setPath(p);
     }
 
-    app_t::instance()->log("load %s", fullPath.c_str());
+    // app_t::instance()->log("load %s", fullPath.c_str());
     std::vector<std::string>& excludeFiles = app_t::instance()->excludeFiles;
     std::vector<std::string>& excludeFolders = app_t::instance()->excludeFolders;
 
@@ -186,22 +186,24 @@ void explorer_t::render()
     while (true) {
         int blockVirtualLine = currentItem;
         int blockScreenLine = blockVirtualLine - scrollY;
-        bool lineVisible = (blockScreenLine >= 0 & blockScreenLine < viewHeight);
-        if (lineVisible) {
-            break;
-        }
-        if (blockScreenLine >= viewHeight) {
+
+        // app_t::instance()->log(">%d %d scroll:%d items:%d h:%d", blockScreenLine, currentItem, scrollY, renderList.size(), viewHeight);
+
+        if (blockScreenLine + 1 >= viewHeight) {
             scrollY++;
-        }
-        if (blockScreenLine <= 0) {
+        } else if (blockScreenLine < 0) {
             scrollY--;
+        } else {
+            break;
         }
     }
 
+    int idx = 0;
     int skip = scrollY;
     int y = 0;
     for (auto file : renderList) {
         if (skip-- > 0) {
+            idx++;
             continue;
         }
 
@@ -209,7 +211,7 @@ void explorer_t::render()
         wmove(win, y, 0);
         wclrtoeol(win);
 
-        if (hasFocus && currentItem == file->lineNumber) {
+        if (hasFocus && currentItem == idx) {
             if (hasFocus) {
                 // pair = colorPairSelected;
                 wattron(win, A_REVERSE);
@@ -249,8 +251,19 @@ void explorer_t::render()
 
         renderLine(file->name.c_str(), x);
 
-        for (int i = 0; i < viewWidth - x; i++) {
-            waddch(win, ' ');
+        //for (int i = 0; i < viewWidth - x; i++) {
+        //    waddch(win, ' ');
+        //}
+        if (hasFocus && currentItem == idx) {
+            if (hasFocus) {
+                // pair = colorPairSelected;
+                wattron(win, A_REVERSE);
+            } else {
+                wattron(win, A_BOLD);
+            }
+            for (int i = 0; i < viewWidth - x; i++) {
+                waddch(win, ' ');
+            }
         }
 
         wattroff(win, COLOR_PAIR(pair));
@@ -260,6 +273,8 @@ void explorer_t::render()
         if (y >= viewHeight) {
             break;
         }
+
+        idx++;
     }
 
     while (y < viewHeight) {
@@ -273,38 +288,48 @@ void explorer_t::render()
     wrefresh(win);
 }
 
-void explorer_t::update(int frames)
+void explorer_t::preloadFolders()
 {
-    /*
-    if (!allFilesLoaded && app_t::instance()->isIdle() == 2) {
-        if (!allFiles.size()) {
-            buildFileList(allFiles, &files, 0, true);
-        }
+    if (allFilesLoaded) {
+        return;
+    }
 
-        int loaded = 0;
-        for(auto item : allFiles) {
-            if (item->isDirectory && item->canLoadMore && item->depth == loadDepth) {
-                item->load();
+    if (!allFiles.size()) {
+        buildFileList(allFiles, &files, 0, true);
+    }
 
-                app_t::instance()->log("load more %d", item->depth);
-                
-                item->canLoadMore = false;
-                if (loaded ++ >= PRELOAD_LOOP) {
-                    break;
-                }
+    int loaded = 0;
+    for (auto item : allFiles) {
+        if (item->isDirectory && item->canLoadMore && item->depth == loadDepth) {
+            item->load();
+
+            // app_t::instance()->log("load more %d", item->depth);
+
+            item->canLoadMore = false;
+            if (loaded++ >= PRELOAD_LOOP) {
+                break;
             }
         }
-
-        if (loaded == 0) {
-            loadDepth++;
-        }
-        
-        allFilesLoaded = (loaded == 0 && loadDepth >= MAX_PRELOAD_DEPTH);
-        if (loaded > 0) {
-            allFiles.clear();
-        }
     }
-    */
+
+    if (loaded == 0) {
+        loadDepth++;
+    }
+
+    allFilesLoaded = (loaded == 0 && loadDepth >= MAX_PRELOAD_DEPTH);
+    if (loaded > 0) {
+        allFiles.clear();
+        renderList.clear();
+        render();
+        app_t::instance()->refresh();
+    }
+}
+
+void explorer_t::update(int frames)
+{
+    if (!allFilesLoaded && app_t::instance()->isIdle() == 2) {
+        preloadFolders();
+    }
 }
 
 void explorer_t::renderLine(const char* line, int& x)
@@ -328,7 +353,12 @@ void explorer_t::layout(int w, int h)
     viewX = 0;
     viewY = 0;
     viewWidth = EXPLORER_WIDTH;
-    viewHeight = h - app_t::instance()->statusbar->viewHeight;
+    viewHeight = h;
+
+    if (app_t::instance()->showStatusBar) {
+        int statusbarHeight = app_t::instance()->statusbar->viewHeight;
+        viewHeight -= statusbarHeight;
+    }
 }
 
 void explorer_t::renderCursor()
@@ -423,7 +453,7 @@ bool explorer_t::processCommand(command_e cmd, char ch)
 
     struct fileitem_t* nextItem = renderList[currentItem];
     if (nextItem != item) {
-        app->statusbar->setStatus(nextItem->name, 3500);
+        app->statusbar->setStatus(nextItem->fullPath, 3500);
         return true;
     }
 

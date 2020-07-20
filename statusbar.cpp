@@ -41,7 +41,10 @@ void statusbar_t::render()
     mvwin(win, viewY, viewX);
     wresize(win, viewHeight, viewWidth);
 
-    setText(doc->fileName, 0);
+    wattron(win, A_REVERSE);
+
+    // setText(doc->fileName, 0);
+
     static char tmp[512];
     sprintf(tmp, "History %d/%d", (int)doc->snapShots.size(), (int)doc->snapShots.back().edits.size());
     setText(tmp, -4);
@@ -89,7 +92,7 @@ void statusbar_t::render()
         offset += 2;
     }
     wattroff(win, COLOR_PAIR(colorPair));
-
+    wattroff(win, A_REVERSE);
     wrefresh(win);
 }
 

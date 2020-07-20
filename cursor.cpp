@@ -64,6 +64,42 @@ bool cursor_t::hasSelection()
     return _anchorPosition != _position;
 }
 
+struct cursor_t cursor_t::selectionStartCursor()
+{
+    size_t start;
+    size_t end;
+
+    if (_position > _anchorPosition) {
+        start = _anchorPosition;
+        end = _position;
+    } else {
+        start = _position;
+        end = _anchorPosition;
+    }
+
+    struct cursor_t cur = *this;
+    cursorSetPosition(&cur, start);
+    return cur;
+}
+
+struct cursor_t cursor_t::selectionEndCursor()
+{
+    size_t start;
+    size_t end;
+
+    if (_position > _anchorPosition) {
+        start = _anchorPosition;
+        end = _position;
+    } else {
+        start = _position;
+        end = _anchorPosition;
+    }
+
+    struct cursor_t curEnd = *this;
+    cursorSetPosition(&curEnd, end);
+    return curEnd;
+}
+
 std::vector<struct block_t*> cursor_t::selectedBlocks()
 {
     std::vector<struct block_t*> blocks;
@@ -89,6 +125,7 @@ std::vector<struct block_t*> cursor_t::selectedBlocks()
 
     struct block_t* startBlock = cur.block();
     struct block_t* endBlock = curEnd.block();
+
     blocks.push_back(startBlock);
     while (startBlock != endBlock) {
         startBlock = startBlock->next;
@@ -96,6 +133,19 @@ std::vector<struct block_t*> cursor_t::selectedBlocks()
     }
 
     return blocks;
+}
+
+bool cursor_t::isMultiBlockSelection()
+{
+    if (hasSelection()) {
+        struct cursor_t cur2 = *this;
+        cur2._position = cur2.anchorPosition();
+        cur2.update();
+        if (block() != cur2.block()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void cursor_t::clearSelection()
@@ -366,22 +416,45 @@ void cursorSelectWord(struct cursor_t* cursor)
 int cursorInsertText(struct cursor_t* cursor, std::string t)
 {
     struct block_t* block = cursor->block();
+    if (!block->isValid()) {
+        return 0;
+    }
+
     struct blockdata_t* data = block->data.get();
     if (data && data->folded && data->foldable) {
         app_t::instance()->currentEditor->toggleFold(block->lineNumber);
     }
 
     std::string blockText = block->text();
-    blockText.insert(cursor->relativePosition(), t);
+
+    if (blockText.length() > 1) {
+        int relativePosition = cursor->relativePosition();
+        if (relativePosition < 0 || relativePosition >= blockText.length()) {
+            relativePosition = blockText.length() - 1;
+        }
+        if (relativePosition < 0) {
+            relativePosition = 0;
+        }
+
+        // app_t::instance()->log("insert at %d/%d text length: %d", cursor->position(), cursor->relativePosition(), t.length());
+
+        blockText.insert(cursor->relativePosition(), t);
+        block->setText(blockText);
+    } else {
+        blockText += t;
+    }
     block->setText(blockText);
 
-    // app_t::instance()->log("insert at %d %s", cursor->relativePosition(), blockText.c_str());
     return blockText.length();
 }
 
 int cursorEraseText(struct cursor_t* cursor, int c)
 {
     struct block_t* block = cursor->block();
+    if (!block->isValid()) {
+        return 0;
+    }
+
     struct blockdata_t* data = block->data.get();
     if (data && data->folded && data->foldable) {
         app_t::instance()->currentEditor->toggleFold(block->lineNumber);
@@ -393,13 +466,14 @@ int cursorEraseText(struct cursor_t* cursor, int c)
     if (cursor->relativePosition() == blockText.length()) {
         if (block->next) {
             blockText += block->next->text();
-            // todo add delete next line
-            std::vector<struct block_t>::iterator it = findBlock(cursor->document()->blocks, *block->next);
-            if (it != cursor->document()->blocks.end()) {
-                cursor->document()->blocks.erase(it);
-            }
+            cursor->document()->removeBlockAtLineNumber(block->next->lineNumber);
+            cursor->document()->update(true);
         }
     } else {
+        // hack for multi-cursor overlap
+        if (c + cursor->relativePosition() > blockText.length() && cursor->document()->cursors.size() > 1) {
+            return 0;
+        }
         blockText.erase(cursor->relativePosition(), c);
     }
 
@@ -410,26 +484,24 @@ int cursorEraseText(struct cursor_t* cursor, int c)
 void cursorSplitBlock(struct cursor_t* cursor)
 {
     struct block_t* block = cursor->block();
+    if (!block->isValid()) {
+        return;
+    }
+
     struct blockdata_t* data = block->data.get();
     if (data && data->folded && data->foldable) {
         app_t::instance()->currentEditor->toggleFold(block->lineNumber);
     }
 
+    int relativePosition = cursor->relativePosition();
     std::string blockText = block->text();
-    std::string block1 = blockText.substr(0, cursor->relativePosition());
-    std::string block2 = blockText.substr(cursor->relativePosition(), std::string::npos);
+    std::string block1 = blockText.substr(0, relativePosition);
+    std::string block2 = blockText.substr(relativePosition, std::string::npos);
     block->setText(block2);
 
-    struct block_t b;
-    b.document = cursor->document();
-    b.setText(block1);
-
-    std::vector<struct block_t>::iterator it = findBlock(cursor->document()->blocks, *block);
-    if (it != cursor->document()->blocks.end()) {
-        cursor->document()->blocks.emplace(it, b);
-    }
-
-    cursor->document()->update();
+    struct block_t &newBlock = cursor->document()->addBlockAtLineNumber(block->lineNumber);
+    newBlock.setText(block1);
+    cursor->document()->update(true);
 }
 
 // todo .. this needs history replay for multiple line deletes
@@ -439,15 +511,8 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         return 0;
     }
 
-    size_t start;
-    size_t end;
-    if (cursor->position() > cursor->anchorPosition()) {
-        start = cursor->anchorPosition();
-        end = cursor->position();
-    } else {
-        start = cursor->position();
-        end = cursor->anchorPosition();
-    }
+    size_t start = cursor->selectionStart();
+    size_t end = cursor->selectionEnd();
 
     struct document_t* doc = cursor->document();
     struct cursor_t cur = *cursor;
@@ -458,49 +523,48 @@ int cursorDeleteSelection(struct cursor_t* cursor)
     curEnd.update();
 
     // for selection spanning multiple blocks
-    struct block_t& startBlock = *cur.block();
-    struct block_t& endBlock = *curEnd.block();
-    if (startBlock.position != endBlock.position) {
+    struct block_t* startBlock = cur.block();
+    struct block_t* endBlock = curEnd.block();
+
+    if (!startBlock->isValid()) {
+        return 0;
+    }
+    if (!endBlock->isValid()) {
+        return 0;
+    }
+
+    if (startBlock->position != endBlock->position) {
         int count = 0;
 
-        struct block_t* next = startBlock.next;
+        struct block_t* next = startBlock->next;
 
-        int d = curEnd.position() - endBlock.position;
-        curEnd._position = endBlock.position;
+        int d = curEnd.position() - endBlock->position;
+        curEnd._position = endBlock->position;
         curEnd.update();
         cursorEraseText(&curEnd, d);
         count += d;
 
-        app_t::instance()->log("end line %d", endBlock.lineNumber);
+        app_t::instance()->log("end line %d", endBlock->lineNumber);
 
-        d = startBlock.position + startBlock.length - cur.position();
+        d = startBlock->position + startBlock->length - cur.position();
         if (d > 1) {
             cur.update();
-            app_t::instance()->log("start line %d %d", startBlock.lineNumber, d);
+            app_t::instance()->log("start line %d %d", startBlock->lineNumber, d);
             cursorEraseText(&cur, d);
             count += d;
         }
 
-        doc->update();
-
-        int linesToDelete = 0;
-        while (next && next != &endBlock) {
-            linesToDelete++;
-            count += next->length;
-            next = next->next;
-        }
-
+        int linesToDelete = endBlock->lineNumber - startBlock->lineNumber;
         // delete blocks in-between
         app_t::instance()->log("lines to delete %d", linesToDelete);
 
-        if (startBlock.next && linesToDelete-- > 0) {
-            std::vector<struct block_t>::iterator it = findBlock(doc->blocks, *startBlock.next);
-            doc->blocks.erase(it, it + linesToDelete + 1);
-            doc->update();
+        int lineNumber = startBlock->lineNumber + 1;
+        for(int i=0; i<linesToDelete-1; i++) {
+            doc->removeBlockAtLineNumber(lineNumber);
         }
 
         // merge two block
-        doc->update();
+        doc->update(true);
         cursorEraseText(&cur, 1);
         count++;
 
@@ -514,8 +578,8 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         cursorEraseText(&cur, 1);
     }
 
-    cursor->_position = cur.position();
-    cursor->_anchorPosition = cur.position();
+    cursor->_position = start;
+    cursor->_anchorPosition = end;
     cursor->update();
     return count;
 }
@@ -526,52 +590,33 @@ std::string cursor_t::selectedText()
         return "";
     }
 
-    size_t start;
-    size_t end;
-    if (position() > anchorPosition()) {
-        start = anchorPosition();
-        end = position();
-    } else {
-        start = position();
-        end = anchorPosition();
-    }
+    struct cursor_t start = selectionStartCursor();
+    struct cursor_t end = selectionEndCursor();
 
-    struct cursor_t cursor = *this;
-    cursor._position = start;
-    cursor.update();
-    struct block_t* block = cursor.block();
-
+    std::vector<struct block_t*> blocks = selectedBlocks();
     std::string res = "";
-    std::string text = block->text();
-
-    int count = end - start + 1;
-
-    for (int i = 0; i < count; i++) {
-        size_t idx = start + i;
-        int blockIdx = idx - block->position;
-
-        char c = text[blockIdx];
-        if (c == 0) {
-
-            if (!block->next) {
-                return res;
-            }
-            block = block->next;
-            if (!block || !block->isValid()) {
-                return res;
-            }
-            text = block->text();
-
+    for (auto b : blocks) {
+        if (res != "") {
             res += "\n";
-            continue;
         }
-        res += c;
+        std::string t = b->text();
+        if (b == start._block) {
+            t = t.c_str() + start._relativePosition;
+        }
+        if (b == end._block) {
+            int trunc = end._block->length - end._relativePosition - 2;
+            if (trunc > 0) {
+                t = t.substr(0, t.length() - trunc);
+                app_t::instance()->log(">trunc %d", trunc);
+            }
+        }
+        res += t;
     }
 
     return res;
 }
 
-bool cursorFindWord(struct cursor_t* cursor, std::string t)
+bool cursorFindWord(struct cursor_t* cursor, std::string t, int direction)
 {
     bool firstCursor = true;
     struct cursor_t cur = *cursor;
@@ -608,8 +653,14 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t)
             }
         }
 
-        if (!cursorMovePosition(&cur, cursor_t::Move::NextBlock)) {
-            return false;
+        if (direction == 1) {
+            if (!cursorMovePosition(&cur, cursor_t::Move::PrevBlock)) {
+                return false;
+            }
+        } else {
+            if (!cursorMovePosition(&cur, cursor_t::Move::NextBlock)) {
+                return false;
+            }
         }
 
         cursorMovePosition(&cur, cursor_t::Move::StartOfLine);
@@ -693,7 +744,8 @@ int cursorIndent(struct cursor_t* cursor)
             cur._block = b;
 
             bool updatePos = b->uid == posCur._block->uid;
-            bool updateAnchor = b->uid == anchorCur._block->uid;;
+            bool updateAnchor = b->uid == anchorCur._block->uid;
+            ;
             int count = _cursorIndent(&cur);
             cursor->document()->update();
 
@@ -756,7 +808,8 @@ int cursorUnindent(struct cursor_t* cursor)
             cur._block = b;
 
             bool updatePos = b->uid == posCur._block->uid;
-            bool updateAnchor = b->uid == anchorCur._block->uid;;
+            bool updateAnchor = b->uid == anchorCur._block->uid;
+            ;
             int count = _cursorUnindent(&cur);
             cursor->document()->update();
 
