@@ -82,8 +82,8 @@ struct block_t {
     ~block_t();
 
     size_t uid;
-    int lineNumber;
-    int lineCount;
+    size_t lineNumber;
+    size_t lineCount;
 
     struct document_t* document;
     size_t position;
@@ -109,7 +109,7 @@ struct block_t {
 };
 
 struct document_t {
-    
+
     document_t();
     ~document_t();
 
@@ -131,7 +131,7 @@ struct document_t {
     void clearSelections();
 
     struct block_t& addBlockAtLineNumber(size_t line);
-    struct block_t& removeBlockAtLineNumber(size_t line);
+    struct block_t& removeBlockAtLineNumber(size_t line, size_t count = 1);
 
     void addBufferDocument(const std::string& largeText);
     void insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer);

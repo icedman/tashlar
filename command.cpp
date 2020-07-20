@@ -37,7 +37,6 @@ bool processEditorCommand(command_e cmd, char ch)
 
     case CMD_PASTE:
         if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
-            // doc->addSnapshot(); // TODO << wasteful of resources
             app->inputBuffer = app->clipBoard;
         } else if (app->clipBoard.length()) {
             doc->addSnapshot();
@@ -191,8 +190,8 @@ bool processEditorCommand(command_e cmd, char ch)
         struct cursor_t cur = cursors[i];
         if (cur.isMultiBlockSelection()) {
             switch (cmd) {
-            //case CMD_INDENT:
-            //case CMD_UNINDENT:
+            case CMD_INDENT:
+            case CMD_UNINDENT:
             case CMD_CUT:
             case CMD_DELETE:
             case CMD_BACKSPACE:
@@ -404,7 +403,6 @@ bool processEditorCommand(command_e cmd, char ch)
         }
 
         doc->updateCursor(cur);
-
         if (update) {
             doc->update(advance != 0);
 
@@ -414,11 +412,14 @@ bool processEditorCommand(command_e cmd, char ch)
                     c._position += advance;
                     c._anchorPosition += advance;
                     c.update();
-                    // std::cout << advance << std::endl;
                 }
                 doc->updateCursor(c);
             }
         }
+    }
+
+    if (snapShot) {
+        doc->addSnapshot();
     }
 
     if (markHistory) {

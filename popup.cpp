@@ -390,6 +390,10 @@ void popup_t::update(int frames)
 
 void popup_t::completion()
 {
+    if (app_t::instance()->inputBuffer.length()) {
+        return;
+    }
+
     request = 10000;
     struct editor_t* editor = app_t::instance()->currentEditor.get();
     struct document_t* doc = &editor->document;

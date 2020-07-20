@@ -29,6 +29,7 @@ struct cursor_t {
     cursor_t();
 
     size_t uid;
+    size_t _docUpdateUid;
 
     struct document_t* _document;
     struct block_t* _block;

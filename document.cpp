@@ -14,15 +14,18 @@ block_t::block_t()
     , document(0)
     , file(0)
     , lineNumber(0)
+    , lineCount(0)
     , position(0)
     , screenLine(0)
     , dirty(false)
     , next(0)
     , previous(0)
-{}
+{
+}
 
 block_t::~block_t()
-{}
+{
+}
 
 std::string block_t::text()
 {
@@ -70,7 +73,7 @@ std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blo
     std::vector<struct block_t>::iterator it = blocks.begin();
     while (it != blocks.end()) {
         struct block_t& blk = *it;
-        if (&blk == &block) {
+        if (blk.uid == block.uid) {
             return it;
         }
         it++;
@@ -162,7 +165,7 @@ struct block_t& document_t::addBlockAtLineNumber(size_t line)
         } else {
             it = blocks.end();
         }
-    }    
+    }
 
     struct block_t b;
     b.document = this;
@@ -175,7 +178,7 @@ struct block_t& document_t::addBlockAtLineNumber(size_t line)
     return *blocks.emplace(it, b);
 }
 
-struct block_t& document_t::removeBlockAtLineNumber(size_t line)
+struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
 {
     if (blocks.size() < 2) {
         return nullBlock;
@@ -194,7 +197,7 @@ struct block_t& document_t::removeBlockAtLineNumber(size_t line)
     }
 
     struct block_t& block = *it;
-    blocks.erase(it);
+    blocks.erase(it, it+count);
     return block;
 }
 
@@ -278,10 +281,10 @@ void document_t::updateCursor(struct cursor_t& cursor)
 {
     for (auto& c : cursors) {
         if (c.uid == cursor.uid) {
-            c._block = cursor.block();
             c._position = cursor.position();
             c._anchorPosition = cursor.anchorPosition();
             c._preferredRelativePosition = cursor.preferredRelativePosition();
+            c._block = cursor._block;
             c.update();
             break;
         }
@@ -320,14 +323,14 @@ void document_t::clearSelections()
 
 void document_t::update(bool force)
 {
+    // TODO: This is used all over.. perpetually improve (update only changed)
     if (!dirty && !force) {
         return;
     }
 
-    app_t::instance()->log("document update");
+    app_t::instance()->log("document update %d", blockUid);
     dirty = false;
 
-    // TODO: This is used all over.. perpetually improve (update only changed)
     // update block positions
     struct block_t* prev = NULL;
     int l = 0;
@@ -345,9 +348,12 @@ void document_t::update(bool force)
 
         b.position = pos;
         b.lineNumber = l++;
+        b.screenLine = 0;
+
         if (!b.uid) {
             b.uid += blockUid++;
         }
+        
         pos += b.length;
         prev = &b;
     }
@@ -360,10 +366,12 @@ void document_t::update(bool force)
         cursor.update();
         cursors.emplace_back(cursor);
     }
+
+        app_t::instance()->log("cursor: %d block: %d blocks: %d", cursors[0].position(), cursors[0].block()->lineNumber, blocks.size());
 }
 
 struct block_t& document_t::block(struct cursor_t& cursor)
-{
+{        
     // TODO: This is used all over.. perpetually improve search (divide-conquer? index based?)!
     app_t::instance()->log("block query");
 
@@ -379,13 +387,14 @@ struct block_t& document_t::block(struct cursor_t& cursor)
         if (b.length == 0 && cursor.position() == b.position) {
             return b;
         }
-        if (b.position <= cursor.position() && cursor.position() < b.position + b.length) {
+        if (b.position <= cursor.position() && cursor.position() < b.position + (b.length ? b.length : 1)) {
             return b;
         }
         idx++;
         bit++;
     }
-
+    
+    app_t::instance()->log("null block returned");
     return nullBlock;
 }
 
@@ -411,13 +420,13 @@ void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<docum
 {
     size_t ln = cursor.block()->lineNumber;
     for (auto bb : buffer->blocks) {
-        //struct block_t b;
-        struct block_t &b = addBlockAtLineNumber(ln++);
+       //struct block_t& b = addBlockAtLineNumber(ln++); // too slow
+        struct block_t b;
         b.document = buffer.get();
         b.file = &buffer->file;
         b.filePosition = bb.position;
         b.length = bb.length;
-        //blocks.emplace_back(b);
+        blocks.emplace_back(b);
     }
     update(true);
 }

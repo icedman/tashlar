@@ -17,10 +17,12 @@
 
 cursor_t::cursor_t()
     : uid(0)
+    , _docUpdateUid(0)
     , _document(0)
     , _block(0)
     , _position(0)
     , _anchorPosition(0)
+    , _relativePosition(0)
     , _preferredRelativePosition(0)
 {
 }
@@ -42,16 +44,17 @@ void cursor_t::update()
         return;
     }
 
-    if (!_block) {
-        // app_t::instance()->log("initial query");
+    if (!_block || _docUpdateUid != _document->blockUid) {
+         app_t::instance()->log("initial query");
         _block = &_document->block(*this);
     }
 
     if (_position < _block->position || _position >= _block->position + _block->length) {
-        // app_t::instance()->log("reposition query %d %d", _position, _block->position);
+        app_t::instance()->log("reposition query %d %d", _position, _block->position);
         _block = &_document->block(*this);
     }
     _relativePosition = _position - _block->position;
+    _docUpdateUid = _document->blockUid;
 }
 
 bool cursor_t::isNull()
@@ -204,6 +207,7 @@ void cursorSetPosition(struct cursor_t* cursor, size_t position)
     cursor->_position = position;
     cursor->_anchorPosition = position;
     cursor->relativePosition(); // recompute relative
+    // app_t::instance()->log("set cursor>%d", position);
 }
 
 void cursorSetAnchorPosition(struct cursor_t* cursor, size_t position)
@@ -488,6 +492,10 @@ void cursorSplitBlock(struct cursor_t* cursor)
         return;
     }
 
+    if (!block->length) {
+        block->setText("");
+    }
+
     struct blockdata_t* data = block->data.get();
     if (data && data->folded && data->foldable) {
         app_t::instance()->currentEditor->toggleFold(block->lineNumber);
@@ -499,7 +507,7 @@ void cursorSplitBlock(struct cursor_t* cursor)
     std::string block2 = blockText.substr(relativePosition, std::string::npos);
     block->setText(block2);
 
-    struct block_t &newBlock = cursor->document()->addBlockAtLineNumber(block->lineNumber);
+    struct block_t& newBlock = cursor->document()->addBlockAtLineNumber(block->lineNumber);
     newBlock.setText(block1);
     cursor->document()->update(true);
 }
@@ -559,9 +567,9 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         app_t::instance()->log("lines to delete %d", linesToDelete);
 
         int lineNumber = startBlock->lineNumber + 1;
-        for(int i=0; i<linesToDelete-1; i++) {
-            doc->removeBlockAtLineNumber(lineNumber);
-        }
+        // for (size_t i = 0; i < linesToDelete - 1; i++) {
+            doc->removeBlockAtLineNumber(lineNumber, linesToDelete-1);
+        // }
 
         // merge two block
         doc->update(true);

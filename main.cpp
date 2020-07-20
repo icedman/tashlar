@@ -64,6 +64,7 @@ void renderEditor(struct editor_t& editor)
         size_t pos = 0;
         for (auto& b : editor.document.blocks) {
             editor.layoutBlock(b);
+            b.lineNumber = l++;
             b.screenLine = 0;
             if (prev) {
                 b.screenLine = prev->screenLine + prev->lineCount;
@@ -76,9 +77,15 @@ void renderEditor(struct editor_t& editor)
     // scroll to cursor
     // TODO: use math not loops
     while (true) {
-        size_t blockVirtualLine = block.screenLine > block.lineNumber ? block.screenLine : block.lineNumber;
-        size_t blockScreenLine = blockVirtualLine - editor.scrollY;
+        long blockVirtualLine = block.screenLine > block.lineNumber ? block.screenLine : block.lineNumber;
+        long blockScreenLine = blockVirtualLine - editor.scrollY;
 
+        // app_t::instance()->log(": c:%d line:%d scroll:%d text:%s", cursor.position(), block.lineNumber, editor.scrollY, block.text().c_str());
+        if (block.lineNumber >= editor.document.blocks.size()) {
+            app_t::instance()->log("invalid block");
+            break;
+        }
+        
         bool lineVisible = (blockScreenLine >= 0 & blockScreenLine < editor.viewHeight);
         if (lineVisible) {
             break;
@@ -88,11 +95,8 @@ void renderEditor(struct editor_t& editor)
         }
         if (blockScreenLine <= 0) {
             editor.scrollY--;
-        }
-
-        app_t::instance()->log(": %d %d %d", block.screenLine, block.lineNumber, editor.scrollY);
-        // break;
-    }
+        }        
+     }
 
     while (cursor.position() - block.position + 1 - editor.scrollX > editor.viewWidth) {
         if (app_t::instance()->lineWrap)
@@ -407,7 +411,6 @@ int main(int argc, char** argv)
             int advance = 0;
 
             if (cur.hasSelection()) {
-                //doc->addSnapshot(); // TODO << wasteful of resources
                 int count = cursorDeleteSelection(&cur);
                 doc->history().addDelete(cur, count);
                 advance -= count;
@@ -423,15 +426,20 @@ int main(int argc, char** argv)
             advance += s.length();
 
             doc->updateCursor(cur);
-            doc->update(advance != 0);
 
+            // update the document indices
+            if (!app_t::instance()->inputBuffer.length() || s == "\n") {
+                doc->update(advance != 0);
+            }
+
+            // advace cursor positions
             for (int j = 0; j < cursors.size(); j++) {
                 struct cursor_t& c = cursors[j];
                 if (c.position() > 0 && c.position() > cur.position() && c.uid != cur.uid) {
                     c._position += advance;
                     c._anchorPosition += advance;
                     c.update();
-                    app_t::instance()->log("%d pos: %d adv: %d", j, c._position, advance);
+                    // app_t::instance()->log("%d pos: %d adv: %d", j, c._position, advance);
                 }
                 doc->updateCursor(c);
             }
