@@ -24,7 +24,7 @@ dist
 .cache
 
 tm-parser
-libs/*.a
+libs
 out.cpp
 
 lua-*
