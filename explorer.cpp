@@ -303,7 +303,7 @@ void explorer_t::preloadFolders()
         if (item->isDirectory && item->canLoadMore && item->depth == loadDepth) {
             item->load();
 
-            app_t::instance()->log("load more %d", item->depth);
+            // app_t::instance()->log("load more %d", item->depth);
 
             item->canLoadMore = false;
             if (loaded++ >= PRELOAD_LOOP) {

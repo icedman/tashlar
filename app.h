@@ -22,7 +22,8 @@ struct cmd_t {
     cmd_t(command_e c = CMD_UNKNOWN, std::string a = "")
         : cmd(c)
         , args(a)
-    {}    
+    {
+    }
     command_e cmd;
     std::string args;
 };
@@ -106,6 +107,7 @@ struct app_t {
 
     std::vector<std::string> excludeFiles;
     std::vector<std::string> excludeFolders;
+    std::string scriptPath;
 
     bool idle;
     int idleIndex;

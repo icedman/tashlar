@@ -110,11 +110,13 @@ bool document_t::open(const char* path)
 
     std::string line;
     size_t pos = file.tellg();
+    size_t lineNo = 0;
     while (std::getline(file, line)) {
         struct block_t b;
         b.document = this;
         b.file = &file;
         b.position = pos;
+        b.originalLineNumber = lineNo++;
         b.filePosition = pos;
         b.length = line.length() + 1;
         blocks.emplace_back(b);
@@ -266,7 +268,7 @@ void document_t::saveAs(const char* path, bool replacePath)
         tmp << text << std::endl;
     }
 }
-    
+
 struct cursor_t document_t::cursor()
 {
     cursors[0].update();

@@ -615,7 +615,7 @@ std::string cursor_t::selectedText()
             int trunc = end._block->length - end._relativePosition - 2;
             if (trunc > 0) {
                 t = t.substr(0, t.length() - trunc);
-                app_t::instance()->log(">trunc %d", trunc);
+                // app_t::instance()->log(">trunc %d", trunc);
             }
         }
         res += t;

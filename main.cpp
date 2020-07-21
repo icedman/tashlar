@@ -185,7 +185,8 @@ int main(int argc, char** argv)
 
     app.windows.push_back(&popup);
 
-    char* filename = 0;
+    const char* defaultFile = "./newfile";
+    char* filename = (char*)defaultFile;
     if (argc > 1) {
         filename = argv[argc - 1];
     } else {
@@ -201,6 +202,9 @@ int main(int argc, char** argv)
     // scripting
     //-------------------
     scripting_t::instance()->initialize();
+    if (app.scriptPath.size()) {
+        scripting_t::instance()->runFile(app.scriptPath);
+    }
 
     //-------------------
     // keybinding
@@ -433,7 +437,7 @@ int main(int argc, char** argv)
             doc->updateCursor(cur);
 
             // update the document indices
-            if (!app_t::instance()->inputBuffer.length() || s == "\n") {
+            if (cursors.size() > 1 || !app_t::instance()->inputBuffer.length() || s == "\n") {
                 doc->update(advance != 0);
             }
 

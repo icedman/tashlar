@@ -17,7 +17,7 @@
 
 #include "keybinding.h"
 
-#define HIGHLIGHT_PRECEEDING_BLOCKS 16
+#define HIGHLIGHT_PRECEEDING_BLOCKS 32
 
 bool editor_proxy_t::processCommand(command_e cmd, char ch)
 {
@@ -633,7 +633,7 @@ void editor_t::update(int tick)
         if (frames <= 0) {
             highlightPreceedingBlocks(*document.cursor().block());
             frames = 0;
-        } 
+        }
     }
 }
 

@@ -356,11 +356,20 @@ void app_t::configure(int argc, char** argv)
     // defaults
     //-------------------
     const char* argTheme = 0;
+    const char* argScript = 0;
     const char* defaultTheme = "Monokai";
+
     for (int i = 0; i < argc - 1; i++) {
         if (strcmp(argv[i], "-t") == 0) {
             argTheme = argv[i + 1];
         }
+        if (strcmp(argv[i], "-s") == 0) {
+            argScript = argv[i + 1];
+        }
+    }
+
+    if (argScript) {
+        scriptPath = argScript;
     }
 
     std::string _path = "~/.ashlar/settings.json";
@@ -488,7 +497,7 @@ void app_t::save()
 {
     currentEditor->document.save();
 }
-    
+
 void app_t::saveAs(std::string path, bool replaceName)
 {
     currentEditor->document.saveAs(path.c_str(), replaceName);

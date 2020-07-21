@@ -1,5 +1,5 @@
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 extern "C" {
 #include "lauxlib.h"
@@ -19,7 +19,7 @@ static lua_State* L = 0;
 typedef int command_exec(lua_State* L);
 
 struct command_lua_map_t {
-    char *name;
+    char* name;
     int cmd;
 } command_lua_map[] = {
     // CMD_UNKNOWN,
@@ -29,16 +29,16 @@ struct command_lua_map_t {
     { "paste", CMD_PASTE },
     { "select_word", CMD_SELECT_WORD },
 
-    { "cmd_tab_0", CMD_TAB_0 } ,
-    { "cmd_tab_1", CMD_TAB_1 } ,
-    { "cmd_tab_2", CMD_TAB_2 } ,
-    { "cmd_tab_3", CMD_TAB_3 } ,
-    { "cmd_tab_4", CMD_TAB_4 } ,
-    { "cmd_tab_5", CMD_TAB_5 } ,
-    { "cmd_tab_6", CMD_TAB_6 } ,
-    { "cmd_tab_7", CMD_TAB_7 } ,
-    { "cmd_tab_8", CMD_TAB_8 } ,
-    { "cmd_tab_9", CMD_TAB_9 } ,
+    { "cmd_tab_0", CMD_TAB_0 },
+    { "cmd_tab_1", CMD_TAB_1 },
+    { "cmd_tab_2", CMD_TAB_2 },
+    { "cmd_tab_3", CMD_TAB_3 },
+    { "cmd_tab_4", CMD_TAB_4 },
+    { "cmd_tab_5", CMD_TAB_5 },
+    { "cmd_tab_6", CMD_TAB_6 },
+    { "cmd_tab_7", CMD_TAB_7 },
+    { "cmd_tab_8", CMD_TAB_8 },
+    { "cmd_tab_9", CMD_TAB_9 },
 
     { "indent", CMD_INDENT },
     { "unindent", CMD_UNINDENT },
@@ -120,10 +120,9 @@ struct command_lua_map_t {
     // CMD_POPUP_COMPLETION,
 
     { "history_snapshot", CMD_HISTORY_SNAPSHOT },
-    
+
     { NULL, CMD_UNKNOWN }
 };
-
 
 static int command_theme(lua_State* L)
 {
@@ -180,7 +179,6 @@ static int command_app_save_as(lua_State* L)
     return 0;
 }
 
-
 static int command_app_save_copy(lua_State* L)
 {
     int n = lua_gettop(L);
@@ -196,7 +194,23 @@ static int command_app_save_copy(lua_State* L)
 
     return 0;
 }
-    
+
+static int command_run_file(lua_State* L)
+{
+    int n = lua_gettop(L);
+    char* fileName = 0;
+    if (n > 0) {
+        fileName = (char*)lua_tostring(L, 1);
+    }
+
+    if (fileName) {
+        struct scripting_t* scripting = scripting_t::instance();
+        scripting->runFile(fileName);
+    }
+
+    return 0;
+}
+
 static int command_editor(lua_State* L)
 {
     int n = lua_gettop(L);
@@ -209,18 +223,27 @@ static int command_editor(lua_State* L)
                 cmdArgs = args;
             }
         }
-    
-        for(int i=0;;i++) {
-            if (!command_lua_map[i].name) break;
+
+        for (int i = 0;; i++) {
+            if (!command_lua_map[i].name)
+                break;
             if (strcmp(command_lua_map[i].name, cmdName) == 0) {
                 app_t::instance()->log("editor: %s %d", cmdName, command_lua_map[i].cmd);
                 app_t::instance()->commandBuffer.push_back(cmd_t((command_e)command_lua_map[i].cmd, cmdArgs));
             }
         }
+
+        app_t::instance()->currentEditor->document.update(true);
     }
     return 0;
 }
-    
+
+static int command_quit(lua_State* L)
+{
+    app_t::instance()->commandBuffer.clear();
+    app_t::instance()->commandBuffer.push_back(CMD_QUIT);
+}
+
 struct scripting_t* scripting_t::instance()
 {
     return scriptingInstance;
@@ -239,10 +262,12 @@ void scripting_t::initialize()
 {
     L = luaL_newstate();
     lua_register(L, "theme", command_theme);
-    lua_register(L, "editor", command_editor);
+    lua_register(L, "command", command_editor);
     lua_register(L, "open", command_app_open);
     lua_register(L, "save_as", command_app_save_as);
     lua_register(L, "save_copy", command_app_save_copy);
+    lua_register(L, "run_file", command_run_file);
+    lua_register(L, "quit", command_quit);
     scriptingInstance = this;
 }
 

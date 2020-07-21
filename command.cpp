@@ -289,6 +289,8 @@ bool processEditorCommand(command_e cmd, char ch)
             markHistory = true;
             handled = true;
 
+            app_t::instance()->log("cursor down");
+
             targetBlock = cur.block();
             targetBlockData = targetBlock->data.get();
             if (targetBlockData && targetBlockData->folded && !targetBlockData->foldable && targetBlock->next) {
@@ -318,9 +320,9 @@ bool processEditorCommand(command_e cmd, char ch)
             handled = true;
             break;
 
-            //-----------
-            // document edits
-            //-----------
+        //-----------
+        // document edits
+        //-----------
         case CMD_INDENT: {
             //doc->addSnapshot();
             if (cursors.size() > 1 && cur.isMultiBlockSelection()) {
@@ -404,6 +406,7 @@ bool processEditorCommand(command_e cmd, char ch)
         }
 
         doc->updateCursor(cur);
+
         if (update) {
             doc->update(advance != 0);
 

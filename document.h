@@ -83,6 +83,7 @@ struct block_t {
 
     size_t uid;
     size_t lineNumber;
+    size_t originalLineNumber;
     size_t lineCount;
 
     struct document_t* document;
