@@ -206,8 +206,9 @@ void tabbar_t::layout(int w, int h)
     }
 }
 
-bool tabbar_t::processCommand(command_e cmd, char ch)
+bool tabbar_t::processCommand(command_t cmdt, char ch)
 {
+    command_e cmd = cmdt.cmd;
     struct app_t* app = app_t::instance();
 
     switch (cmd) {

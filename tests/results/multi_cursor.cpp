@@ -1,5 +1,5 @@
-#include <iostream>
-#include <string>
+#~include~ <>
+#~include~ <string>
 
 int main()
 {

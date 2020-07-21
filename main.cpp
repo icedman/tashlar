@@ -257,7 +257,7 @@ int main(int argc, char** argv)
         //-----------------
         // get input
         //-----------------
-        cmd_t cmdt;
+        command_t cmdt;
         command_e cmd = CMD_UNKNOWN;
         std::string keySequence;
         std::string expandedSequence;
@@ -341,6 +341,7 @@ int main(int argc, char** argv)
             popup.request = -1;
             popup.items.clear();
             break;
+
         case CMD_CLOSE_TAB:
             app.close();
             if (app.editors.size() == 0) {
@@ -389,6 +390,10 @@ int main(int argc, char** argv)
             app.refresh();
             break;
         }
+        case CMD_OPEN:
+            app.openEditor(cmdt.args.c_str());
+            continue;
+
         case CMD_QUIT:
             end = true;
             continue;
@@ -399,7 +404,8 @@ int main(int argc, char** argv)
         //-------------------
         // update keystrokes on cursors
         //-------------------
-        bool commandHandled = app.processCommand(cmd, ch);
+        cmdt.cmd = cmd;
+        bool commandHandled = app.processCommand(cmdt, ch);
         if (commandHandled || cmd == CMD_CANCEL) {
             continue;
         }

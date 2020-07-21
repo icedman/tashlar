@@ -12,7 +12,7 @@ struct window_t {
     virtual void update(int frames);
     virtual void render() = 0;
     virtual void renderCursor();
-    virtual bool processCommand(command_e cmd, char ch);
+    virtual bool processCommand(command_t cmd, char ch);
     virtual bool isFocused();
     virtual bool isShown();
 

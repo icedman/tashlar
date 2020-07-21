@@ -382,13 +382,14 @@ static struct fileitem_t* parentItem(struct fileitem_t* item, std::vector<struct
     return item;
 }
 
-bool explorer_t::processCommand(command_e cmd, char ch)
+bool explorer_t::processCommand(command_t cmdt, char ch)
 {
     // proceed only if got focus
     if (!isFocused()) {
         return false;
     }
 
+    command_e cmd = cmdt.cmd;
     struct app_t* app = app_t::instance();
     struct fileitem_t* item = renderList[currentItem];
 

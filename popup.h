@@ -32,7 +32,7 @@ struct popup_t : public window_t {
         focusable = true;
     }
 
-    bool processCommand(command_e cmd, char ch) override;
+    bool processCommand(command_t cmd, char ch) override;
     void layout(int w, int h) override;
     void render() override;
     void renderCursor() override;

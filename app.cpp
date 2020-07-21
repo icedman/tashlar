@@ -311,7 +311,7 @@ void app_t::render()
     }
 }
 
-bool app_t::processCommand(command_e cmd, char ch)
+bool app_t::processCommand(command_t cmd, char ch)
 {
     bool handled = false;
     for (auto window : windows) {
@@ -491,16 +491,6 @@ editor_ptr app_t::openEditor(std::string path)
     tabbar->tabs.clear();
     refresh();
     return editor;
-}
-
-void app_t::save()
-{
-    currentEditor->document.save();
-}
-
-void app_t::saveAs(std::string path, bool replaceName)
-{
-    currentEditor->document.saveAs(path.c_str(), replaceName);
 }
 
 void app_t::refresh()

@@ -4,8 +4,9 @@
 #include "editor.h"
 #include "statusbar.h"
 
-bool processEditorCommand(command_e cmd, char ch)
+bool processEditorCommand(command_t cmdt, char ch)
 {
+    command_e cmd = cmdt.cmd;
     struct app_t* app = app_t::instance();
     struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;

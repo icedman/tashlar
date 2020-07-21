@@ -31,12 +31,13 @@ static bool compareFile(struct item_t& f1, struct item_t& f2)
     return f1.score < f2.score;
 }
 
-bool popup_t::processCommand(command_e cmd, char ch)
+bool popup_t::processCommand(command_t cmdt, char ch)
 {
     if (!isFocused()) {
         return false;
     }
 
+    command_e cmd = cmdt.cmd;
     struct app_t* app = app_t::instance();
 
     std::string s;

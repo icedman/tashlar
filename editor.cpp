@@ -19,7 +19,7 @@
 
 #define HIGHLIGHT_PRECEEDING_BLOCKS 32
 
-bool editor_proxy_t::processCommand(command_e cmd, char ch)
+bool editor_proxy_t::processCommand(command_t cmd, char ch)
 {
     return app_t::instance()->currentEditor->processCommand(cmd, ch);
 }
@@ -582,8 +582,9 @@ void editor_t::layout(int w, int h)
     }
 }
 
-bool editor_t::processCommand(command_e cmd, char ch)
+bool editor_t::processCommand(command_t cmdt, char ch)
 {
+    command_e cmd = cmdt.cmd;
     struct app_t* app = app_t::instance();
     struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
@@ -597,6 +598,16 @@ bool editor_t::processCommand(command_e cmd, char ch)
     case CMD_CANCEL:
         doc->clearCursors();
         return false;
+
+    case CMD_SAVE_AS:
+        doc->saveAs(cmdt.args.c_str(), true);
+        app->statusbar->setStatus("saved copy", 2000);
+        return true;
+
+    case CMD_SAVE_COPY:
+        doc->saveAs(cmdt.args.c_str());
+        app->statusbar->setStatus("saved copy", 2000);
+        return true;
 
     case CMD_SAVE:
         doc->save();

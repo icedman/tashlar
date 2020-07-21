@@ -95,10 +95,10 @@ struct command_lua_map_t {
     // CMD_NEW_TAB,
     { "close_tab", CMD_CLOSE_TAB },
 
-    // { "open", CMD_OPEN },
+    { "open", CMD_OPEN },
     { "save", CMD_SAVE },
-    // { "save_as", CMD_SAVE_AS },
-    // { "save_copy", CMD_SAVE_COPY },
+    { "save_as", CMD_SAVE_AS },
+    { "save_copy", CMD_SAVE_COPY },
     { "quit", CMD_QUIT },
     { "undo", CMD_UNDO },
     // { "", CMD_REDO },
@@ -147,54 +147,6 @@ static int command_theme(lua_State* L)
     return 0;
 }
 
-static int command_app_open(lua_State* L)
-{
-    int n = lua_gettop(L);
-    char* fileName = 0;
-    if (n > 0) {
-        fileName = (char*)lua_tostring(L, 1);
-    }
-
-    if (fileName) {
-        struct app_t* app = app_t::instance();
-        app->openEditor(fileName);
-    }
-
-    return 0;
-}
-
-static int command_app_save_as(lua_State* L)
-{
-    int n = lua_gettop(L);
-    char* fileName = 0;
-    if (n > 0) {
-        fileName = (char*)lua_tostring(L, 1);
-    }
-
-    if (fileName) {
-        struct app_t* app = app_t::instance();
-        app->saveAs(fileName, true);
-    }
-
-    return 0;
-}
-
-static int command_app_save_copy(lua_State* L)
-{
-    int n = lua_gettop(L);
-    char* fileName = 0;
-    if (n > 0) {
-        fileName = (char*)lua_tostring(L, 1);
-    }
-
-    if (fileName) {
-        struct app_t* app = app_t::instance();
-        app->saveAs(fileName);
-    }
-
-    return 0;
-}
-
 static int command_run_file(lua_State* L)
 {
     int n = lua_gettop(L);
@@ -229,7 +181,7 @@ static int command_editor(lua_State* L)
                 break;
             if (strcmp(command_lua_map[i].name, cmdName) == 0) {
                 app_t::instance()->log("editor: %s %d", cmdName, command_lua_map[i].cmd);
-                app_t::instance()->commandBuffer.push_back(cmd_t((command_e)command_lua_map[i].cmd, cmdArgs));
+                app_t::instance()->commandBuffer.push_back(command_t((command_e)command_lua_map[i].cmd, cmdArgs));
                 break;
             }
         }
@@ -262,9 +214,6 @@ void scripting_t::initialize()
     L = luaL_newstate();
     lua_register(L, "theme", command_theme);
     lua_register(L, "command", command_editor);
-    lua_register(L, "open", command_app_open);
-    lua_register(L, "save_as", command_app_save_as);
-    lua_register(L, "save_copy", command_app_save_copy);
     lua_register(L, "run_file", command_run_file);
     lua_register(L, "quit", command_quit);
     scriptingInstance = this;

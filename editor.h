@@ -31,7 +31,7 @@ struct editor_t : public window_t {
     {
     }
 
-    bool processCommand(command_e cmd, char ch) override;
+    bool processCommand(command_t cmd, char ch) override;
     void layout(int w, int h) override;
     void render() override;
     void renderCursor() override;
@@ -68,7 +68,7 @@ struct editor_proxy_t : public window_t {
     {
     }
 
-    bool processCommand(command_e cmd, char ch) override;
+    bool processCommand(command_t cmd, char ch) override;
     void layout(int w, int h) override;
     void render() override;
     void renderCursor() override;

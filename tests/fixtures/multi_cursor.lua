@@ -1,4 +1,4 @@
-open("tests/source/test.cpp")
+command("open", "tests/source/test.cpp")
 
 command("move_cursor_next_word");
 command("move_cursor_next_word");
@@ -11,5 +11,5 @@ command("add_cursor_for_selected_word");
 command("add_cursor_for_selected_word");
 command("insert", "~include~");
 
-save_as("tests/results/multi_cursor.cpp")
+command("save_as", "tests/results/multi_cursor.cpp")
 

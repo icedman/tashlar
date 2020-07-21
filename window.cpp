@@ -19,7 +19,7 @@ void window_t::renderCursor()
 {
 }
 
-bool window_t::processCommand(command_e cmd, char ch)
+bool window_t::processCommand(command_t cmd, char ch)
 {
     return false;
 }

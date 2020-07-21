@@ -107,6 +107,16 @@ enum command_e {
     CMD_HISTORY_SNAPSHOT
 };
 
-bool processEditorCommand(command_e cmd, char ch);
+struct command_t {
+    command_t(command_e c = CMD_UNKNOWN, std::string a = "")
+        : cmd(c)
+        , args(a)
+    {
+    }
+    command_e cmd;
+    std::string args;
+};
+
+bool processEditorCommand(command_t cmd, char ch);
 
 #endif // COMMAND_H

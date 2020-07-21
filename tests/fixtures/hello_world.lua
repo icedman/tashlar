@@ -1,4 +1,4 @@
-open("tests/source/test.cpp")
+command("open", "tests/source/test.cpp")
 
 command("move_cursor_end_of_document")
 command("enter");
@@ -17,5 +17,5 @@ command("indent");
 command("insert", "five cursors down")
 command("enter");
 
-save_as("tests/results/hello_word.cpp")
+command("save_as", "tests/results/hello_word.cpp")
 
