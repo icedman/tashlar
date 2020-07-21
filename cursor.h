@@ -57,6 +57,9 @@ struct cursor_t {
 
     struct document_t* document();
     struct block_t* block();
+
+    void rebase(struct block_t *block);
+
     std::vector<struct block_t*> selectedBlocks();
     std::string selectedText();
     bool isMultiBlockSelection();

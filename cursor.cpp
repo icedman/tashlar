@@ -197,6 +197,20 @@ size_t cursor_t::relativePosition()
     return _relativePosition;
 }
 
+void cursor_t::rebase(struct block_t *block)
+{
+    /*
+    app_t::instance()->log("rebase %d to %d", _block->lineNumber, block->lineNumber);
+    _block = block;
+
+    int relativePosition = _relativePosition;
+    if ( elativePosition>=_block->length)-1 {
+         elativePosition= _block->length-1;
+    }
+    _position = _block->position + _relativePosition;
+    */
+}
+
 size_t cursor_t::preferredRelativePosition()
 {
     return _preferredRelativePosition;
@@ -327,6 +341,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
             }
         }
         if (!block.previous) {
+            // app_t::instance()->log("previous missing!");
             return false;
         }
         if (relativePosition > block.previous->length - 1) {
@@ -334,6 +349,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         }
         cursor->_position = block.previous->position + relativePosition;
         cursor->_block = block.previous;
+        // cursor->rebase(block.previous);
         break;
 
     case cursor_t::Move::Down:
@@ -346,6 +362,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         }
 
         if (!block.next) {
+            // app_t::instance()->log("next missing!");
             return false;
         }
         if (relativePosition > block.next->length - 1) {
@@ -353,6 +370,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         }
         cursor->_position = block.next->position + relativePosition;
         cursor->_block = block.next;
+        //cursor->rebase(block.next);
         break;
 
     case cursor_t::Move::Left:
@@ -395,7 +413,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     }
 
     cursor->update();
-    // app_t::instance()->log("block %d relative %d", cursor->block()->lineNumber, cursor->relativePosition());
+    // app_t::instance()->log("cursor %d block %d relative %d", cursor->position(), cursor->block()->lineNumber, cursor->relativePosition());
 
     return !cursor->isNull();
 }

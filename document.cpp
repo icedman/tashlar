@@ -297,6 +297,7 @@ void document_t::updateCursor(struct cursor_t& cursor)
             c._preferredRelativePosition = cursor.preferredRelativePosition();
             c._block = cursor._block;
             c.update();
+            // app_t::instance()->log("updateCursor %d", c.position());
             break;
         }
     }
@@ -378,7 +379,7 @@ void document_t::update(bool force)
         cursors.emplace_back(cursor);
     }
 
-    app_t::instance()->log("cursor: %d block: %d blocks: %d", cursors[0].position(), cursors[0].block()->lineNumber, blocks.size());
+    app_t::instance()->log("cursor: %d block: %d/%d", cursors[0].position(), cursors[0].block()->lineNumber, blocks.size());
 }
 
 struct block_t& document_t::block(struct cursor_t& cursor)

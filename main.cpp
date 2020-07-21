@@ -202,10 +202,7 @@ int main(int argc, char** argv)
     // scripting
     //-------------------
     scripting_t::instance()->initialize();
-    if (app.scriptPath.size()) {
-        scripting_t::instance()->runFile(app.scriptPath);
-    }
-
+ 
     //-------------------
     // keybinding
     //-------------------
@@ -221,6 +218,14 @@ int main(int argc, char** argv)
 
     app.setupColors();
     bool end = false;
+
+    //-------------------
+    // run script
+    //-------------------
+    if (app.scriptPath.size()) {
+        app.layout();
+        scripting_t::instance()->runFile(app.scriptPath);
+    }
 
     std::string previousKeySequence;
     while (!end) {

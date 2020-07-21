@@ -230,10 +230,9 @@ static int command_editor(lua_State* L)
             if (strcmp(command_lua_map[i].name, cmdName) == 0) {
                 app_t::instance()->log("editor: %s %d", cmdName, command_lua_map[i].cmd);
                 app_t::instance()->commandBuffer.push_back(cmd_t((command_e)command_lua_map[i].cmd, cmdArgs));
+                break;
             }
         }
-
-        app_t::instance()->currentEditor->document.update(true);
     }
     return 0;
 }
