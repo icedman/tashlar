@@ -17,6 +17,8 @@
 
 #include "keybinding.h"
 
+#define HIGHLIGHT_PRECEEDING_BLOCKS 16
+
 bool editor_proxy_t::processCommand(command_e cmd, char ch)
 {
     return app_t::instance()->currentEditor->processCommand(cmd, ch);
@@ -218,7 +220,7 @@ void editor_t::highlightPreceedingBlocks(struct block_t& block)
 {
     struct block_t* end = &block;
     struct block_t* start = &block;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < HIGHLIGHT_PRECEEDING_BLOCKS; i++) {
         if (!start->previous) {
             break;
         }
@@ -356,6 +358,8 @@ void editor_t::highlightBlock(struct block_t& block)
     if (!block.data->dirty) {
         return;
     }
+
+    frames = 15000;
 
     // app_t::instance()->log("highlight %d", block.uid);
 
@@ -622,11 +626,14 @@ bool editor_t::processCommand(command_e cmd, char ch)
     return processEditorCommand(cmd, ch);
 }
 
-void editor_t::update(int frames)
+void editor_t::update(int tick)
 {
-    if (app_t::instance()->isIdle()) {
-        // app_t::instance()->log("%d", app_t::instance()->isIdle());
-        highlightPreceedingBlocks(*document.cursor().block());
+    if (frames > 0) {
+        frames -= tick;
+        if (frames <= 0) {
+            highlightPreceedingBlocks(*document.cursor().block());
+            frames = 0;
+        } 
     }
 }
 

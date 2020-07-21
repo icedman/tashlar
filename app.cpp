@@ -484,6 +484,16 @@ editor_ptr app_t::openEditor(std::string path)
     return editor;
 }
 
+void app_t::save()
+{
+    currentEditor->document.save();
+}
+    
+void app_t::saveAs(std::string path, bool replaceName)
+{
+    currentEditor->document.saveAs(path.c_str(), replaceName);
+}
+
 void app_t::refresh()
 {
     refreshLoop = 2;

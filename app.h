@@ -18,6 +18,15 @@ struct explorer_t;
 struct minimap_t;
 struct popup_t;
 
+struct cmd_t {
+    cmd_t(command_e c = CMD_UNKNOWN, std::string a = "")
+        : cmd(c)
+        , args(a)
+    {}    
+    command_e cmd;
+    std::string args;
+};
+
 struct app_t {
 
     app_t();
@@ -38,7 +47,7 @@ struct app_t {
     std::vector<editor_ptr> editors;
     editor_ptr currentEditor;
 
-    std::vector<command_e> commandBuffer;
+    std::vector<cmd_t> commandBuffer;
     std::string inputBuffer;
 
     std::string clipBoard;
@@ -88,6 +97,8 @@ struct app_t {
     static void log(const char* format, ...);
 
     editor_ptr openEditor(std::string path);
+    void save();
+    void saveAs(std::string path, bool replaceName = false);
 
     std::vector<struct window_t*> windows;
     int width;

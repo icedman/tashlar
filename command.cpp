@@ -101,6 +101,7 @@ bool processEditorCommand(command_e cmd, char ch)
         if (cursor.hasSelection()) {
             if (cmd == CMD_ADD_CURSOR_FOR_SELECTED_WORD) {
                 struct cursor_t c = cursor;
+                c.selectionStart(); // normalizes the positions
                 if (cursorFindWord(&cursor, cursor.selectedText())) {
                     doc->addCursor(c);
                     doc->updateCursor(cursor);

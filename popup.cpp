@@ -525,7 +525,7 @@ void popup_t::onInput()
     }
 
     if (type == POPUP_COMMANDS) {
-        if (text.length() > 2) {
+        if (text.length() > 2 && text[0] != ':') {
             char* searchString = (char*)text.c_str();
             for (auto cmd : commandItems) {
                 int score = levenshtein_distance(searchString, (char*)(cmd.name.c_str()));
@@ -617,7 +617,11 @@ void popup_t::onSubmit()
     }
 
     if (type == POPUP_COMMANDS) {
-        if (items.size() && currentItem >= 0 && currentItem < items.size()) {
+        if (text.length() && text[0] == ':') {
+            std::string script = text;
+            script.erase(script.begin(), script.begin()+1);
+            scripting_t::instance()->runScript(script);
+        } else if (items.size() && currentItem >= 0 && currentItem < items.size()) {
             struct item_t& item = items[currentItem];
             scripting_t::instance()->runScript(item.script);
         }

@@ -80,7 +80,10 @@ enum command_e {
     CMD_NEW_TAB,
     CMD_CLOSE_TAB,
 
+    CMD_OPEN,
     CMD_SAVE,
+    CMD_SAVE_AS,
+    CMD_SAVE_COPY,
     CMD_QUIT,
     CMD_UNDO,
     CMD_REDO,

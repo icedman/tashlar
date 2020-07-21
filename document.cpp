@@ -197,7 +197,7 @@ struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
     }
 
     struct block_t& block = *it;
-    blocks.erase(it, it+count);
+    blocks.erase(it, it + count);
     return block;
 }
 
@@ -258,6 +258,15 @@ void document_t::save()
     }
 }
 
+void document_t::saveAs(const char* path, bool replacePath)
+{
+    std::ofstream tmp(path, std::ofstream::out);
+    for (auto b : blocks) {
+        std::string text = b.text();
+        tmp << text << std::endl;
+    }
+}
+    
 struct cursor_t document_t::cursor()
 {
     cursors[0].update();
@@ -353,7 +362,7 @@ void document_t::update(bool force)
         if (!b.uid) {
             b.uid += blockUid++;
         }
-        
+
         pos += b.length;
         prev = &b;
     }
@@ -367,13 +376,13 @@ void document_t::update(bool force)
         cursors.emplace_back(cursor);
     }
 
-        app_t::instance()->log("cursor: %d block: %d blocks: %d", cursors[0].position(), cursors[0].block()->lineNumber, blocks.size());
+    app_t::instance()->log("cursor: %d block: %d blocks: %d", cursors[0].position(), cursors[0].block()->lineNumber, blocks.size());
 }
 
 struct block_t& document_t::block(struct cursor_t& cursor)
-{        
+{
     // TODO: This is used all over.. perpetually improve search (divide-conquer? index based?)!
-    app_t::instance()->log("block query");
+    // app_t::instance()->log("block query");
 
     if (!blocks.size()) {
         return nullBlock;
@@ -393,8 +402,8 @@ struct block_t& document_t::block(struct cursor_t& cursor)
         idx++;
         bit++;
     }
-    
-    app_t::instance()->log("null block returned");
+
+    // app_t::instance()->log("null block returned");
     return nullBlock;
 }
 
@@ -420,7 +429,7 @@ void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<docum
 {
     size_t ln = cursor.block()->lineNumber;
     for (auto bb : buffer->blocks) {
-       //struct block_t& b = addBlockAtLineNumber(ln++); // too slow
+        //struct block_t& b = addBlockAtLineNumber(ln++); // too slow
         struct block_t b;
         b.document = buffer.get();
         b.file = &buffer->file;

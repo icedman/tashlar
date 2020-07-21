@@ -377,7 +377,7 @@ static int readEscapeSequence(std::string& keySequence)
 
 int readKey(std::string& keySequence)
 {
-    if (kbhit(50) != 0) {
+    if (kbhit(100) != 0) {
         int c;
         if (read(STDIN_FILENO, &c, 1) != 0) {
 

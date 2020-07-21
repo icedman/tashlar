@@ -122,6 +122,7 @@ struct document_t {
     bool open(const char* path);
     void close();
     void save();
+    void saveAs(const char* path, bool replacePath = false);
 
     struct cursor_t cursor();
     void setCursor(struct cursor_t& cursor);

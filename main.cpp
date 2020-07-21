@@ -85,7 +85,7 @@ void renderEditor(struct editor_t& editor)
             app_t::instance()->log("invalid block");
             break;
         }
-        
+
         bool lineVisible = (blockScreenLine >= 0 & blockScreenLine < editor.viewHeight);
         if (lineVisible) {
             break;
@@ -95,8 +95,8 @@ void renderEditor(struct editor_t& editor)
         }
         if (blockScreenLine <= 0) {
             editor.scrollY--;
-        }        
-     }
+        }
+    }
 
     while (cursor.position() - block.position + 1 - editor.scrollX > editor.viewWidth) {
         if (app_t::instance()->lineWrap)
@@ -248,6 +248,7 @@ int main(int argc, char** argv)
         //-----------------
         // get input
         //-----------------
+        cmd_t cmdt;
         command_e cmd = CMD_UNKNOWN;
         std::string keySequence;
         std::string expandedSequence;
@@ -261,8 +262,12 @@ int main(int argc, char** argv)
                 break;
             }
             if (app.commandBuffer.size()) {
-                cmd = app.commandBuffer.front();
+                cmdt = app.commandBuffer.front();
+                cmd = cmdt.cmd;
                 app.commandBuffer.erase(app.commandBuffer.begin());
+                if (cmdt.cmd == CMD_INSERT) {
+                    app.inputBuffer = cmdt.args;
+                }
                 break;
             }
 

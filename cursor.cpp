@@ -45,12 +45,12 @@ void cursor_t::update()
     }
 
     if (!_block || _docUpdateUid != _document->blockUid) {
-         app_t::instance()->log("initial query");
+        // app_t::instance()->log("initial query");
         _block = &_document->block(*this);
     }
 
     if (_position < _block->position || _position >= _block->position + _block->length) {
-        app_t::instance()->log("reposition query %d %d", _position, _block->position);
+        // app_t::instance()->log("reposition query %d %d", _position, _block->position);
         _block = &_document->block(*this);
     }
     _relativePosition = _position - _block->position;
@@ -568,7 +568,7 @@ int cursorDeleteSelection(struct cursor_t* cursor)
 
         int lineNumber = startBlock->lineNumber + 1;
         // for (size_t i = 0; i < linesToDelete - 1; i++) {
-            doc->removeBlockAtLineNumber(lineNumber, linesToDelete-1);
+        doc->removeBlockAtLineNumber(lineNumber, linesToDelete - 1);
         // }
 
         // merge two block

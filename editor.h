@@ -27,6 +27,7 @@ enum color_pair_e {
 struct editor_t : public window_t {
     editor_t()
         : window_t(true)
+        , frames(0)
     {
     }
 
@@ -57,6 +58,8 @@ struct editor_t : public window_t {
 
     struct bracket_info_t cursorBracket1;
     struct bracket_info_t cursorBracket2;
+
+    int frames;
 };
 
 struct editor_proxy_t : public window_t {
