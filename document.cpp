@@ -93,6 +93,7 @@ document_t::document_t()
     , cursorUid(1)
     , dirty(true)
     , runOn(false)
+    , windowsLineEnd(false)
 {
 }
 
@@ -115,6 +116,7 @@ bool document_t::open(const char* path)
     std::ofstream tmp(tmpPath, std::ofstream::out);
 
     std::string line;
+    size_t offset = 0;
     size_t pos = file.tellg();
     size_t lineNo = 0;
     while (std::getline(file, line)) {
@@ -124,9 +126,17 @@ bool document_t::open(const char* path)
         b.position = pos;
         b.originalLineNumber = lineNo++;
         b.filePosition = pos;
+
+        if (line.length() && line[line.length()-1] == '\r') {
+            line.pop_back();
+            offset++;
+            windowsLineEnd = true;
+        }
+
         b.length = line.length() + 1;
         blocks.emplace_back(b);
         pos = file.tellg();
+        pos -= offset;
         tmp << line << std::endl;
         if (b.length > 2000) {
             runOn = true;
@@ -255,16 +265,11 @@ void document_t::close()
 
 void document_t::save()
 {
-    if (runOn) {
-        return;
-    }
-
+    std::string lineEnd = windowsLineEnd ? WINDOWS_LINE_END : LINUX_LINE_END;
     std::ofstream tmp(filePath, std::ofstream::out);
     for (auto b : blocks) {
         std::string text = b.text();
-        tmp << text;
-        tmp << LINUX_LINE_END;
-        // << std::endl;
+        tmp << text << lineEnd;
     }
 }
 

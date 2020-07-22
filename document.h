@@ -157,6 +157,7 @@ struct document_t {
 
     bool runOn;
     bool dirty;
+    bool windowsLineEnd;
 
     size_t blockUid;
     size_t cursorUid;
