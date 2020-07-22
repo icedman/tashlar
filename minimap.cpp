@@ -116,7 +116,7 @@ void minimap_t::render()
             wattron(win, A_BOLD);
             wattron(win, COLOR_PAIR(colorPairIndicator));
             // waddwstr(win, L"\u2192");
-            wattroff(win, COLOR_PAIR(colorPairIndicator));
+           // wattroff(win, COLOR_PAIR(colorPairIndicator));
             // wattron(win, A_REVERSE);
         } else {
             waddch(win, ' ');
@@ -133,7 +133,9 @@ void minimap_t::render()
             // }
 
             wattron(win, COLOR_PAIR(pair));
-            // waddwstr(win, wcharFromDots(b.data->dots[x]));
+            #ifdef ENABLE_UTF8
+            waddwstr(win, wcharFromDots(b.data->dots[x]));
+            #endif
             wattroff(win, COLOR_PAIR(pair));
 
             if (x >= viewWidth - 1) {

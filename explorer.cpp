@@ -239,7 +239,13 @@ void explorer_t::render()
             // waddwstr(win, file->expanded ? L"\u25B4" : L"\u25B8");
             // waddwstr(win, file->expanded ? L"\u25B2" : L"\u25B6");
             wattron(win, COLOR_PAIR(colorPairIndicator));
-            // waddwstr(win, file->expanded ? L"\u2191" : L"\u2192");
+
+            #ifdef ENABLE_UTF8
+            waddwstr(win, file->expanded ? L"\u2191" : L"\u2192");
+            #else
+            waddstr(win, file->expanded ? "-" : "+");
+            #endif
+
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             wattron(win, COLOR_PAIR(pair));
         } else {

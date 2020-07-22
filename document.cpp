@@ -7,6 +7,12 @@
 #include "editor.h"
 #include "util.h"
 
+#define TMP_BUFFER "/tmp/tmpfile.XXXXXX"
+#define TMP_PASTE "/tmp/tmpfile.paste.XXXXXX"
+
+#define WINDOWS_LINE_END "\r\n"
+#define LINUX_LINE_END "\n"
+
 static size_t blocksCount = 0;
 
 block_t::block_t()
@@ -100,7 +106,7 @@ bool document_t::open(const char* path)
     bool useStreamBuffer = true;
 
     filePath = path;
-    std::string tmpPath = "/tmp/tmpfile.XXXXXX";
+    std::string tmpPath = TMP_BUFFER;
     mkstemp((char*)tmpPath.c_str());
 
     app_t::instance()->log(tmpPath.c_str());
@@ -256,7 +262,9 @@ void document_t::save()
     std::ofstream tmp(filePath, std::ofstream::out);
     for (auto b : blocks) {
         std::string text = b.text();
-        tmp << text << std::endl;
+        tmp << text;
+        tmp << LINUX_LINE_END;
+        // << std::endl;
     }
 }
 
@@ -412,7 +420,7 @@ struct block_t& document_t::block(struct cursor_t& cursor)
 
 void document_t::addBufferDocument(const std::string& largeText)
 {
-    std::string tmpPath = "/tmp/tmpfile.paste.XXXXXX";
+    std::string tmpPath = TMP_PASTE;
     mkstemp((char*)tmpPath.c_str());
 
     app_t::instance()->log(tmpPath.c_str());
@@ -430,6 +438,7 @@ void document_t::addBufferDocument(const std::string& largeText)
 
 void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer)
 {
+    std::vector<struct block_t> bufferBlocks;
     size_t ln = cursor.block()->lineNumber;
     for (auto bb : buffer->blocks) {
         //struct block_t& b = addBlockAtLineNumber(ln++); // too slow
@@ -438,7 +447,10 @@ void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<docum
         b.file = &buffer->file;
         b.filePosition = bb.position;
         b.length = bb.length;
-        blocks.emplace_back(b);
+        bufferBlocks.push_back(b);
     }
+    blocks.insert(blocks.begin()+ln, make_move_iterator(bufferBlocks.begin()), make_move_iterator(bufferBlocks.end()));
     update(true);
 }
+
+

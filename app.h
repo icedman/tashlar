@@ -18,6 +18,8 @@ struct explorer_t;
 struct minimap_t;
 struct popup_t;
 
+#define ENABLE_UTF8
+
 struct app_t {
 
     app_t();

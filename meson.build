@@ -6,6 +6,8 @@ project('tashlar', 'cpp',
 pwd = meson.current_source_dir()
 cc = meson.get_compiler('cpp')
 
+add_global_arguments('-D_XOPEN_SOURCE_EXTENDED=1', language: 'cpp')
+
 tashlar_files = [
     'main.cpp',
     'app.cpp',
@@ -29,10 +31,10 @@ tashlar_files = [
     'window.cpp'
 ]
 
-curses_dep = dependency('ncurses', required: true, disabler: true)
+curses_dep = dependency('ncursesw', required: true, disabler: true)
 if not curses_dep.found()
   curses_root = get_option('curses_root')
-  curses_lib = cc.find_library('curses', dirs : curses_root, required : false, disabler: true)
+  curses_lib = cc.find_library('cursesw', dirs : curses_root, required : false, disabler: true)
   curses_dep = declare_dependency(include_directories: curses_root, dependencies: curses_lib)
 endif
 

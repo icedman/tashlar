@@ -40,7 +40,7 @@ bool processEditorCommand(command_t cmdt, char ch)
         if (app->clipBoard.length() && app->clipBoard.length() < SIMPLE_PASTE_THRESHOLD) {
             app->inputBuffer = app->clipBoard;
         } else if (app->clipBoard.length()) {
-            doc->addSnapshot();
+            doc->history().mark();
             doc->history().begin();
             doc->addBufferDocument(app->clipBoard);
             app->clipBoard = "";
