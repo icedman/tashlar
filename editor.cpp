@@ -142,7 +142,7 @@ void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct blo
             firstCursor = false;
 
             // brackets matching
-            if (cursorBracket1.line != -1 && cursorBracket2.line != -1) {
+            if (cursorBracket1.bracket != -1 && cursorBracket2.bracket != -1) {
                 if ((pos == cursorBracket1.absolutePosition - wrapOffset) || (pos == cursorBracket2.absolutePosition - wrapOffset)) {
                     wattron(win, A_UNDERLINE);
                 }
@@ -653,7 +653,7 @@ void editor_t::matchBracketsUnderCursor()
     struct cursor_t cursor = app_t::instance()->currentEditor->document.cursor();
     if (cursor.position() != cursorBracket1.absolutePosition) {
         cursorBracket1 = bracketAtCursor(cursor);
-        if (cursorBracket1.position != -1) {
+        if (cursorBracket1.bracket != -1) {
             struct cursor_t matchCursor = findBracketMatchCursor(cursorBracket1, cursor);
             cursorBracket2 = bracketAtCursor(matchCursor);
             cursorBracket1.absolutePosition = cursor.position();
@@ -669,8 +669,7 @@ void editor_t::matchBracketsUnderCursor()
 struct bracket_info_t editor_t::bracketAtCursor(struct cursor_t& cursor)
 {
     bracket_info_t b;
-    b.line = -1;
-    b.position = -1;
+    b.bracket = -1;;
 
     struct block_t* block = cursor.block();
     if (!block) {
@@ -838,7 +837,7 @@ void editor_t::toggleFold(size_t line)
     }
 
     bracket_info_t bracket = bracketAtCursor(openBracket);
-    if (bracket.line == -1 || bracket.position == -1) {
+    if (bracket.bracket == -1) {
         return;
     }
     struct cursor_t endBracket = findBracketMatchCursor(bracket, openBracket);

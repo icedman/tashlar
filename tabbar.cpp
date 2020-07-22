@@ -41,8 +41,8 @@ void tabbar_t::render()
             struct tabitem_t item = {
                 // .name = " " + e->document.fileName + " ",
                 .name = e->document.fileName,
-                .itemNumber = tabs.size(),
-                .width = e->document.fileName.length() + 2,
+                .itemNumber = (int)tabs.size(),
+                .width = (int)e->document.fileName.length() + 2,
                 .editor = e
             };
             tabs.emplace_back(item);

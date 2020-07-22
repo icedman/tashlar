@@ -31,9 +31,9 @@ struct span_info_t {
 };
 
 struct bracket_info_t {
-    long line;
-    long position;
-    long absolutePosition;
+    size_t line;
+    size_t position;
+    size_t absolutePosition;
     int bracket;
     bool open;
     bool unpaired;

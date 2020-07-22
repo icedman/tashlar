@@ -115,7 +115,7 @@ void minimap_t::render()
         if (currentLine >= b.lineNumber && currentLine < b.lineNumber + 4) {
             wattron(win, A_BOLD);
             wattron(win, COLOR_PAIR(colorPairIndicator));
-            waddwstr(win, L"\u2192");
+            // waddwstr(win, L"\u2192");
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             // wattron(win, A_REVERSE);
         } else {
@@ -133,7 +133,7 @@ void minimap_t::render()
             // }
 
             wattron(win, COLOR_PAIR(pair));
-            waddwstr(win, wcharFromDots(b.data->dots[x]));
+            // waddwstr(win, wcharFromDots(b.data->dots[x]));
             wattroff(win, COLOR_PAIR(pair));
 
             if (x >= viewWidth - 1) {
