@@ -439,6 +439,7 @@ void popup_t::showCompletion()
     type = POPUP_COMPLETION;
     placeholder = "";
 
+    int prevSize = items.size();
     items.clear();
     std::vector<search_result_t> res = search_t::instance()->findCompletion(prefix);
     for (int j = 0; j < res.size(); j++) {
@@ -458,9 +459,11 @@ void popup_t::showCompletion()
     if (items.size()) {
         currentItem = -1;
         app->focused = this;
-        app->layout();
-        app->render();
-        app->refresh();
+        if (prevSize != items.size()) { 
+            app->layout();
+            app->render();
+            app->refresh();
+        } 
     }
 }
 

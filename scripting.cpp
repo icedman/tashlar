@@ -212,6 +212,7 @@ scripting_t::~scripting_t()
 void scripting_t::initialize()
 {
     L = luaL_newstate();
+    // luaL_openlibs(L);
     lua_register(L, "theme", command_theme);
     lua_register(L, "command", command_editor);
     lua_register(L, "run_file", command_run_file);
