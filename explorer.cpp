@@ -232,24 +232,17 @@ void explorer_t::render()
             x++;
         }
         if (file->isDirectory) {
-            // waddch(win, file->expanded ? '-' : '+');
-            // waddwstr(win, L"\u276F"); // arrow
-            // waddwstr(win, L"\u2716"); // close
-            // waddwstr(win, file->expanded ? L"\u2303" : L"\u203A");
-            // waddwstr(win, file->expanded ? L"\u25B4" : L"\u25B8");
-            // waddwstr(win, file->expanded ? L"\u25B2" : L"\u25B6");
             wattron(win, COLOR_PAIR(colorPairIndicator));
 
             #ifdef ENABLE_UTF8
             waddwstr(win, file->expanded ? L"\u2191" : L"\u2192");
             #else
-            waddstr(win, file->expanded ? "-" : "+");
+            waddch(win, file->expanded ? '-' : '+');
             #endif
 
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             wattron(win, COLOR_PAIR(pair));
         } else {
-            // waddwstr(win, L"\u1F4C4");
             waddch(win, ' ');
         }
         waddch(win, ' ');

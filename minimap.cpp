@@ -115,8 +115,12 @@ void minimap_t::render()
         if (currentLine >= b.lineNumber && currentLine < b.lineNumber + 4) {
             wattron(win, A_BOLD);
             wattron(win, COLOR_PAIR(colorPairIndicator));
-            // waddwstr(win, L"\u2192");
-           // wattroff(win, COLOR_PAIR(colorPairIndicator));
+            #ifdef ENABLE_UTF8
+            waddwstr(win, L"\u2192");
+            #else
+            waddch(win, '>');
+            #endif
+            wattroff(win, COLOR_PAIR(colorPairIndicator));
             // wattron(win, A_REVERSE);
         } else {
             waddch(win, ' ');
