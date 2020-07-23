@@ -13,6 +13,7 @@ struct scripting_t {
     void initialize();
     int runScript(std::string script);
     int runFile(std::string path);
+    void update(int frames);
 };
 
 #endif // SCRIPTING_H

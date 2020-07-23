@@ -307,6 +307,7 @@ int main(int argc, char** argv)
             }
 
             app.update(150);
+            scripting.update(150);
 
             if (sequenceTick > 0 && (sequenceTick -= 150) < 0) {
                 previousKeySequence = "";

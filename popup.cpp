@@ -365,7 +365,7 @@ void popup_t::commands()
                     .fullPath = theme["path"].asString(),
                     .score = 0,
                     .depth = 0,
-                    .script = "theme(\"" + theme["label"].asString() + "\")"
+                    .script = "app.theme(\"" + theme["label"].asString() + "\")"
                 };
 
                 commandItems.push_back(item);

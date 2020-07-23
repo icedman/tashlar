@@ -417,7 +417,7 @@ int readKey(std::string& keySequence)
                 return c;
             }
 
-            // hack for repeated key press
+            // hack for repeated key presses
             if (c > 255 || !isprint(c)) {
                 char drop;
                 while(kbhit(100)) {
@@ -426,7 +426,7 @@ int readKey(std::string& keySequence)
                 return -1;
             }
 
-            app_t::log("key:%d %c\n", c, (char)c);
+            // app_t::log("key:%d %c\n", c, (char)c);
 
             return c;
         }

@@ -28,3 +28,4 @@ libs
 out.cpp
 
 lua-*
+quickjs-*

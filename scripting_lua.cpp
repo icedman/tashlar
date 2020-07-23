@@ -1,7 +1,10 @@
+#include <cstring>
+#include <iostream>
 
 extern "C" {
-#include "quickjs.h"
-#include "quickjs-libc.h"
+#include "lauxlib.h"
+#include "lua.h"
+#include "lualib.h"
 }
 
 #include "app.h"
@@ -9,22 +12,16 @@ extern "C" {
 #include "scripting.h"
 #include "theme.h"
 
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <istream>
-#include <streambuf>
-#include <string>
-
 static struct scripting_t* scriptingInstance = 0;
 
-static JSRuntime *rt = 0;
-static JSContext *ctx = 0;
+static lua_State* L = 0;
 
-struct command_script_map_t {
+typedef int command_exec(lua_State* L);
+
+struct command_lua_map_t {
     char* name;
     int cmd;
-} command_script_map[] = {
+} command_lua_map[] = {
     // CMD_UNKNOWN,
     { "cancel", CMD_CANCEL },
     { "cut", CMD_CUT },
@@ -127,6 +124,77 @@ struct command_script_map_t {
     { NULL, CMD_UNKNOWN }
 };
 
+static int command_theme(lua_State* L)
+{
+    int n = lua_gettop(L);
+    char* themeName = 0;
+    if (n > 0) {
+        themeName = (char*)lua_tostring(L, 1);
+    }
+
+    if (themeName) {
+        struct app_t* app = app_t::instance();
+        // app->log("theme %s", themeName);
+        theme_ptr tmpTheme = theme_from_name(themeName, app->extensions);
+        if (tmpTheme) {
+            app->theme = tmpTheme;
+            app->setupColors();
+            app->applyColors();
+            app->refresh();
+        }
+    }
+
+    return 0;
+}
+
+static int command_run_file(lua_State* L)
+{
+    int n = lua_gettop(L);
+    char* fileName = 0;
+    if (n > 0) {
+        fileName = (char*)lua_tostring(L, 1);
+    }
+
+    if (fileName) {
+        struct scripting_t* scripting = scripting_t::instance();
+        scripting->runFile(fileName);
+    }
+
+    return 0;
+}
+
+static int command_editor(lua_State* L)
+{
+    int n = lua_gettop(L);
+    if (n > 0) {
+        char* cmdName = (char*)lua_tostring(L, 1);
+        std::string cmdArgs;
+        if (n > 1) {
+            char* args = (char*)lua_tostring(L, 2);
+            if (args) {
+                cmdArgs = args;
+            }
+        }
+
+        for (int i = 0;; i++) {
+            if (!command_lua_map[i].name)
+                break;
+            if (strcmp(command_lua_map[i].name, cmdName) == 0) {
+                app_t::instance()->log("editor: %s %d", cmdName, command_lua_map[i].cmd);
+                app_t::instance()->commandBuffer.push_back(command_t((command_e)command_lua_map[i].cmd, cmdArgs));
+                break;
+            }
+        }
+    }
+    return 0;
+}
+
+static int command_quit(lua_State* L)
+{
+    app_t::instance()->commandBuffer.clear();
+    app_t::instance()->commandBuffer.push_back(CMD_QUIT);
+}
+
 struct scripting_t* scripting_t::instance()
 {
     return scriptingInstance;
@@ -138,140 +206,28 @@ scripting_t::scripting_t()
 
 scripting_t::~scripting_t()
 {
-    JS_FreeContext(ctx);
-    JS_FreeRuntime(rt);
-}
-
-static JSValue js_log(JSContext *ctx, JSValueConst this_val,
-                        int argc, JSValueConst *argv)
-{
-    int i;
-    const char *str;
-    
-    for(i = 0; i < argc; i++) {
-        str = JS_ToCString(ctx, argv[i]);
-        if (!str)
-            return JS_EXCEPTION;
-        app_t::instance()->log("log: %s", str);
-        JS_FreeCString(ctx, str);
-    }
-    return JS_UNDEFINED;
-}
-
-static JSValue js_runFile(JSContext *ctx, JSValueConst this_val,
-                        int argc, JSValueConst *argv)
-{
-    int i;
-    const char *str;
-    
-    for(i = 0; i < argc; i++) {
-        str = JS_ToCString(ctx, argv[i]);
-        if (!str)
-            return JS_EXCEPTION;
-        scripting_t::instance()->runFile(str);
-        JS_FreeCString(ctx, str);
-    }
-    return JS_UNDEFINED;
-}
-
-static JSValue js_command(JSContext *ctx, JSValueConst this_val,
-                        int argc, JSValueConst *argv)
-{
-    int i;
-    const char *str = 0;
-    std::string cmdName;
-    std::string cmdArgs;
-        
-    for(i = 0; i < argc; i++) {
-        str = JS_ToCString(ctx, argv[i]);
-        if (!str)
-            return JS_EXCEPTION;
-
-        if (i == 0) cmdName = str;
-        if (i == 1) cmdArgs = str;
-
-        JS_FreeCString(ctx, str);
-    }
-
-    for (int i = 0;; i++) {
-        if (!command_script_map[i].name)
-            break;
-        if (strcmp(command_script_map[i].name, cmdName.c_str()) == 0) {
-            app_t::instance()->log("editor: %s %d", cmdName.c_str(), command_script_map[i].cmd);
-            app_t::instance()->commandBuffer.push_back(command_t((command_e)command_script_map[i].cmd, cmdArgs));
-            break;
-        }
-    }
-
-    return JS_UNDEFINED;
-}
-
-static JSValue js_theme(JSContext *ctx, JSValueConst this_val,
-                        int argc, JSValueConst *argv)
-{
-    int i;
-    const char *themeName;
-    
-    for(i = 0; i < argc; i++) {
-        themeName = JS_ToCString(ctx, argv[i]);
-        if (!themeName)
-            return JS_EXCEPTION;
-
-        struct app_t* app = app_t::instance();
-        // app->log("theme %s", themeName);
-        theme_ptr tmpTheme = theme_from_name(themeName, app->extensions);
-        if (tmpTheme) {
-            app->theme = tmpTheme;
-            app->setupColors();
-            app->applyColors();
-            app->refresh();
-        }
-
-        JS_FreeCString(ctx, themeName);
-    }
-    return JS_UNDEFINED;
+    lua_close(L);
 }
 
 void scripting_t::initialize()
 {
-    rt = JS_NewRuntime();
-    js_std_init_handlers(rt);
-    ctx = JS_NewContextRaw(rt);
-    JS_AddIntrinsicBaseObjects(ctx);
-    JS_AddIntrinsicEval(ctx);
-    js_std_add_helpers(ctx, 0, 0);
-
-    JSValue global_obj, app;
-    
-    global_obj = JS_GetGlobalObject(ctx);
-    
-    app = JS_NewObject(ctx);
-    JS_SetPropertyStr(ctx, app, "log", JS_NewCFunction(ctx, js_log, "log", 1));
-    JS_SetPropertyStr(ctx, app, "theme", JS_NewCFunction(ctx, js_theme, "theme", 1));
-    JS_SetPropertyStr(ctx, app, "command", JS_NewCFunction(ctx, js_command, "command", 1));
-    JS_SetPropertyStr(ctx, app, "runFile", JS_NewCFunction(ctx, js_runFile, "runFile", 1));
-    JS_SetPropertyStr(ctx, global_obj, "app", app);
-    JS_FreeValue(ctx, global_obj);
-
+    L = luaL_newstate();
+    // luaL_openlibs(L);
+    lua_register(L, "theme", command_theme);
+    lua_register(L, "command", command_editor);
+    lua_register(L, "run_file", command_run_file);
+    lua_register(L, "quit", command_quit);
     scriptingInstance = this;
 }
 
 int scripting_t::runScript(std::string script)
 {
-    JSValue ret = JS_Eval(ctx, script.c_str(), script.length(), "<eval>", JS_EVAL_TYPE_GLOBAL);
+    luaL_dostring(L, script.c_str());
     return 0;
 }
 
 int scripting_t::runFile(std::string path)
 {
-    // js_loadScript(ctx, path.c_str());
-    std::ifstream file(path, std::ifstream::in);
-    std::string script((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    JSValue ret = JS_Eval(ctx, script.c_str(), script.length(), path.c_str(), JS_EVAL_TYPE_GLOBAL);
+    luaL_dofile(L, path.c_str());
     return 0;
-}
-
-void scripting_t::update(int frames)
-{
-    js_std_loop(ctx);
 }
