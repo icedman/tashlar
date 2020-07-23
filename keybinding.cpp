@@ -168,7 +168,7 @@ static int readEscapeSequence(std::string& keySequence)
     read(STDIN_FILENO, &seq[0], 1);
 
     if (!kbhit(wait)) {
-        return readMoreEscapeSequence(seq[0], keySequence);
+        return ESC; // readMoreEscapeSequence(seq[0], keySequence);
     }
     read(STDIN_FILENO, &seq[1], 1);
 
@@ -415,6 +415,15 @@ int readKey(std::string& keySequence)
                 app_t::log("ctrl+%d\n", c);
 
                 return c;
+            }
+
+            // hack for repeated key press
+            if (c > 255 || !isprint(c)) {
+                char drop;
+                while(kbhit(100)) {
+                    read(STDIN_FILENO, &drop, 1);            
+                }
+                return -1;
             }
 
             app_t::log("key:%d %c\n", c, (char)c);
