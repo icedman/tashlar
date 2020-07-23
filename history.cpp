@@ -74,18 +74,30 @@ static bool rebaseCursor(cursor_edit_t edit, struct cursor_t& cur)
     struct document_t* doc = cur.document();
     struct block_t* block;
     for (auto& b : doc->blocks) {
+        if (b.lineNumber == cur._block->lineNumber) {
+            block = &b;
+        }
         if (b.uid == edit.block_uid) {
-            app_t::instance()->log("rebased %d", b.uid);
+            // app_t::instance()->log("rebased %d", b.uid);
             cur._block = &b;
             cur._position = b.position + cur._relativePosition;
+            if (cur._relativePosition > b.position + b.length - 1) {
+                cur._relativePosition = b.position + b.length - 1;
+            }
             cur._anchorPosition = cur._position;
             cur.update();
             return true;
         }
     }
 
-    app_t::instance()->log("failed to rebase %d", edit.block_uid);
-    return false;
+    // app_t::instance()->log("failed to rebase %d %d .. try at line", edit.block_uid, (int)edit.edit);
+    cur._block = block;
+    cur._position = block->position + cur._relativePosition;
+    if (cur._relativePosition > block->position + block->length - 1) {
+        cur._relativePosition = block->position + block->length - 1;
+    }
+    cur._anchorPosition = cur._position;
+    return true;
 }
 
 void history_t::replay()
@@ -96,8 +108,6 @@ void history_t::replay()
 
     edit_batch_t last = edits.back();
     edits.pop_back();
-
-    app_t::instance()->log("r1");
 
     for (auto batch : edits) {
         for (auto e : batch) {

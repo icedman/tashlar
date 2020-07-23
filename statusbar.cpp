@@ -9,7 +9,7 @@
 #include "history.h"
 #include "statusbar.h"
 
-#define STATUS_ITEMS 4
+#define STATUS_ITEMS 6
 
 void statusbar_t::setText(std::string s, int pos, int size)
 {

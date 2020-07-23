@@ -235,9 +235,13 @@ void document_t::addSnapshot()
 
 void document_t::undo()
 {
-    if (snapShots.size() > 1 && history().edits.size() == 0) {
-        snapShots.pop_back();
-    }
+    for(int i=0;i<2;i++) { // happens with aggressive snapshots like indent
+        if (snapShots.size() > 1 && history().edits.size() == 0) {
+            snapShots.pop_back();
+            continue;
+        }
+        break;
+    } 
 
     struct history_t& _history = history();
     _history.mark();

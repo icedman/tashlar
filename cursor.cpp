@@ -775,12 +775,13 @@ int cursorIndent(struct cursor_t* cursor)
             int count = _cursorIndent(&cur);
             cursor->document()->update();
 
-            app_t::instance()->log("indent %d %d", updatePos, updateAnchor);
             if (updatePos) {
+                app_t::instance()->log("indent update pos %d", cursor->_position);
                 cursor->_position = posCur._block->position + posCur._relativePosition + count;
             }
             if (updateAnchor) {
-                cursor->_anchorPosition = anchorCur._block->position + posCur._relativePosition + count;
+                app_t::instance()->log("indent update anchor %d", cursor->_anchorPosition);
+                cursor->_anchorPosition = anchorCur._block->position + anchorCur._relativePosition + count;
             }
         }
 

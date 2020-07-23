@@ -23,6 +23,7 @@ bool processEditorCommand(command_t cmdt, char ch)
 
     case CMD_HISTORY_SNAPSHOT:
         app->inputBuffer = "";
+        doc->history().mark();
         doc->addSnapshot();
         return true;
 
@@ -208,6 +209,7 @@ bool processEditorCommand(command_t cmdt, char ch)
     }
 
     if (snapShot) {
+        doc->history().mark();
         doc->addSnapshot();
     }
 
@@ -289,8 +291,6 @@ bool processEditorCommand(command_t cmdt, char ch)
             cursorMovePosition(&cur, cursor_t::Down, cmd == CMD_MOVE_CURSOR_DOWN_ANCHORED);
             markHistory = true;
             handled = true;
-
-            app_t::instance()->log("cursor down");
 
             targetBlock = cur.block();
             targetBlockData = targetBlock->data.get();
@@ -423,12 +423,12 @@ bool processEditorCommand(command_t cmdt, char ch)
         }
     }
 
-    if (snapShot) {
-        doc->addSnapshot();
-    }
-
     if (markHistory) {
         doc->history().mark();
+    }
+
+    if (snapShot) {
+        doc->addSnapshot();
     }
 
     return handled;

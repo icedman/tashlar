@@ -214,10 +214,11 @@ int main(int argc, char** argv)
     initscr();
     raw();
     noecho();
+    nodelay(stdscr, true);
+
     clear();
 
     app.setupColors();
-    bool end = false;
 
     //-------------------
     // run script
@@ -227,6 +228,7 @@ int main(int argc, char** argv)
         scripting_t::instance()->runFile(app.scriptPath);
     }
 
+    bool end = false;
     std::string previousKeySequence;
     while (!end) {
 
