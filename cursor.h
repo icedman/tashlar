@@ -11,8 +11,12 @@ struct cursor_t;
 
 struct cursor_position_t
 {
+    cursor_position_t() : block(0), position(0) {}
+
     struct block_t *block;
     int position;
+
+    size_t absolutePosition();
 };
 
 struct cursor_t {
@@ -38,21 +42,20 @@ struct cursor_t {
     size_t _docUpdateUid;
 
     struct document_t* _document;
-    struct block_t* _block;
 
-    size_t _relativePosition;
+    cursor_position_t _position;
+    cursor_position_t _anchor;
     size_t _preferredRelativePosition;
-    size_t _position;
-    size_t _anchorPosition;
 
     bool hasSelection();
     bool isNull();
-    void update();
+
+    void setPosition(struct block_t *block, size_t position);
+    void setAnchor(struct block_t *block, size_t anchor);
 
     size_t position();
     size_t anchorPosition();
     size_t relativePosition();
-    size_t preferredRelativePosition();
 
     void clearSelection();
     size_t selectionStart();
@@ -64,15 +67,11 @@ struct cursor_t {
     struct document_t* document();
     struct block_t* block();
 
-    void rebase(struct block_t *block);
-
     std::vector<struct block_t*> selectedBlocks();
     std::string selectedText();
     bool isMultiBlockSelection();
 };
 
-void cursorSetPosition(struct cursor_t* cursor, size_t position);
-void cursorSetAnchorPosition(struct cursor_t* cursor, size_t position);
 bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool keepAnchor = false, int count = 1);
 int cursorInsertText(struct cursor_t* cursor, std::string t);
 int cursorEraseText(struct cursor_t* cursor, int c);

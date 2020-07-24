@@ -71,6 +71,7 @@ void history_t::addPasteBuffer(struct cursor_t& cur, std::shared_ptr<document_t>
 
 static bool rebaseCursor(cursor_edit_t edit, struct cursor_t& cur)
 {
+    /*
     struct document_t* doc = cur.document();
     struct block_t* block;
     for (auto& b : doc->blocks) {
@@ -97,6 +98,7 @@ static bool rebaseCursor(cursor_edit_t edit, struct cursor_t& cur)
         cur._relativePosition = block->position + block->length - 1;
     }
     cur._anchorPosition = cur._position;
+    */
     return true;
 }
 
@@ -136,7 +138,6 @@ void history_t::replay()
             }
 
             e.cursor.block()->data = nullptr;
-            e.cursor.update();
             e.cursor.document()->setCursor(e.cursor);
         }
     }

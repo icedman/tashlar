@@ -181,16 +181,19 @@ bool processEditorCommand(command_t cmdt, char ch)
     bool handled = false;
     bool markHistory = false;
     bool snapShot = false;
-    std::vector<struct cursor_t> cursors = doc->cursors;
+    std::vector<struct cursor_t>& cursors = doc->cursors;
 
     struct block_t* targetBlock = 0;
     struct blockdata_t* targetBlockData = 0;
+
+    std::vector<size_t> blockIds;
 
     //----------------
     // check for multiline selections
     //----------------
     for (int i = 0; i < cursors.size(); i++) {
-        struct cursor_t cur = cursors[i];
+        struct cursor_t& cur = cursors[i];
+        blockIds.push_back(cur.block()->uid);
         if (cur.isMultiBlockSelection()) {
             switch (cmd) {
             case CMD_INDENT:
@@ -236,6 +239,22 @@ bool processEditorCommand(command_t cmdt, char ch)
             default:
                 break;
             }
+        }
+
+        // refresh cursor position
+        switch (cmd) {
+        case CMD_BACKSPACE:
+        case CMD_SPLIT_LINE: {
+            for(auto &b : doc->blocks) {
+                if (b.uid == blockIds[i]) {
+                    cur.setPosition(&b, cur.relativePosition());
+                    cur._anchor = cur._position;
+                }
+            }
+            break;
+        }
+        default:
+            break;
         }
 
         switch (cmd) {
@@ -328,7 +347,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             //doc->addSnapshot();
             if (cursors.size() > 1 && cur.isMultiBlockSelection()) {
                 // cur._position = cur.selectionStart();
-                cur._anchorPosition = cur._position;
+                // cur._anchorPosition = cur._position;
             }
             int count = cursorIndent(&cur);
             if (count) {
@@ -344,7 +363,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             //doc->addSnapshot();
             if (cursors.size() > 1 && cur.isMultiBlockSelection()) {
                 // cur._position = cur.selectionStart();
-                cur._anchorPosition = cur._position;
+                // cur._anchorPosition = cur._position;
             }
             int count = cursorUnindent(&cur);
             if (count) {
@@ -382,7 +401,9 @@ bool processEditorCommand(command_t cmdt, char ch)
             handled = true;
             break;
 
-        case CMD_BACKSPACE:
+        case CMD_BACKSPACE: {
+            
+            bool repositionMainCursor = cur.relativePosition() == 0;
             if (cursorMovePosition(&cur, cursor_t::Left)) {
                 doc->history().addDelete(cur, 1);
                 cursorEraseText(&cur, 1);
@@ -390,37 +411,41 @@ bool processEditorCommand(command_t cmdt, char ch)
             }
             update = true;
             handled = true;
-            break;
 
-        case CMD_SPLIT_LINE:
+            if (i > 0 && repositionMainCursor) {
+                doc->update(true);
+                if (doc->cursors[0].position() > cur.position()) {
+                    cursorMovePosition(&doc->cursors[0], cursor_t::Move::PrevBlock, false);
+                }
+            }
+            break;
+        }
+
+        case CMD_SPLIT_LINE: {
+
             doc->history().addSplit(cur);
             cursorSplitBlock(&cur);
-            cursorMovePosition(&cur, cursor_t::Right);
             advance++;
             update = true;
             handled = true;
             markHistory = true;
+
+            if (i > 0) {
+                doc->update(true);
+                if (doc->cursors[0].position() > cur.position()) {
+                    cursorMovePosition(&doc->cursors[0], cursor_t::Move::NextBlock, false);
+                }
+            }
             break;
+        }
 
         default:
             break;
         }
 
+        doc->update(update && advance != 0);        
         doc->updateCursor(cur);
-
-        if (update) {
-            doc->update(advance != 0);
-
-            for (int j = 0; j < cursors.size(); j++) {
-                struct cursor_t& c = cursors[j];
-                if (c.position() > 0 && c.position() > cur.position() && c.uid != cur.uid) {
-                    c._position += advance;
-                    c._anchorPosition += advance;
-                    c.update();
-                }
-                doc->updateCursor(c);
-            }
-        }
+            
     }
 
     if (markHistory) {
@@ -431,5 +456,6 @@ bool processEditorCommand(command_t cmdt, char ch)
         doc->addSnapshot();
     }
 
+    
     return handled;
 }

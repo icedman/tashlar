@@ -50,7 +50,8 @@ void gutter_t::render()
             continue;
         }
 
-        std::string lineNo = std::to_string(1 + b.lineNumber);
+        //std::string lineNo = std::to_string(1 + b.lineNumber);
+        std::string lineNo = std::to_string(b.uid);
         int x = viewWidth - (lineNo.length() + 1);
 
         int pair = colorPair;

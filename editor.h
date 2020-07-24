@@ -47,7 +47,7 @@ struct editor_t : public window_t {
     void matchBracketsUnderCursor();
     struct bracket_info_t bracketAtCursor(struct cursor_t& cursor);
     struct cursor_t cursorAtBracket(struct bracket_info_t bracket);
-    struct cursor_t findLastOpenBracketCursor(struct block_t block);
+    struct cursor_t findLastOpenBracketCursor(struct block_t& block);
     struct cursor_t findBracketMatchCursor(struct bracket_info_t bracket, struct cursor_t cursor);
 
     void toggleFold(size_t line);

@@ -144,16 +144,14 @@ struct document_t {
 
     void update(bool force = false);
 
-    struct block_t& block(struct cursor_t& cursor);
-
     struct block_t nullBlock;
     std::string filePath;
     std::string fileName;
     std::string fullPath;
 
     std::vector<std::string> tmpPaths;
-
     std::vector<struct history_t> snapShots;
+    std::vector<struct block_t*> garbageBlocks;
 
     bool runOn;
     bool dirty;

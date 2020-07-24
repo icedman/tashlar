@@ -187,6 +187,7 @@ struct block_t& document_t::addBlockAtLineNumber(size_t line)
 
     struct block_t b;
     b.document = this;
+    b.uid = blockUid++;
     b.setText("");
     if (it == blocks.end()) {
         blocks.emplace_back(b);
@@ -288,9 +289,8 @@ void document_t::saveAs(const char* path, bool replacePath)
 
 struct cursor_t document_t::cursor()
 {
-    cursors[0].update();
     if (cursors[0].isNull()) {
-        cursorSetPosition(&cursors[0], 0);
+        cursors[0].setPosition(&blocks[0], 0);
     }
     return cursors[0];
 }
@@ -309,13 +309,9 @@ void document_t::updateCursor(struct cursor_t& cursor)
 {
     for (auto& c : cursors) {
         if (c.uid == cursor.uid) {
-            c._position = cursor.position();
-            c._anchorPosition = cursor.anchorPosition();
-            c._preferredRelativePosition = cursor.preferredRelativePosition();
-            c._block = cursor._block;
-            c.update();
-            // app_t::instance()->log("updateCursor %d", c.position());
-            break;
+            c._position = cursor._position;
+            c._anchor = cursor._anchor;
+             break;
         }
     }
 }
@@ -335,12 +331,12 @@ void document_t::clearCursors()
     }
 
     struct cursor_t cursor = cursors[0];
-    cursor._block = 0;
     cursor.clearSelection();
-    cursor.update();
 
     cursors.clear();
     cursors.push_back(cursor);
+
+    garbageBlocks.clear();
 }
 
 void document_t::clearSelections()
@@ -390,41 +386,9 @@ void document_t::update(bool force)
     if (!cursors.size()) {
         struct cursor_t cursor;
         cursor._document = this;
-        cursor._position = 0;
-        cursor._anchorPosition = 0;
-        cursor.update();
-        cursors.emplace_back(cursor);
+        cursor.setPosition(&blocks[0], 0);
+        addCursor(cursor);
     }
-
-    app_t::instance()->log("cursor: %d block: %d/%d", cursors[0].position(), cursors[0].block()->lineNumber, blocks.size());
-}
-
-struct block_t& document_t::block(struct cursor_t& cursor)
-{
-    // TODO: This is used all over.. perpetually improve search (divide-conquer? index based?)!
-    // app_t::instance()->log("block query");
-
-    if (!blocks.size()) {
-        return nullBlock;
-    }
-
-    std::vector<struct block_t>::iterator bit = blocks.begin();
-    size_t idx = 0;
-
-    while (bit != blocks.end()) {
-        auto& b = *bit;
-        if (b.length == 0 && cursor.position() == b.position) {
-            return b;
-        }
-        if (b.position <= cursor.position() && cursor.position() < b.position + (b.length ? b.length : 1)) {
-            return b;
-        }
-        idx++;
-        bit++;
-    }
-
-    // app_t::instance()->log("null block returned");
-    return nullBlock;
 }
 
 void document_t::addBufferDocument(const std::string& largeText)

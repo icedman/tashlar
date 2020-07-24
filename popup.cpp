@@ -149,7 +149,7 @@ void popup_t::layout(int w, int h)
 
     if (type == POPUP_COMPLETION && !cursor.isNull()) {
         struct editor_t* editor = app_t::instance()->currentEditor.get();
-        viewX = editor->viewX + cursor.position() - cursor.block()->position;
+        viewX = editor->viewX + cursor.relativePosition();
         viewY = editor->viewY + cursor.block()->renderedLine + 1;
 
         bool reverse = false;
@@ -491,7 +491,7 @@ void popup_t::onInput()
         std::stringstream(text) >> line;
         for (auto& b : doc->blocks) {
             if (b.lineNumber == line - 1) {
-                cursorSetPosition(&cursor, b.position);
+                cursor.setPosition(&b, b.position);
                 doc->setCursor(cursor);
             }
         }

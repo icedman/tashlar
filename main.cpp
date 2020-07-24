@@ -450,23 +450,12 @@ int main(int argc, char** argv)
 
             doc->updateCursor(cur);
 
-            // update the document indices
+            // update the block indices
             if (cursors.size() > 1 || !app_t::instance()->inputBuffer.length() || s == "\n") {
                 doc->update(advance != 0);
             }
 
-            // advace cursor positions
-            for (int j = 0; j < cursors.size(); j++) {
-                struct cursor_t& c = cursors[j];
-                if (c.position() > 0 && c.position() > cur.position() && c.uid != cur.uid) {
-                    c._position += advance;
-                    c._anchorPosition += advance;
-                    c.update();
-                    // app_t::instance()->log("%d pos: %d adv: %d", j, c._position, advance);
-                }
-                doc->updateCursor(c);
-            }
-
+            // popup completion
             if (cursors.size() == 1 && advance > 0) {
                 struct cursor_t c = cur;
                 if (cursorMovePosition(&c, cursor_t::Move::Left)) {

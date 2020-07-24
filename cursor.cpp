@@ -15,14 +15,18 @@
 
 #include <algorithm>
 
+size_t cursor_position_t::absolutePosition()
+{
+    if (!block) {
+        return 0;
+    }
+    return block->position + position;
+}
+
 cursor_t::cursor_t()
     : uid(0)
     , _docUpdateUid(0)
     , _document(0)
-    , _block(0)
-    , _position(0)
-    , _anchorPosition(0)
-    , _relativePosition(0)
     , _preferredRelativePosition(0)
 {
 }
@@ -34,200 +38,129 @@ struct document_t* cursor_t::document()
 
 struct block_t* cursor_t::block()
 {
-    update();
-    return _block;
-}
-
-void cursor_t::update()
-{
-    if (!_document) {
-        return;
-    }
-
-    if (!_block || _docUpdateUid != _document->blockUid) {
-        // app_t::instance()->log("initial query");
-        _block = &_document->block(*this);
-    }
-
-    if (_position < _block->position || _position >= _block->position + _block->length) {
-        // app_t::instance()->log("reposition query %d %d", _position, _block->position);
-        _block = &_document->block(*this);
-    }
-    _relativePosition = _position - _block->position;
-    _docUpdateUid = _document->blockUid;
+    return _position.block;
 }
 
 bool cursor_t::isNull()
 {
-    return _document == 0 || _block == 0 || !_block->isValid();
+    return _document == 0 || block() == 0 || !block()->isValid();
 }
 
 bool cursor_t::hasSelection()
 {
-    return _anchorPosition != _position;
+    if (!_anchor.block) {
+        return false;
+    }
+
+    return _anchor.block != _position.block || (_anchor.block == _position.block && _anchor.position != _position.position);
 }
 
 struct cursor_t cursor_t::selectionStartCursor()
 {
-    size_t start;
-    size_t end;
+    struct cursor_t cur1;
+    cur1._position = _position;
+ 
+    struct cursor_t cur2;
+    cur2._position = _anchor;
 
-    if (_position > _anchorPosition) {
-        start = _anchorPosition;
-        end = _position;
-    } else {
-        start = _position;
-        end = _anchorPosition;
-    }
-
-    struct cursor_t cur = *this;
-    cursorSetPosition(&cur, start);
-    return cur;
+    return _position.absolutePosition() < _anchor.absolutePosition() ? cur1 : cur2;
 }
 
 struct cursor_t cursor_t::selectionEndCursor()
 {
-    size_t start;
-    size_t end;
+    struct cursor_t cur1;
+    cur1._position = _position;
 
-    if (_position > _anchorPosition) {
-        start = _anchorPosition;
-        end = _position;
-    } else {
-        start = _position;
-        end = _anchorPosition;
-    }
+    struct cursor_t cur2;
+    cur2._position = _anchor;
 
-    struct cursor_t curEnd = *this;
-    cursorSetPosition(&curEnd, end);
-    return curEnd;
+    return _position.absolutePosition() < _anchor.absolutePosition() ? cur2 : cur1;
+}
+
+size_t cursor_t::selectionStart()
+{
+    return selectionStartCursor().position();
+}
+
+size_t cursor_t::selectionEnd()
+{
+    return selectionEndCursor().position();
 }
 
 std::vector<struct block_t*> cursor_t::selectedBlocks()
 {
     std::vector<struct block_t*> blocks;
 
-    size_t start;
-    size_t end;
-
-    if (_position > _anchorPosition) {
-        start = _anchorPosition;
-        end = _position;
-    } else {
-        start = _position;
-        end = _anchorPosition;
+    if (!hasSelection()) {
+        return blocks;
     }
 
-    _position = end;
-    _anchorPosition = start;
+    struct document_t* doc = document();
+    struct cursor_t cur = selectionStartCursor();
+    struct cursor_t curEnd = selectionEndCursor();
 
-    struct cursor_t cur = *this;
-    struct cursor_t curEnd = *this;
-    cursorSetPosition(&cur, start);
-    cursorSetPosition(&curEnd, end);
-
+    // for selection spanning multiple blocks
     struct block_t* startBlock = cur.block();
     struct block_t* endBlock = curEnd.block();
 
+    if (!startBlock->isValid()) {
+        return blocks;
+    }
+    if (!endBlock->isValid()) {
+        return blocks;
+    }
+    
     blocks.push_back(startBlock);
     while (startBlock != endBlock) {
         startBlock = startBlock->next;
         blocks.push_back(startBlock);
     }
-
+    
     return blocks;
 }
 
 bool cursor_t::isMultiBlockSelection()
 {
-    if (hasSelection()) {
-        struct cursor_t cur2 = *this;
-        cur2._position = cur2.anchorPosition();
-        cur2.update();
-        if (block() != cur2.block()) {
-            return true;
-        }
-    }
     return false;
 }
 
 void cursor_t::clearSelection()
 {
-    _anchorPosition = _position;
+    _anchor = _position;
 }
 
-size_t cursor_t::selectionStart()
-{
-    size_t start;
-    size_t end;
-
-    if (_position > _anchorPosition) {
-        start = _anchorPosition;
-        end = _position;
-    } else {
-        start = _position;
-        end = _anchorPosition;
-    }
-
-    _position = end;
-    _anchorPosition = start;
-    return _anchorPosition;
-    ;
-}
-
-size_t cursor_t::selectionEnd()
-{
-    selectionStart();
-    return _position;
-}
 
 size_t cursor_t::position()
 {
-    return _position;
+    return _position.absolutePosition();
 }
 
 size_t cursor_t::anchorPosition()
 {
-    return _anchorPosition;
+    return _anchor.absolutePosition();
 }
 
 size_t cursor_t::relativePosition()
 {
-    update(); // always try update
-    return _relativePosition;
+    return _position.position;
 }
 
-void cursor_t::rebase(struct block_t *block)
-{
-    /*
-    app_t::instance()->log("rebase %d to %d", _block->lineNumber, block->lineNumber);
-    _block = block;
-
-    int relativePosition = _relativePosition;
-    if ( elativePosition>=_block->length)-1 {
-         elativePosition= _block->length-1;
+void cursor_t::setPosition(struct block_t* block, size_t pos)
+{   
+    if (pos >= block->length) {
+        pos = block->length - 1;
     }
-    _position = _block->position + _relativePosition;
-    */
+    _position.block = block;
+    _position.position = pos;
 }
 
-size_t cursor_t::preferredRelativePosition()
+void cursor_t::setAnchor(struct block_t* block, size_t pos)
 {
-    return _preferredRelativePosition;
-}
-
-void cursorSetPosition(struct cursor_t* cursor, size_t position)
-{
-    cursor->_position = position;
-    cursor->_anchorPosition = position;
-    cursor->relativePosition(); // recompute relative
-    // app_t::instance()->log("set cursor>%d", position);
-}
-
-void cursorSetAnchorPosition(struct cursor_t* cursor, size_t position)
-{
-    cursor->_anchorPosition = position;
-    // no need to recompute
+    if (pos >= block->length) {
+        pos = block->length - 1;
+    }
+    _anchor.block = block;
+    _anchor.position = pos;
 }
 
 bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool keepAnchor, int count)
@@ -241,13 +174,11 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         return false;
     }
 
-    // app_t::instance()->log("move %d", cursor->position());
-
     count--;
-    size_t relativePosition = cursor->_position - block.position;
+    size_t relativePosition = cursor->relativePosition();
 
-    if ((move == cursor_t::Move::Up || move == cursor_t::Move::Down) && cursor->preferredRelativePosition() != 0) {
-        relativePosition = cursor->preferredRelativePosition();
+    if ((move == cursor_t::Move::Up || move == cursor_t::Move::Down) && cursor->_preferredRelativePosition != 0) {
+        relativePosition = cursor->_preferredRelativePosition;
     }
 
     std::vector<search_result_t> search_results;
@@ -274,7 +205,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     if (!(move == cursor_t::Move::Up || move == cursor_t::Move::Down)) {
         cursor->_preferredRelativePosition = 0;
     } else {
-        if (cursor->preferredRelativePosition() == 0) {
+        if (cursor->_preferredRelativePosition == 0) {
             cursor->_preferredRelativePosition = relativePosition;
         }
     }
@@ -283,60 +214,34 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         search_results = search_t::instance()->findWords(block.text());
     }
 
+    app_t::instance()->log("block %d position: %d", cursor->block()->lineNumber, cursor->relativePosition());
+
     switch (move) {
-    case cursor_t::Move::StartOfLine:
-        cursor->_position = block.position;
-        break;
-    case cursor_t::Move::EndOfLine:
-        cursor->_position = block.position + (block.length - 1);
-        break;
-
-    case cursor_t::Move::StartOfDocument:
-        cursor->_position = 0;
-        break;
-    case cursor_t::Move::EndOfDocument: {
-        struct block_t& end = cursor->document()->blocks.back();
-        cursor->_position = end.position + end.length - 1;
-        break;
-    }
-
-    case cursor_t::Move::WordLeft: {
-        bool found = false;
-        std::reverse(std::begin(search_results), std::end(search_results));
-        for (auto i : search_results) {
-            cursor->_position = block.position + i.begin;
-            if (i.begin + 1 < relativePosition) {
-                found = true;
-                break;
+    case cursor_t::Move::Left:
+        if (cursor->_position.position > 0) {
+            cursor->_position.position--;
+        } else {
+            if (block.previous) {
+                cursor->setPosition(block.previous, block.previous->length-1);
             }
         }
-        if (!found) {
-            cursor->_position = block.position;
-        }
         break;
-    }
 
-    case cursor_t::Move::WordRight: {
-        bool found = false;
-        for (auto i : search_results) {
-            cursor->_position = block.position + i.begin;
-            if (i.begin > relativePosition) {
-                found = true;
-                break;
+    case cursor_t::Move::Right:
+        cursor->_position.position++;
+        if (cursor->_position.position >= block.length) {
+            cursor->_position.position--;
+            if (block.next) {
+                cursor->setPosition(block.next, 0);
             }
-        }
-
-        if (!found) {
-            cursor->_position = block.position + (block.length - 1);
-        }
+        } 
         break;
-    }
 
     case cursor_t::Move::Up:
         if (wrap && block.length > viewWidth) {
-            int p = cursor->_position - viewWidth;
-            if (p >= block.position && p > 0) {
-                cursor->_position = p;
+            int p = cursor->_position.position - viewWidth;
+            if (p >= 0) {
+                cursor->setPosition(&block, p);
                 break;
             }
         }
@@ -344,19 +249,18 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
             // app_t::instance()->log("previous missing!");
             return false;
         }
-        if (relativePosition > block.previous->length - 1) {
-            relativePosition = block.previous->length - 1;
+
+        while (relativePosition > viewWidth) {
+            relativePosition -= viewWidth;
         }
-        cursor->_position = block.previous->position + relativePosition;
-        cursor->_block = block.previous;
-        // cursor->rebase(block.previous);
+        cursor->setPosition(block.previous, relativePosition);
         break;
 
     case cursor_t::Move::Down:
         if (wrap && block.length > viewWidth) {
-            int p = cursor->_position + viewWidth;
-            if (p < block.position + block.length) {
-                cursor->_position = p;
+            int p = cursor->_position.position + viewWidth;
+            if (p < block.length) {
+                cursor->setPosition(&block, p);
                 break;
             }
         }
@@ -365,38 +269,65 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
             // app_t::instance()->log("next missing!");
             return false;
         }
-        if (relativePosition > block.next->length - 1) {
-            relativePosition = block.next->length - 1;
+    
+        while (relativePosition > viewWidth) {
+            relativePosition -= viewWidth;
         }
-        cursor->_position = block.next->position + relativePosition;
-        cursor->_block = block.next;
-        //cursor->rebase(block.next);
+        cursor->setPosition(block.next, relativePosition);
         break;
 
-    case cursor_t::Move::Left:
-        if (cursor->_position > 0) {
-            cursor->_position--;
-        }
+    case cursor_t::Move::StartOfLine:
+        cursor->setPosition(cursor->block(), 0);
+        break;
+    case cursor_t::Move::EndOfLine:
+        cursor->setPosition(cursor->block(), cursor->block()->length - 1);
         break;
 
-    case cursor_t::Move::Right:
-        cursor->_position++;
-        if (cursor->_position >= block.position + block.length && !block.next) {
-            cursor->_position--;
+    case cursor_t::Move::StartOfDocument: {
+        struct block_t& front = cursor->document()->blocks.front();
+        cursor->setPosition(&front, 0);
+        break;
+    }
+    case cursor_t::Move::EndOfDocument: {
+        struct block_t& end = cursor->document()->blocks.back();
+        cursor->setPosition(&end, end.length);
+        break;
+    }
+
+    case cursor_t::Move::WordLeft: {
+        bool found = false;
+        std::reverse(std::begin(search_results), std::end(search_results));
+        for (auto i : search_results) {
+            cursor->_position.position = i.begin;
+            if (i.begin + 1 < relativePosition) {
+                found = true;
+                break;
+            }
         }
         break;
+    }
+
+    case cursor_t::Move::WordRight: {
+        bool found = false;
+        for (auto i : search_results) {
+            cursor->_position.position = i.begin;
+            if (i.begin > relativePosition) {
+                found = true;
+                break;
+            }
+        }
+        break;
+    }
 
     case cursor_t::Move::PrevBlock:
-        if (cursor->block() && cursor->block()->previous) {
-            cursor->_position = cursor->block()->previous->position;
-            cursor->_block = cursor->block()->previous;
+        if (block.previous) {
+            cursor->setPosition(block.previous, relativePosition);
         }
         break;
 
     case cursor_t::Move::NextBlock:
-        if (cursor->block() && cursor->block()->next) {
-            cursor->_position = cursor->block()->next->position;
-            cursor->_block = cursor->block()->next;
+        if (block.next) {
+            cursor->setPosition(block.next, relativePosition);
         }
         break;
 
@@ -405,17 +336,15 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     }
 
     if (!keepAnchor) {
-        cursor->_anchorPosition = cursor->position();
+        cursor->_anchor = cursor->_position;
     }
 
-    if (count > 0) {
-        return cursorMovePosition(cursor, move, keepAnchor, count);
+    if (count-- > 0) {
+        cursorMovePosition(cursor, move, keepAnchor, count);
     }
 
-    cursor->update();
-    // app_t::instance()->log("cursor %d block %d relative %d", cursor->position(), cursor->block()->lineNumber, cursor->relativePosition());
-
-    return !cursor->isNull();
+    app_t::instance()->log("new block %d position: %d", cursor->block()->lineNumber, cursor->relativePosition());
+    return true;
 }
 
 void cursorSelectWord(struct cursor_t* cursor)
@@ -427,9 +356,8 @@ void cursorSelectWord(struct cursor_t* cursor)
 
     for (auto i : search_results) {
         if (i.begin <= relativePosition && relativePosition < i.end) {
-            cursor->_anchorPosition = block->position + i.begin;
-            cursor->_position = block->position + i.end - 1;
-            cursor->update();
+            cursor->setPosition(block, i.end-1);
+            cursor->setAnchor(block, i.begin);
             return;
         }
     }
@@ -459,7 +387,6 @@ int cursorInsertText(struct cursor_t* cursor, std::string t)
         }
 
         // app_t::instance()->log("insert at %d/%d text length: %d", cursor->position(), cursor->relativePosition(), t.length());
-
         blockText.insert(cursor->relativePosition(), t);
         block->setText(blockText);
     } else {
@@ -485,22 +412,19 @@ int cursorEraseText(struct cursor_t* cursor, int c)
     std::string blockText = block->text();
 
     // at end
-    if (cursor->relativePosition() == blockText.length()) {
+    if (cursor->relativePosition() >= blockText.length()) {
         if (block->next) {
             blockText += block->next->text();
+            cursor->document()->garbageBlocks.emplace_back(block);
             cursor->document()->removeBlockAtLineNumber(block->next->lineNumber);
             cursor->document()->update(true);
         }
     } else {
-        // hack for multi-cursor overlap
-        if (c + cursor->relativePosition() > blockText.length() && cursor->document()->cursors.size() > 1) {
-            return 0;
-        }
         blockText.erase(cursor->relativePosition(), c);
     }
 
     block->setText(blockText);
-    return 1;
+    return c;
 }
 
 void cursorSplitBlock(struct cursor_t* cursor)
@@ -514,6 +438,7 @@ void cursorSplitBlock(struct cursor_t* cursor)
         block->setText("");
     }
 
+
     struct blockdata_t* data = block->data.get();
     if (data && data->folded && data->foldable) {
         app_t::instance()->currentEditor->toggleFold(block->lineNumber);
@@ -523,30 +448,25 @@ void cursorSplitBlock(struct cursor_t* cursor)
     std::string blockText = block->text();
     std::string block1 = blockText.substr(0, relativePosition);
     std::string block2 = blockText.substr(relativePosition, std::string::npos);
-    block->setText(block2);
+    block->setText(block1);
 
-    struct block_t& newBlock = cursor->document()->addBlockAtLineNumber(block->lineNumber);
-    newBlock.setText(block1);
     cursor->document()->update(true);
+    
+    struct block_t& newBlock = cursor->document()->addBlockAtLineNumber(block->lineNumber+1);
+    newBlock.setText(block2);
+    cursor->setPosition(&newBlock, 0);
+    cursor->setAnchor(&newBlock, 0);
 }
 
-// todo .. this needs history replay for multiple line deletes
 int cursorDeleteSelection(struct cursor_t* cursor)
 {
     if (!cursor->hasSelection()) {
         return 0;
     }
 
-    size_t start = cursor->selectionStart();
-    size_t end = cursor->selectionEnd();
-
     struct document_t* doc = cursor->document();
-    struct cursor_t cur = *cursor;
-    struct cursor_t curEnd = *cursor;
-    cur._position = start;
-    curEnd._position = end;
-    cur.update();
-    curEnd.update();
+    struct cursor_t cur = cursor->selectionStartCursor();
+    struct cursor_t curEnd = cursor->selectionEndCursor();
 
     // for selection spanning multiple blocks
     struct block_t* startBlock = cur.block();
@@ -559,54 +479,38 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         return 0;
     }
 
-    if (startBlock->position != endBlock->position) {
+    if (startBlock != endBlock) {
         int count = 0;
 
         struct block_t* next = startBlock->next;
 
-        int d = curEnd.position() - endBlock->position;
-        curEnd._position = endBlock->position;
-        curEnd.update();
-        cursorEraseText(&curEnd, d);
-        count += d;
-
-        app_t::instance()->log("end line %d", endBlock->lineNumber);
-
-        d = startBlock->position + startBlock->length - cur.position();
-        if (d > 1) {
-            cur.update();
-            app_t::instance()->log("start line %d %d", startBlock->lineNumber, d);
-            cursorEraseText(&cur, d);
-            count += d;
+        std::string startText = startBlock->text().substr(0, cur.relativePosition());
+        std::string newText = endBlock->text().substr(curEnd.relativePosition());
+        if (startText.length()>1) {
+            startText.pop_back(); // drop newline
         }
+        cur.block()->setText(startText + newText);
 
         int linesToDelete = endBlock->lineNumber - startBlock->lineNumber;
         // delete blocks in-between
         app_t::instance()->log("lines to delete %d", linesToDelete);
 
         int lineNumber = startBlock->lineNumber + 1;
-        // for (size_t i = 0; i < linesToDelete - 1; i++) {
-        doc->removeBlockAtLineNumber(lineNumber, linesToDelete - 1);
-        // }
+        doc->removeBlockAtLineNumber(lineNumber, linesToDelete);
+        // warning these deletes are not yet counted
+        
+        cursor->_position = cur._position;
+        cursor->_anchor = cur._position;
 
-        // merge two block
         doc->update(true);
-        cursorEraseText(&cur, 1);
-        count++;
-
-        cursor->_position = cur.position();
-        cursor->_anchorPosition = cur.position();
         return count;
     }
 
-    int count = end - start + 1;
-    for (int i = 0; i < count; i++) {
-        cursorEraseText(&cur, 1);
-    }
+    int count = curEnd.position() - cur.position() + 1;
+    cursorEraseText(&cur, count);
 
-    cursor->_position = start;
-    cursor->_anchorPosition = end;
-    cursor->update();
+    cursor->_position = cur._position;
+    cursor->_anchor = cursor->_position;
     return count;
 }
 
@@ -626,11 +530,11 @@ std::string cursor_t::selectedText()
             res += "\n";
         }
         std::string t = b->text();
-        if (b == start._block) {
-            t = t.c_str() + start._relativePosition;
+        if (b == start.block()) {
+            t = t.c_str() + start.relativePosition();
         }
-        if (b == end._block) {
-            int trunc = end._block->length - end._relativePosition - 2;
+        if (b == end.block()) {
+            int trunc = end.block()->length - end.relativePosition() - 2;
             if (trunc > 0) {
                 t = t.substr(0, t.length() - trunc);
                 // app_t::instance()->log(">trunc %d", trunc);
@@ -672,13 +576,14 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t, int direction)
             }
 
             if (found.isValid()) {
-                cursor->_anchorPosition = block.position + found.begin;
-                cursor->_position = block.position + found.end - 1;
-                cursor->update();
+                cursor->setPosition(cur.block(), found.end-1);
+                cursor->setAnchor(cur.block(), found.begin);
+                app_t::instance()->log("found word! %d", cursor->position());
                 return true;
             }
         }
 
+        app_t::instance()->log("find next");
         if (direction == 1) {
             if (!cursorMovePosition(&cur, cursor_t::Move::PrevBlock)) {
                 return false;
@@ -753,21 +658,22 @@ static int _cursorIndent(struct cursor_t* cursor)
 
 int cursorIndent(struct cursor_t* cursor)
 {
+    /*
     std::vector<struct block_t*> blocks = cursor->selectedBlocks();
     if (blocks.size() > 1) {
 
         struct cursor_t posCur = *cursor;
-        posCur._position = cursor->_position;
-        posCur.update();
+        //posCur._position = cursor->_position;
+        //posCur.update();
 
         struct cursor_t anchorCur = *cursor;
-        anchorCur._position = cursor->_anchorPosition;
-        anchorCur.update();
+        //anchorCur._position = cursor->_anchorPosition;
+        //anchorCur.update();
 
         for (auto b : blocks) {
             struct cursor_t cur = *cursor;
-            cur._position = b->position;
-            cur._block = b;
+            //cur._position = b->position;
+            //cur._block = b;
 
             bool updatePos = b->uid == posCur._block->uid;
             bool updateAnchor = b->uid == anchorCur._block->uid;
@@ -777,11 +683,11 @@ int cursorIndent(struct cursor_t* cursor)
 
             if (updatePos) {
                 app_t::instance()->log("indent update pos %d", cursor->_position);
-                cursor->_position = posCur._block->position + posCur._relativePosition + count;
+                //cursor->_position = posCur._block->position + posCur._relativePosition + count;
             }
             if (updateAnchor) {
                 app_t::instance()->log("indent update anchor %d", cursor->_anchorPosition);
-                cursor->_anchorPosition = anchorCur._block->position + anchorCur._relativePosition + count;
+                //cursor->_anchorPosition = anchorCur._block->position + anchorCur._relativePosition + count;
             }
         }
 
@@ -790,14 +696,17 @@ int cursorIndent(struct cursor_t* cursor)
     }
 
     int count = _cursorIndent(cursor);
-    cursor->_position += count;
-    cursor->_anchorPosition += count;
-    cursor->update();
+    //cursor->_position += count;
+    //cursor->_anchorPosition += count;
+    //cursor->update();
     return count;
+    */
+    return 0;
 }
 
 int _cursorUnindent(struct cursor_t* cursor)
 {
+    /*
     std::string text = cursor->block()->text();
     int tab_size = 4;
     int currentIndent = countIndentSize(text + "?");
@@ -814,25 +723,28 @@ int _cursorUnindent(struct cursor_t* cursor)
         cursor->block()->setText(newText);
     }
     return deleted;
+    */
+    return 0;
 }
 
 int cursorUnindent(struct cursor_t* cursor)
 {
+    /*
     std::vector<struct block_t*> blocks = cursor->selectedBlocks();
     if (blocks.size() > 1) {
 
         struct cursor_t posCur = *cursor;
-        posCur._position = cursor->_position;
-        posCur.update();
+        //posCur._position = cursor->_position;
+        //posCur.update();
 
         struct cursor_t anchorCur = *cursor;
-        anchorCur._position = cursor->_anchorPosition;
-        anchorCur.update();
+        //anchorCur._position = cursor->_anchorPosition;
+        //anchorCur.update();
 
         for (auto b : blocks) {
             struct cursor_t cur = *cursor;
-            cur._position = b->position;
-            cur._block = b;
+            //cur._position = b->position;
+            //cur._block = b;
 
             bool updatePos = b->uid == posCur._block->uid;
             bool updateAnchor = b->uid == anchorCur._block->uid;
@@ -842,10 +754,10 @@ int cursorUnindent(struct cursor_t* cursor)
 
             app_t::instance()->log("unindent %d %d", updatePos, updateAnchor);
             if (updatePos) {
-                cursor->_position = posCur._block->position + posCur._relativePosition - count;
+                //cursor->_position = posCur._block->position + posCur._relativePosition - count;
             }
             if (updateAnchor) {
-                cursor->_anchorPosition = anchorCur._block->position + posCur._relativePosition - count;
+                //cursor->_anchorPosition = anchorCur._block->position + posCur._relativePosition - count;
             }
         }
 
@@ -854,10 +766,12 @@ int cursorUnindent(struct cursor_t* cursor)
     }
 
     int count = _cursorUnindent(cursor);
-    cursor->_position -= count;
-    cursor->_anchorPosition -= count;
-    cursor->update();
+    //cursor->_position -= count;
+    //cursor->_anchorPosition -= count;
+    //cursor->update();
     return count;
+    */
+    return 0;
 }
 
 int autoIndent(struct cursor_t cursor)

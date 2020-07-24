@@ -699,7 +699,7 @@ struct cursor_t editor_t::cursorAtBracket(struct bracket_info_t bracket)
     while (block) {
         if (block->lineNumber == bracket.line) {
             cursor = document.cursor();
-            cursorSetPosition(&cursor, block->position + bracket.position);
+            cursor.setPosition(block, bracket.position);
             break;
         }
         if (block->lineNumber > bracket.line) {
@@ -711,7 +711,7 @@ struct cursor_t editor_t::cursorAtBracket(struct bracket_info_t bracket)
     return cursor;
 }
 
-struct cursor_t editor_t::findLastOpenBracketCursor(struct block_t block)
+struct cursor_t editor_t::findLastOpenBracketCursor(struct block_t& block)
 {
     if (!block.isValid()) {
         return cursor_t();
@@ -728,7 +728,7 @@ struct cursor_t editor_t::findLastOpenBracketCursor(struct block_t block)
             if (res.isNull()) {
                 res = document.cursor();
             }
-            cursorSetPosition(&res, block.position + b.position);
+            res.setPosition(&block, b.position);
         }
     }
 
@@ -766,7 +766,7 @@ struct cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, 
 
                     if (!brackets.size()) {
                         // std::cout << "found end!" << std::endl;
-                        cursorSetPosition(&cursor, block->position + b.position);
+                        cursor.setPosition(block, b.position);
                         return cursor;
                     }
                     continue;
@@ -804,7 +804,7 @@ struct cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, 
 
                     if (!brackets.size()) {
                         // std::cout << "found begin!" << std::endl;
-                        cursorSetPosition(&cursor, block->position + b.position);
+                        cursor.setPosition(block, b.position);
                         return cursor;
                     }
                     continue;
