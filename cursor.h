@@ -9,6 +9,12 @@ struct document_t;
 struct block_t;
 struct cursor_t;
 
+struct cursor_position_t
+{
+    struct block_t *block;
+    int position;
+};
+
 struct cursor_t {
     enum Move {
         NoMove,
