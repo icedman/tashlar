@@ -13,7 +13,6 @@
 #define WINDOWS_LINE_END "\r\n"
 #define LINUX_LINE_END "\n"
 
-static size_t blocksCount = 0;
 static size_t leakWatchCount = 0;
 
 blockdata_t::blockdata_t()
@@ -25,7 +24,7 @@ blockdata_t::blockdata_t()
     , indent(0)
     , lastPrevBlockRule(0)
 {
-    leakWatchCount++;
+    // leakWatchCount++;
 }
 
 blockdata_t::~blockdata_t()
@@ -225,6 +224,7 @@ struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
         return nullBlock;
     }
 
+    
     std::vector<struct block_t>::iterator it = blocks.begin();
     if (line > 0) {
         if (line >= blocks.size()) {
@@ -237,6 +237,21 @@ struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
         return nullBlock;
     }
 
+    // nullify cursors
+    /*
+    int _count = count;
+    std::vector<struct block_t>::iterator _it = it;
+    for(auto &c : cursors) {
+        while(_it != blocks.end() && count-- > 0) {
+            if (c.block() && (*_it).uid == c.block()->uid) {
+                c._position = cursor_position_t();
+                break;
+            }
+            _it++;
+        }
+    }
+    */
+    
     struct block_t& block = *it;
     blocks.erase(it, it + count);
     return block;
@@ -326,7 +341,7 @@ void document_t::setCursor(struct cursor_t& cursor)
     cursor.uid = cursors[0].uid;
     updateCursor(cursor);
 }
-    
+
 void document_t::updateCursor(struct cursor_t& cursor)
 {
     for (auto& c : cursors) {

@@ -52,7 +52,7 @@ void cursor_t::flipAnchor()
     _anchor = _position;
     _position = t;
 }
-    
+
 struct cursor_t cursor_t::selectionStartCursor()
 {
     struct cursor_t cur1;
@@ -148,8 +148,7 @@ void cursor_t::setPosition(struct block_t* block, size_t pos)
         pos = block->length - 1;
     }
     _position.block = block;
-    _position.position = 0;
-    _anchor = _position;
+    _position.position = pos;
 }
 
 void cursor_t::setAnchor(struct block_t* block, size_t pos)
@@ -364,7 +363,7 @@ void cursorSelectWord(struct cursor_t* cursor)
 }
 
 int cursorInsertText(struct cursor_t* cursor, std::string t)
-{
+{   
     struct block_t* block = cursor->block();
     if (!block->isValid()) {
         return 0;
@@ -384,6 +383,12 @@ int cursorInsertText(struct cursor_t* cursor, std::string t)
         }
         if (relativePosition < 0) {
             relativePosition = 0;
+        }
+
+        // overlapping cursors?
+        if (relativePosition >= blockText.length()) {
+            cursor->document()->clearCursors();
+            return 0;
         }
 
         // app_t::instance()->log("insert at %d/%d text length: %d", cursor->position(), cursor->relativePosition(), t.length());
@@ -427,7 +432,7 @@ int cursorEraseText(struct cursor_t* cursor, int c)
 }
 
 void cursorSplitBlock(struct cursor_t* cursor)
-{
+{   
     struct block_t* block = cursor->block();
     if (!block->isValid()) {
         return;
@@ -482,7 +487,7 @@ int cursorDeleteSelection(struct cursor_t* cursor)
 
         struct block_t* next = startBlock->next;
 
-        std::string startText = startBlock->text().substr(0, cur.relativePosition());
+        std::string startText = startBlock->text().substr(0, cur.relativePosition()+1);
         std::string newText = endBlock->text().substr(curEnd.relativePosition());
         if (startText.length() > 1) {
             startText.pop_back(); // drop newline

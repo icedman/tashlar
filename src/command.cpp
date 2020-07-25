@@ -4,6 +4,7 @@
 #include "editor.h"
 #include "statusbar.h"
 
+// todo cursor implementation is still a mess
 bool processEditorCommand(command_t cmdt, char ch)
 {
     command_e cmd = cmdt.cmd;
@@ -71,20 +72,20 @@ bool processEditorCommand(command_t cmdt, char ch)
     case CMD_MOVE_CURSOR_END_OF_DOCUMENT:
     case CMD_MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED:
         cursorMovePosition(&cursor, cursor_t::EndOfDocument, cmd == CMD_MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED);
-        //doc->setCursor(cursor);
+        // doc->setCursor(cursor);
         return true;
 
     case CMD_ADD_CURSOR_AND_MOVE_UP:
         doc->addCursor(cursor);
         cursorMovePosition(&cursor, cursor_t::Up);
-        //doc->setCursor(cursor);
+        // doc->setCursor(cursor);
         doc->history().mark();
         return true;
 
     case CMD_ADD_CURSOR_AND_MOVE_DOWN:
         doc->addCursor(cursor);
         cursorMovePosition(&cursor, cursor_t::Down);
-        //doc->setCursor(cursor);
+        // doc->setCursor(cursor);
         doc->history().mark();
         return true;
 
@@ -98,7 +99,7 @@ bool processEditorCommand(command_t cmdt, char ch)
     case CMD_SELECT_ALL:
         cursorMovePosition(&cursor, cursor_t::StartOfDocument);
         cursorMovePosition(&cursor, cursor_t::EndOfDocument, true);
-        //doc->setCursor(cursor);
+        // doc->setCursor(cursor);
         return true;
 
     case CMD_SELECT_WORD:
@@ -178,7 +179,6 @@ bool processEditorCommand(command_t cmdt, char ch)
         break;
     }
 
-    // morph some commands
     //-----------------
     // multi cursor updates
     //-----------------
@@ -220,55 +220,43 @@ bool processEditorCommand(command_t cmdt, char ch)
         doc->addSnapshot();
     }
 
+    //-----------
     // deal with cursors having selections
+    //-----------
     for (int i = 0; i < cursors.size(); i++) {
         struct cursor_t& cur = cursors[i];
-        int advance = 0;
         bool update = false;
 
-        switch(cmd) {
+        if (!cur.hasSelection()) {
+            continue;
+        }
+
+        switch (cmd) {
         case CMD_DELETE:
-        case CMD_BACKSPACE:
+        case CMD_BACKSPACE: {
+            int count = cursorDeleteSelection(&cur);
+            cur.clearSelection();
+            update = true;
             cmd = CMD_INSERT;
             cmdt.args = "";
-            // fall through
-        case CMD_INSERT:
-            if (cur.hasSelection()) {
-                int count = cursorDeleteSelection(&cur);
-                if (count) {
-                    doc->history().addDelete(cur, count);
-                }
-                cur.clearSelection();
-                advance -= count;
-                update = true;
-                break;
-            }
-            handled = true;
             break;
+        }
+        case CMD_INSERT: {
+            int count = cursorDeleteSelection(&cur);
+            cur.clearSelection();
+            update = true;
+            break;
+        }
         default:
             break;
         }
 
-        if (advance != 0) {
-            for (int j = 0; j < cursors.size(); j++) {
-                if (j == i) {
-                    continue;
-                }
-                struct cursor_t& cur2 = cursors[j];
-                if (cur2.block() == cur.block() && cur2.relativePosition() > cur.relativePosition()) {
-                    cur2._position.position += advance;
-                    cur2._anchor.position += advance;
-                }
-            }
-
-            doc->update(update && advance != 0);
-            doc->updateCursor(cur);
-        }
+        doc->update(update);
+        doc->updateCursor(cur);
     }
-    
+
     for (int i = 0; i < cursors.size(); i++) {
         struct cursor_t& cur = cursors[i];
-        int advance = 0;
         bool update = false;
 
         if (cur.hasSelection()) {
@@ -401,7 +389,6 @@ bool processEditorCommand(command_t cmdt, char ch)
             }
             int count = cursorIndent(&cur);
             if (count) {
-                advance += count;
                 update = true;
             }
             doc->history().addDelete(cur, 0);
@@ -417,7 +404,6 @@ bool processEditorCommand(command_t cmdt, char ch)
             }
             int count = cursorUnindent(&cur);
             if (count) {
-                advance -= count;
                 update = true;
             }
             doc->history().addDelete(cur, 0);
@@ -432,7 +418,6 @@ bool processEditorCommand(command_t cmdt, char ch)
                     doc->history().addDelete(cur, count);
                 }
                 cur.clearSelection();
-                advance -= count;
                 update = true;
                 break;
             }
@@ -445,18 +430,15 @@ bool processEditorCommand(command_t cmdt, char ch)
 
         case CMD_INSERT: {
             int count = cursorInsertText(&cur, cmdt.args);
-            advance += cmdt.args.length();
             cur._position.position += cmdt.args.length();
             cur._anchor = cur._position;
             update = true;
             handled = true;
-            app_t::instance()->log("insert %d (%s)", advance, cmdt.args.c_str());
             break;
         }
         case CMD_DELETE:
             doc->history().addDelete(cur, 1);
             cursorEraseText(&cur, 1);
-            advance--;
             update = true;
             handled = true;
             break;
@@ -467,7 +449,6 @@ bool processEditorCommand(command_t cmdt, char ch)
             if (cursorMovePosition(&cur, cursor_t::Left)) {
                 doc->history().addDelete(cur, 1);
                 cursorEraseText(&cur, 1);
-                advance--;
             }
             update = true;
             handled = true;
@@ -485,11 +466,10 @@ bool processEditorCommand(command_t cmdt, char ch)
 
             doc->history().addSplit(cur);
             cursorSplitBlock(&cur);
-            advance++;
             update = true;
             handled = true;
             markHistory = true;
-            
+
             if (i > 0) {
                 doc->update(true);
                 if (doc->cursors[0].position() > cur.position()) {
@@ -503,22 +483,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             break;
         }
 
-        // fix - redundant
-        // handle multi-cursor on the same block
-        if (advance != 0) {
-            for (int j = 0; j < cursors.size(); j++) {
-                if (j == i) {
-                    continue;
-                }
-                struct cursor_t& cur2 = cursors[j];
-                if (cur2.block() == cur.block() && cur2.relativePosition() > cur.relativePosition()) {
-                    cur2._position.position += advance;
-                    cur2._anchor = cur2._position;
-                }
-            }
-        }
-
-        doc->update(update && advance != 0);
+        doc->update(update);
         doc->updateCursor(cur);
     }
 

@@ -430,23 +430,22 @@ int main(int argc, char** argv)
         }
 
         cmdt.cmd = CMD_INSERT;
-        cmdt.args = s; 
+        cmdt.args = s;
         app.processCommand(cmdt, ch);
 
-            // popup completion
-            if (doc->cursors.size() == 1 && s.length() > 0) {
-                struct cursor_t c = doc->cursors[0];
-                if (cursorMovePosition(&c, cursor_t::Move::Left)) {
-                    cursorSelectWord(&c);
-                    std::string prefix = c.selectedText();
-                    if (prefix.length() > 2) {
-                        popup.completion();
-                    }
+        // popup completion
+        if (doc->cursors.size() == 1 && s.length() > 0) {
+            struct cursor_t c = doc->cursors[0];
+            if (cursorMovePosition(&c, cursor_t::Move::Left)) {
+                cursorSelectWord(&c);
+                std::string prefix = c.selectedText();
+                if (prefix.length() > 2) {
+                    popup.completion();
                 }
             }
+        }
 
         continue;
-
     }
 
     endwin();
