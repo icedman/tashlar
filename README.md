@@ -1,4 +1,4 @@
-#tashlar 
+#tashlar #tashlar #tashlar ?tashlar 
 
 terminal version of the ashlar text editor
 

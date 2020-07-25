@@ -276,9 +276,11 @@ int main(int argc, char** argv)
                 cmdt = app.commandBuffer.front();
                 cmd = cmdt.cmd;
                 app.commandBuffer.erase(app.commandBuffer.begin());
+                /*
                 if (cmdt.cmd == CMD_INSERT) {
                     app.inputBuffer = cmdt.args;
                 }
+                */
                 break;
             }
 
@@ -418,7 +420,7 @@ int main(int argc, char** argv)
         }
 
         //-------------------
-        // update keystrokes on cursors
+        // update keystrokes or input buffer
         //-------------------
         std::string s;
         s += (char)ch;
@@ -427,49 +429,13 @@ int main(int argc, char** argv)
             continue;
         }
 
-        std::vector<struct cursor_t>& cursors = doc->cursors;
-        for (int i = 0; i < cursors.size(); i++) {
-            struct cursor_t& cur = cursors[i];
-
-            int advance = 0;
-            if (cur.hasSelection()) {
-                int count = cursorDeleteSelection(&cur);
-                doc->history().addDelete(cur, count);
-                advance -= count;
-            } else {
-                doc->history().addInsert(cur, s);
-            }
-
-            cursorInsertText(&cur, s);
-            cursorMovePosition(&cur, cursor_t::Right, false, s.length());
-            if (s == " " || s == "\t") {
-                doc->history().mark();
-            }
-            advance += s.length();
-
-            doc->updateCursor(cur);
-
-            // update the block indices
-            if (cursors.size() > 1 || !app_t::instance()->inputBuffer.length() || s == "\n") {
-                doc->update(advance != 0);
-            }
-
-            // handle when cursors are on the same block_t
-            if (advance != 0) {
-                for (int j = 0; j < cursors.size(); j++) {
-                    if (j == i)
-                        continue;
-                    struct cursor_t& cur2 = cursors[j];
-                    if (cur2.block() == cur.block() && cur2.relativePosition() > cur.relativePosition()) {
-                        cur2._position.position += advance;
-                        cur2._anchor = cur2._position;
-                    }
-                }
-            }
+        cmdt.cmd = CMD_INSERT;
+        cmdt.args = s; 
+        app.processCommand(cmdt, ch);
 
             // popup completion
-            if (cursors.size() == 1 && advance > 0) {
-                struct cursor_t c = cur;
+            if (doc->cursors.size() == 1 && s.length() > 0) {
+                struct cursor_t c = doc->cursors[0];
                 if (cursorMovePosition(&c, cursor_t::Move::Left)) {
                     cursorSelectWord(&c);
                     std::string prefix = c.selectedText();
@@ -478,7 +444,9 @@ int main(int argc, char** argv)
                     }
                 }
             }
-        }
+
+        continue;
+
     }
 
     endwin();

@@ -631,10 +631,14 @@ bool editor_t::processCommand(command_t cmdt, char ch)
     s += (char)ch;
 
     if (cmd == CMD_ENTER || ch == ENTER || s == "\n") {
-        cmd = CMD_SPLIT_LINE;
+        cmdt.cmd = CMD_SPLIT_LINE;
     }
 
-    return processEditorCommand(cmd, ch);
+    if (s == "\t") {
+        cmdt.cmd = CMD_TAB;
+    }
+
+    return processEditorCommand(cmdt, ch);
 }
 
 void editor_t::update(int tick)

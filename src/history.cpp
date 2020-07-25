@@ -138,7 +138,7 @@ void history_t::replay()
             }
 
             e.cursor.block()->data = nullptr;
-            e.cursor.document()->setCursor(e.cursor);
+            // e.cursor.document()->setCursor(e.cursor);
         }
     }
 }

@@ -584,6 +584,7 @@ void popup_t::onSubmit()
 
         if (found) {
             doc->updateCursor(cursor);
+            cursor.flipAnchor();
             doc->setCursor(cursor);
             app->refresh();
             return;

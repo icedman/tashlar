@@ -34,8 +34,7 @@ blockdata_t::~blockdata_t()
         free(dots);
     }
 
-    leakWatchCount--;
-    app_t::instance()->log("in memory %d", leakWatchCount);
+    // leakWatchCount--;
 }
 
 block_t::block_t()
@@ -327,7 +326,7 @@ void document_t::setCursor(struct cursor_t& cursor)
     cursor.uid = cursors[0].uid;
     updateCursor(cursor);
 }
-
+    
 void document_t::updateCursor(struct cursor_t& cursor)
 {
     for (auto& c : cursors) {

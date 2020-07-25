@@ -46,6 +46,13 @@ bool cursor_t::hasSelection()
     return _anchor.block != _position.block || (_anchor.block == _position.block && _anchor.position != _position.position);
 }
 
+void cursor_t::flipAnchor()
+{
+    cursor_position_t t = _anchor;
+    _anchor = _position;
+    _position = t;
+}
+    
 struct cursor_t cursor_t::selectionStartCursor()
 {
     struct cursor_t cur1;
@@ -141,7 +148,8 @@ void cursor_t::setPosition(struct block_t* block, size_t pos)
         pos = block->length - 1;
     }
     _position.block = block;
-    _position.position = pos;
+    _position.position = 0;
+    _anchor = _position;
 }
 
 void cursor_t::setAnchor(struct block_t* block, size_t pos)
@@ -269,6 +277,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     case cursor_t::Move::StartOfLine:
         cursor->setPosition(cursor->block(), 0);
         break;
+
     case cursor_t::Move::EndOfLine:
         cursor->setPosition(cursor->block(), cursor->block()->length - 1);
         break;
@@ -278,6 +287,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         cursor->setPosition(&front, 0);
         break;
     }
+
     case cursor_t::Move::EndOfDocument: {
         struct block_t& end = cursor->document()->blocks.back();
         cursor->setPosition(&end, end.length);

@@ -55,6 +55,7 @@ struct cursor_t {
 
     void setPosition(struct block_t* block, size_t position);
     void setAnchor(struct block_t* block, size_t anchor);
+    void flipAnchor();
 
     size_t position();
     size_t anchorPosition();
