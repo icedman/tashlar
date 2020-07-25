@@ -34,11 +34,9 @@ bool processEditorCommand(command_t cmdt, char ch)
             for (int i = 0; i < app->tabSize; i++) {
                 tab += " ";
             }
-            //app->inputBuffer = tab;
             cmdt.cmd = CMD_INSERT;
             cmdt.args = tab;
             cmd = CMD_INSERT;
-            // app->commandBuffer.push_back(cmdt);
         }
         break;
 
@@ -66,26 +64,22 @@ bool processEditorCommand(command_t cmdt, char ch)
     case CMD_MOVE_CURSOR_START_OF_DOCUMENT:
     case CMD_MOVE_CURSOR_START_OF_DOCUMENT_ANCHORED:
         cursorMovePosition(&cursor, cursor_t::StartOfDocument, cmd == CMD_MOVE_CURSOR_START_OF_DOCUMENT_ANCHORED);
-        // doc->setCursor(cursor);
         return true;
 
     case CMD_MOVE_CURSOR_END_OF_DOCUMENT:
     case CMD_MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED:
         cursorMovePosition(&cursor, cursor_t::EndOfDocument, cmd == CMD_MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED);
-        // doc->setCursor(cursor);
         return true;
 
     case CMD_ADD_CURSOR_AND_MOVE_UP:
         doc->addCursor(cursor);
         cursorMovePosition(&cursor, cursor_t::Up);
-        // doc->setCursor(cursor);
         doc->history().mark();
         return true;
 
     case CMD_ADD_CURSOR_AND_MOVE_DOWN:
         doc->addCursor(cursor);
         cursorMovePosition(&cursor, cursor_t::Down);
-        // doc->setCursor(cursor);
         doc->history().mark();
         return true;
 
@@ -99,7 +93,6 @@ bool processEditorCommand(command_t cmdt, char ch)
     case CMD_SELECT_ALL:
         cursorMovePosition(&cursor, cursor_t::StartOfDocument);
         cursorMovePosition(&cursor, cursor_t::EndOfDocument, true);
-        // doc->setCursor(cursor);
         return true;
 
     case CMD_SELECT_WORD:
@@ -108,16 +101,13 @@ bool processEditorCommand(command_t cmdt, char ch)
         if (cursor.hasSelection()) {
             if (cmd == CMD_ADD_CURSOR_FOR_SELECTED_WORD) {
                 struct cursor_t c = cursor;
-                c.selectionStart(); // normalizes the positions
                 if (cursorFindWord(&cursor, cursor.selectedText())) {
                     doc->addCursor(c);
                     doc->updateCursor(cursor);
-                    //doc->setCursor(cursor);
                 }
             }
         } else {
             cursorSelectWord(&cursor);
-            //doc->setCursor(cursor);
             doc->history().mark();
         }
 
@@ -126,13 +116,11 @@ bool processEditorCommand(command_t cmdt, char ch)
     case CMD_MOVE_CURSOR_PREVIOUS_PAGE:
         doc->clearCursors();
         cursorMovePosition(&cursor, cursor_t::Up, false, editor->viewHeight + 1);
-        //doc->setCursor(cursor);
         return true;
 
     case CMD_MOVE_CURSOR_NEXT_PAGE:
         doc->clearCursors();
         cursorMovePosition(&cursor, cursor_t::Down, false, editor->viewHeight + 1);
-        //doc->setCursor(cursor);
         return true;
 
     case CMD_DUPLICATE_LINE:
@@ -148,7 +136,7 @@ bool processEditorCommand(command_t cmdt, char ch)
         app->commandBuffer.push_back(CMD_SELECT_LINE);
         // app->commandBuffer.push_back(CMD_COPY);
         app->commandBuffer.push_back(CMD_DELETE);
-        app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
+        // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     case CMD_MOVE_LINE_UP:
@@ -391,7 +379,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             if (count) {
                 update = true;
             }
-            doc->history().addDelete(cur, 0);
+            // doc->history().addDelete(cur, 0);
             handled = true;
             break;
         }
@@ -406,7 +394,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             if (count) {
                 update = true;
             }
-            doc->history().addDelete(cur, 0);
+            // doc->history().addDelete(cur, 0);
             handled = true;
             break;
         }
@@ -415,7 +403,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             if (cur.hasSelection()) {
                 int count = cursorDeleteSelection(&cur);
                 if (count) {
-                    doc->history().addDelete(cur, count);
+                    // doc->history().addDelete(cur, count);
                 }
                 cur.clearSelection();
                 update = true;
@@ -437,7 +425,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             break;
         }
         case CMD_DELETE:
-            doc->history().addDelete(cur, 1);
+            // doc->history().addDelete(cur, 1);
             cursorEraseText(&cur, 1);
             update = true;
             handled = true;
@@ -447,7 +435,7 @@ bool processEditorCommand(command_t cmdt, char ch)
 
             bool repositionMainCursor = cur.relativePosition() == 0;
             if (cursorMovePosition(&cur, cursor_t::Left)) {
-                doc->history().addDelete(cur, 1);
+                // doc->history().addDelete(cur, 1);
                 cursorEraseText(&cur, 1);
             }
             update = true;
@@ -464,7 +452,7 @@ bool processEditorCommand(command_t cmdt, char ch)
 
         case CMD_SPLIT_LINE: {
 
-            doc->history().addSplit(cur);
+            // doc->history().addSplit(cur);
             cursorSplitBlock(&cur);
             update = true;
             handled = true;

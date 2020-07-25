@@ -171,6 +171,8 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         return false;
     }
 
+    struct cursor_position_t prevPos = cursor->_position;
+
     count--;
     size_t relativePosition = cursor->relativePosition();
 
@@ -487,18 +489,23 @@ int cursorDeleteSelection(struct cursor_t* cursor)
 
         struct block_t* next = startBlock->next;
 
-        std::string startText = startBlock->text().substr(0, cur.relativePosition()+1);
-        std::string newText = endBlock->text().substr(curEnd.relativePosition());
+        std::string startText = startBlock->text();
+        int startRel = cur.relativePosition()+1;
+        std::string newText = endBlock->text();
+        int endRel = curEnd.relativePosition();
+        endRel = endRel < newText.length() ? endRel : newText.length() - 1;
+
+            startText = startText.substr(0, startRel);        
+            newText = newText.substr(endRel);
+        
         if (startText.length() > 1) {
             startText.pop_back(); // drop newline
         }
         cur.block()->setText(startText + newText);
 
         int linesToDelete = endBlock->lineNumber - startBlock->lineNumber;
-        // delete blocks in-between
-        app_t::instance()->log("lines to delete %d", linesToDelete);
-
         int lineNumber = startBlock->lineNumber + 1;
+        app_t::instance()->log("lines to delete %d %d", lineNumber, linesToDelete);
         doc->removeBlockAtLineNumber(lineNumber, linesToDelete);
         // warning these deletes are not yet counted
 
@@ -514,6 +521,8 @@ int cursorDeleteSelection(struct cursor_t* cursor)
 
     cursor->_position = cur._position;
     cursor->_anchor = cursor->_position;
+
+    cursor->document()->update(true);
     return count;
 }
 

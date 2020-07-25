@@ -237,21 +237,6 @@ struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
         return nullBlock;
     }
 
-    // nullify cursors
-    /*
-    int _count = count;
-    std::vector<struct block_t>::iterator _it = it;
-    for(auto &c : cursors) {
-        while(_it != blocks.end() && count-- > 0) {
-            if (c.block() && (*_it).uid == c.block()->uid) {
-                c._position = cursor_position_t();
-                break;
-            }
-            _it++;
-        }
-    }
-    */
-    
     struct block_t& block = *it;
     blocks.erase(it, it + count);
     return block;
@@ -355,6 +340,13 @@ void document_t::updateCursor(struct cursor_t& cursor)
 
 void document_t::addCursor(struct cursor_t& cursor)
 {
+    // limitation... can't add cursor on the same block
+    for(auto &c : cursors) {
+        if (c.block()->uid == cursor.block()->uid) {
+            return;
+        }
+    }
+    
     struct cursor_t cur = cursor;
     cur.uid = cursorUid++;
     cursors.push_back(cur);

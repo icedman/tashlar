@@ -40,7 +40,6 @@ struct history_t {
     }
 
     std::vector<struct block_t> initialState;
-    // std::vector<struct cursor_edit_t> edits;
 
     std::vector<edit_batch_t> edits;
     edit_batch_t editBatch;
@@ -51,10 +50,10 @@ struct history_t {
     void end();
     void mark();
 
-    void addInsert(struct cursor_t& c, std::string text);
-    void addDelete(struct cursor_t& c, int count);
-    void addSplit(struct cursor_t& c);
-    void addBlockSnapshot(struct cursor_t& c);
+    void _addInsert(struct cursor_t& c, std::string text);
+    void _addDelete(struct cursor_t& c, int count);
+    void _addSplit(struct cursor_t& c);
+    void _addBlockSnapshot(struct cursor_t& c);
     void addPasteBuffer(struct cursor_t& c, std::shared_ptr<document_t> buffer);
     void replay();
 

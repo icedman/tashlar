@@ -26,7 +26,7 @@ void history_t::mark()
     }
 }
 
-void history_t::addInsert(struct cursor_t& cur, std::string t)
+void history_t::_addInsert(struct cursor_t& cur, std::string t)
 {
     editBatch.push_back({ .block_uid = cur.block()->uid,
         .cursor = cur,
@@ -34,7 +34,7 @@ void history_t::addInsert(struct cursor_t& cur, std::string t)
         .edit = EDIT_INSERT });
 }
 
-void history_t::addDelete(struct cursor_t& cur, int c)
+void history_t::_addDelete(struct cursor_t& cur, int c)
 {
     editBatch.push_back({ .block_uid = cur.block()->uid,
         .cursor = cur,
@@ -42,14 +42,14 @@ void history_t::addDelete(struct cursor_t& cur, int c)
         .edit = EDIT_DELETE });
 }
 
-void history_t::addSplit(struct cursor_t& cur)
+void history_t::_addSplit(struct cursor_t& cur)
 {
     editBatch.push_back({ .block_uid = cur.block()->uid,
         .cursor = cur,
         .edit = EDIT_SPLIT });
 }
 
-void history_t::addBlockSnapshot(struct cursor_t& cur)
+void history_t::_addBlockSnapshot(struct cursor_t& cur)
 {
     /*
     editBatch.push_back({ .cursor = cur,

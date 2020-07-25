@@ -492,6 +492,7 @@ void popup_t::onInput()
         for (auto& b : doc->blocks) {
             if (b.lineNumber == line - 1) {
                 cursor.setPosition(&b, b.position);
+                cursor.clearSelection();
                 doc->setCursor(cursor);
             }
         }
