@@ -202,7 +202,7 @@ int main(int argc, char** argv)
     // scripting
     //-------------------
     scripting_t::instance()->initialize();
- 
+
     //-------------------
     // keybinding
     //-------------------
@@ -427,12 +427,11 @@ int main(int argc, char** argv)
             continue;
         }
 
-        std::vector<struct cursor_t> cursors = doc->cursors;
+        std::vector<struct cursor_t>& cursors = doc->cursors;
         for (int i = 0; i < cursors.size(); i++) {
             struct cursor_t& cur = cursors[i];
 
             int advance = 0;
-
             if (cur.hasSelection()) {
                 int count = cursorDeleteSelection(&cur);
                 doc->history().addDelete(cur, count);
@@ -453,6 +452,19 @@ int main(int argc, char** argv)
             // update the block indices
             if (cursors.size() > 1 || !app_t::instance()->inputBuffer.length() || s == "\n") {
                 doc->update(advance != 0);
+            }
+
+            // handle when cursors are on the same block_t
+            if (advance != 0) {
+                for (int j = 0; j < cursors.size(); j++) {
+                    if (j == i)
+                        continue;
+                    struct cursor_t& cur2 = cursors[j];
+                    if (cur2.block() == cur.block() && cur2.relativePosition() > cur.relativePosition()) {
+                        cur2._position.position += advance;
+                        cur2._anchor = cur2._position;
+                    }
+                }
             }
 
             // popup completion

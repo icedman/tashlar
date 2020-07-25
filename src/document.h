@@ -40,23 +40,8 @@ struct bracket_info_t {
 };
 
 struct blockdata_t {
-    blockdata_t()
-        : dirty(true)
-        , folded(false)
-        , foldable(false)
-        , foldedBy(0)
-        , dots(0)
-        , indent(0)
-        , lastPrevBlockRule(0)
-    {
-    }
-
-    ~blockdata_t()
-    {
-        if (dots) {
-            free(dots);
-        }
-    }
+    blockdata_t();
+    ~blockdata_t();
 
     std::vector<span_info_t> spans;
     std::vector<bracket_info_t> foldingBrackets;
@@ -151,7 +136,6 @@ struct document_t {
 
     std::vector<std::string> tmpPaths;
     std::vector<struct history_t> snapShots;
-    std::vector<struct block_t*> garbageBlocks;
 
     bool runOn;
     bool dirty;

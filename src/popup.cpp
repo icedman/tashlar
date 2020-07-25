@@ -459,11 +459,11 @@ void popup_t::showCompletion()
     if (items.size()) {
         currentItem = -1;
         app->focused = this;
-        if (prevSize != items.size()) { 
+        if (prevSize != items.size()) {
             app->layout();
             app->render();
             app->refresh();
-        } 
+        }
     }
 }
 

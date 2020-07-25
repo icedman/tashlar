@@ -1,4 +1,5 @@
-# tashlar
+#tashlar 
+
 terminal version of the ashlar text editor
 
 https://asciinema.org/a/nu2uB4Q0Zz1waLQbynbzsabl1

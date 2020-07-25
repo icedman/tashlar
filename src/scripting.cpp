@@ -1,7 +1,7 @@
 
 extern "C" {
-#include "quickjs.h"
 #include "quickjs-libc.h"
+#include "quickjs.h"
 }
 
 #include "app.h"
@@ -18,8 +18,8 @@ extern "C" {
 
 static struct scripting_t* scriptingInstance = 0;
 
-static JSRuntime *rt = 0;
-static JSContext *ctx = 0;
+static JSRuntime* rt = 0;
+static JSContext* ctx = 0;
 
 struct command_script_map_t {
     char* name;
@@ -142,13 +142,13 @@ scripting_t::~scripting_t()
     JS_FreeRuntime(rt);
 }
 
-static JSValue js_log(JSContext *ctx, JSValueConst this_val,
-                        int argc, JSValueConst *argv)
+static JSValue js_log(JSContext* ctx, JSValueConst this_val,
+    int argc, JSValueConst* argv)
 {
     int i;
-    const char *str;
-    
-    for(i = 0; i < argc; i++) {
+    const char* str;
+
+    for (i = 0; i < argc; i++) {
         str = JS_ToCString(ctx, argv[i]);
         if (!str)
             return JS_EXCEPTION;
@@ -158,13 +158,13 @@ static JSValue js_log(JSContext *ctx, JSValueConst this_val,
     return JS_UNDEFINED;
 }
 
-static JSValue js_runFile(JSContext *ctx, JSValueConst this_val,
-                        int argc, JSValueConst *argv)
+static JSValue js_runFile(JSContext* ctx, JSValueConst this_val,
+    int argc, JSValueConst* argv)
 {
     int i;
-    const char *str;
-    
-    for(i = 0; i < argc; i++) {
+    const char* str;
+
+    for (i = 0; i < argc; i++) {
         str = JS_ToCString(ctx, argv[i]);
         if (!str)
             return JS_EXCEPTION;
@@ -174,21 +174,23 @@ static JSValue js_runFile(JSContext *ctx, JSValueConst this_val,
     return JS_UNDEFINED;
 }
 
-static JSValue js_command(JSContext *ctx, JSValueConst this_val,
-                        int argc, JSValueConst *argv)
+static JSValue js_command(JSContext* ctx, JSValueConst this_val,
+    int argc, JSValueConst* argv)
 {
     int i;
-    const char *str = 0;
+    const char* str = 0;
     std::string cmdName;
     std::string cmdArgs;
-        
-    for(i = 0; i < argc; i++) {
+
+    for (i = 0; i < argc; i++) {
         str = JS_ToCString(ctx, argv[i]);
         if (!str)
             return JS_EXCEPTION;
 
-        if (i == 0) cmdName = str;
-        if (i == 1) cmdArgs = str;
+        if (i == 0)
+            cmdName = str;
+        if (i == 1)
+            cmdArgs = str;
 
         JS_FreeCString(ctx, str);
     }
@@ -206,13 +208,13 @@ static JSValue js_command(JSContext *ctx, JSValueConst this_val,
     return JS_UNDEFINED;
 }
 
-static JSValue js_theme(JSContext *ctx, JSValueConst this_val,
-                        int argc, JSValueConst *argv)
+static JSValue js_theme(JSContext* ctx, JSValueConst this_val,
+    int argc, JSValueConst* argv)
 {
     int i;
-    const char *themeName;
-    
-    for(i = 0; i < argc; i++) {
+    const char* themeName;
+
+    for (i = 0; i < argc; i++) {
         themeName = JS_ToCString(ctx, argv[i]);
         if (!themeName)
             return JS_EXCEPTION;
@@ -242,9 +244,9 @@ void scripting_t::initialize()
     js_std_add_helpers(ctx, 0, 0);
 
     JSValue global_obj, app;
-    
+
     global_obj = JS_GetGlobalObject(ctx);
-    
+
     app = JS_NewObject(ctx);
     JS_SetPropertyStr(ctx, app, "log", JS_NewCFunction(ctx, js_log, "log", 1));
     JS_SetPropertyStr(ctx, app, "theme", JS_NewCFunction(ctx, js_theme, "theme", 1));

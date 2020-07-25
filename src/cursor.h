@@ -9,11 +9,14 @@ struct document_t;
 struct block_t;
 struct cursor_t;
 
-struct cursor_position_t
-{
-    cursor_position_t() : block(0), position(0) {}
+struct cursor_position_t {
+    cursor_position_t()
+        : block(0)
+        , position(0)
+    {
+    }
 
-    struct block_t *block;
+    struct block_t* block;
     int position;
 
     size_t absolutePosition();
@@ -50,8 +53,8 @@ struct cursor_t {
     bool hasSelection();
     bool isNull();
 
-    void setPosition(struct block_t *block, size_t position);
-    void setAnchor(struct block_t *block, size_t anchor);
+    void setPosition(struct block_t* block, size_t position);
+    void setAnchor(struct block_t* block, size_t anchor);
 
     size_t position();
     size_t anchorPosition();

@@ -27,5 +27,7 @@ tm-parser
 libs
 out.cpp
 
+tests/results/*
+
 lua-*
 quickjs-*

@@ -57,7 +57,7 @@ static struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
         if (span.length == 0) {
             continue;
         }
-        if (pos >= span.start  && pos < span.start + span.length ) {
+        if (pos >= span.start && pos < span.start + span.length) {
             res = span;
             if (res.state != BLOCK_STATE_UNKNOWN) {
                 return res;
@@ -669,7 +669,8 @@ void editor_t::matchBracketsUnderCursor()
 struct bracket_info_t editor_t::bracketAtCursor(struct cursor_t& cursor)
 {
     bracket_info_t b;
-    b.bracket = -1;;
+    b.bracket = -1;
+    ;
 
     struct block_t* block = cursor.block();
     if (!block) {

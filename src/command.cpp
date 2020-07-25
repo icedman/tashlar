@@ -245,7 +245,7 @@ bool processEditorCommand(command_t cmdt, char ch)
         switch (cmd) {
         case CMD_BACKSPACE:
         case CMD_SPLIT_LINE: {
-            for(auto &b : doc->blocks) {
+            for (auto& b : doc->blocks) {
                 if (b.uid == blockIds[i]) {
                     cur.setPosition(&b, cur.relativePosition());
                     cur._anchor = cur._position;
@@ -402,7 +402,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             break;
 
         case CMD_BACKSPACE: {
-            
+
             bool repositionMainCursor = cur.relativePosition() == 0;
             if (cursorMovePosition(&cur, cursor_t::Left)) {
                 doc->history().addDelete(cur, 1);
@@ -443,9 +443,21 @@ bool processEditorCommand(command_t cmdt, char ch)
             break;
         }
 
-        doc->update(update && advance != 0);        
+        // multi-cursor on the same block
+        if (advance < 0) {
+            for (int j = 0; j < cursors.size(); j++) {
+                if (j == i)
+                    continue;
+                struct cursor_t& cur2 = cursors[j];
+                if (cur2.block() == cur.block() && cur2.relativePosition() > cur.relativePosition()) {
+                    cur2._position.position += advance;
+                    cur2._anchor = cur2._position;
+                }
+            }
+        }
+
+        doc->update(update && advance != 0);
         doc->updateCursor(cur);
-            
     }
 
     if (markHistory) {
@@ -456,6 +468,5 @@ bool processEditorCommand(command_t cmdt, char ch)
         doc->addSnapshot();
     }
 
-    
     return handled;
 }

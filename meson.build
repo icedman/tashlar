@@ -9,26 +9,26 @@ cc = meson.get_compiler('cpp')
 add_global_arguments('-D_XOPEN_SOURCE_EXTENDED=1', language: 'cpp')
 
 tashlar_files = [
-    'main.cpp',
-    'app.cpp',
-    'command.cpp',
-    'cursor.cpp',
-    'document.cpp',
-    'dots.cpp',
-    'editor.cpp',
-    'explorer.cpp',
-    'extension.cpp',
-    'gutter.cpp',
-    'history.cpp',
-    'keybinding.cpp',
-    'minimap.cpp',
-    'popup.cpp',
-    'search.cpp',
-    'statusbar.cpp',
-    'scripting.cpp',
-    'tabbar.cpp',
-    'util.cpp',
-    'window.cpp'
+    'src/main.cpp',
+    'src/app.cpp',
+    'src/command.cpp',
+    'src/cursor.cpp',
+    'src/document.cpp',
+    'src/dots.cpp',
+    'src/editor.cpp',
+    'src/explorer.cpp',
+    'src/extension.cpp',
+    'src/gutter.cpp',
+    'src/history.cpp',
+    'src/keybinding.cpp',
+    'src/minimap.cpp',
+    'src/popup.cpp',
+    'src/search.cpp',
+    'src/statusbar.cpp',
+    'src/scripting.cpp',
+    'src/tabbar.cpp',
+    'src/util.cpp',
+    'src/window.cpp'
 ]
 
 curses_dep = dependency('ncursesw', required: true, disabler: true)

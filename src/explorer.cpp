@@ -234,11 +234,11 @@ void explorer_t::render()
         if (file->isDirectory) {
             wattron(win, COLOR_PAIR(colorPairIndicator));
 
-            #ifdef ENABLE_UTF8
+#ifdef ENABLE_UTF8
             waddwstr(win, file->expanded ? L"\u2191" : L"\u2192");
-            #else
+#else
             waddch(win, file->expanded ? '-' : '+');
-            #endif
+#endif
 
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             wattron(win, COLOR_PAIR(pair));

@@ -115,11 +115,11 @@ void minimap_t::render()
         if (currentLine >= b.lineNumber && currentLine < b.lineNumber + 4) {
             wattron(win, A_BOLD);
             wattron(win, COLOR_PAIR(colorPairIndicator));
-            #ifdef ENABLE_UTF8
+#ifdef ENABLE_UTF8
             waddwstr(win, L"\u2192");
-            #else
+#else
             waddch(win, '>');
-            #endif
+#endif
             wattroff(win, COLOR_PAIR(colorPairIndicator));
             // wattron(win, A_REVERSE);
         } else {
@@ -137,9 +137,9 @@ void minimap_t::render()
             // }
 
             wattron(win, COLOR_PAIR(pair));
-            #ifdef ENABLE_UTF8
+#ifdef ENABLE_UTF8
             waddwstr(win, wcharFromDots(b.data->dots[x]));
-            #endif
+#endif
             wattroff(win, COLOR_PAIR(pair));
 
             if (x >= viewWidth - 1) {

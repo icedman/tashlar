@@ -14,6 +14,29 @@
 #define LINUX_LINE_END "\n"
 
 static size_t blocksCount = 0;
+static size_t leakWatchCount = 0;
+
+blockdata_t::blockdata_t()
+    : dirty(true)
+    , folded(false)
+    , foldable(false)
+    , foldedBy(0)
+    , dots(0)
+    , indent(0)
+    , lastPrevBlockRule(0)
+{
+    leakWatchCount++;
+}
+
+blockdata_t::~blockdata_t()
+{
+    if (dots) {
+        free(dots);
+    }
+
+    leakWatchCount--;
+    app_t::instance()->log("in memory %d", leakWatchCount);
+}
 
 block_t::block_t()
     : uid(0)
@@ -127,7 +150,7 @@ bool document_t::open(const char* path)
         b.originalLineNumber = lineNo++;
         b.filePosition = pos;
 
-        if (line.length() && line[line.length()-1] == '\r') {
+        if (line.length() && line[line.length() - 1] == '\r') {
             line.pop_back();
             offset++;
             windowsLineEnd = true;
@@ -236,13 +259,13 @@ void document_t::addSnapshot()
 
 void document_t::undo()
 {
-    for(int i=0;i<2;i++) { // happens with aggressive snapshots like indent
+    for (int i = 0; i < 2; i++) { // happens with aggressive snapshots like indent
         if (snapShots.size() > 1 && history().edits.size() == 0) {
             snapShots.pop_back();
             continue;
         }
         break;
-    } 
+    }
 
     struct history_t& _history = history();
     _history.mark();
@@ -311,7 +334,7 @@ void document_t::updateCursor(struct cursor_t& cursor)
         if (c.uid == cursor.uid) {
             c._position = cursor._position;
             c._anchor = cursor._anchor;
-             break;
+            break;
         }
     }
 }
@@ -335,8 +358,6 @@ void document_t::clearCursors()
 
     cursors.clear();
     cursors.push_back(cursor);
-
-    garbageBlocks.clear();
 }
 
 void document_t::clearSelections()
@@ -422,8 +443,6 @@ void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<docum
         b.length = bb.length;
         bufferBlocks.push_back(b);
     }
-    blocks.insert(blocks.begin()+ln, make_move_iterator(bufferBlocks.begin()), make_move_iterator(bufferBlocks.end()));
+    blocks.insert(blocks.begin() + ln, make_move_iterator(bufferBlocks.begin()), make_move_iterator(bufferBlocks.end()));
     update(true);
 }
-
-

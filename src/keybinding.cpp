@@ -420,8 +420,8 @@ int readKey(std::string& keySequence)
             // hack for repeated key presses
             if (c > 255 || !isprint(c)) {
                 char drop;
-                while(kbhit(100)) {
-                    read(STDIN_FILENO, &drop, 1);            
+                while (kbhit(100)) {
+                    read(STDIN_FILENO, &drop, 1);
                 }
                 return -1;
             }
