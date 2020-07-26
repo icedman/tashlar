@@ -504,16 +504,13 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         int startRel = cur.relativePosition() + 1;
         std::string newText = endBlock->text();
         int endRel = curEnd.relativePosition();
-        endRel = endRel < newText.length() ? endRel : newText.length() - 1;
+        endRel = endRel < newText.length() ? endRel : newText.length();
+        endRel ++;
 
         //app_t::instance()->log("execute delete %d %d", startRel, endRel);
 
         startText = startText.substr(0, startRel);
-        if (endRel > 0) {
-            newText = (newText + " ").substr(endRel);
-        } else {
-            newText = "";
-        }
+        newText = (newText + " ").substr(endRel); 
 
         if (startText.length() > 1) {
             startText.pop_back(); // drop newline

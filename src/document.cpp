@@ -258,17 +258,7 @@ void document_t::addSnapshot()
 }
 
 void document_t::undo()
-{
-    /*
-    for (int i = 0; i < 2; i++) { // happens with aggressive snapshots like indent
-        if (snapShots.size() > 1 && history().edits.size() == 0) {
-            snapShots.pop_back();
-            continue;
-        }
-        break;
-    }
-    }*/
-
+{ 
     struct history_t& _history = history();
     _history.mark();
 
@@ -286,7 +276,6 @@ void document_t::undo()
 void document_t::close()
 {
     file.close();
-
     app_t::instance()->log("file closed %s", filePath.c_str());
     for (auto tmpPath : tmpPaths) {
         app_t::instance()->log("temporary file freed %s", tmpPath.c_str());
@@ -380,6 +369,11 @@ void document_t::clearSelections()
 void document_t::update(bool force)
 {
     // TODO: This is used all over.. perpetually improve (update only changed)
+    // 1. lineNumbers must always be updated
+    // 2. b.position .. may probably be dispensed with.. as edits now deal wil relative positions
+    // 3. next & prev must be updated (perhaps at insertion/deletion)
+    // 4. length must be updated 
+
     if (!dirty && !force) {
         return;
     }
@@ -398,9 +392,11 @@ void document_t::update(bool force)
         b.previous = prev;
         b.next = NULL;
 
+        /*
         if (b.content.length()) {
             b.length = b.content.length() + 1;
         }
+        */
 
         b.position = pos;
         b.lineNumber = l++;

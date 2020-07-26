@@ -77,8 +77,7 @@ struct block_t {
     size_t renderedLine;
 
     std::string content;
-    size_t length;
-
+ 
     std::ifstream* file;
     size_t filePosition;
 
@@ -92,6 +91,8 @@ struct block_t {
     std::string text();
     void setText(std::string t);
     bool isValid();
+    
+    size_t length; 
 };
 
 struct document_t {
