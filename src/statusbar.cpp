@@ -46,7 +46,9 @@ void statusbar_t::render()
     // setText(doc->fileName, 0);
 
     static char tmp[512];
-    // sprintf(tmp, "History %d/%d", (int)doc->snapShots.size(), (int)doc->snapShots.back().edits.size());
+    sprintf(tmp, "History %d/%d", (int)doc->snapShots.size(), (int)doc->snapShots.back().edits.size());
+     setText(tmp, -5);
+
     sprintf(tmp, "%s", doc->windowsLineEnd ? "CR/LF" : "LF");
     setText(tmp, -4);
 

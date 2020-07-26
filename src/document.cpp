@@ -223,7 +223,7 @@ struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
     if (blocks.size() < 2) {
         return nullBlock;
     }
-
+ 
     std::vector<struct block_t>::iterator it = blocks.begin();
     if (line > 0) {
         if (line >= blocks.size()) {
@@ -259,6 +259,7 @@ void document_t::addSnapshot()
 
 void document_t::undo()
 {
+    /*
     for (int i = 0; i < 2; i++) { // happens with aggressive snapshots like indent
         if (snapShots.size() > 1 && history().edits.size() == 0) {
             snapShots.pop_back();
@@ -266,6 +267,7 @@ void document_t::undo()
         }
         break;
     }
+    }*/
 
     struct history_t& _history = history();
     _history.mark();
@@ -273,7 +275,7 @@ void document_t::undo()
     blocks = history().initialState;
     update(true);
     clearCursors();
-    ;
+    
     _history.replay();
 
     update(true);

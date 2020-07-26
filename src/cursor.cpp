@@ -16,7 +16,6 @@ size_t cursor_position_t::absolutePosition()
 
 cursor_t::cursor_t()
     : uid(0)
-    , _docUpdateUid(0)
     , _document(0)
     , _preferredRelativePosition(0)
 {
@@ -427,7 +426,7 @@ int cursorEraseText(struct cursor_t* cursor, int c)
     if (cursor->relativePosition() >= blockText.length()) {
         if (block->next) {
             blockText += block->next->text();
-            cursor->document()->removeBlockAtLineNumber(block->next->lineNumber);
+            cursor->document()->removeBlockAtLineNumber(block->next->lineNumber); 
             cursor->document()->update(true);
         }
     } else {
@@ -479,9 +478,7 @@ int cursorDeleteSelection(struct cursor_t* cursor)
     struct document_t* doc = cursor->document();
     struct cursor_t cur = cursor->selectionStartCursor();
     struct cursor_t curEnd = cursor->selectionEndCursor();
-
-    cursor->document()->history()._addDeleteSelection(cur, curEnd);
-
+ 
     // for selection spanning multiple blocks
     struct block_t* startBlock = cur.block();
     struct block_t* endBlock = curEnd.block();
@@ -493,6 +490,8 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         return 0;
     }
 
+    cursor->document()->history()._addDeleteSelection(cur, curEnd);
+
     if (startBlock != endBlock) {
         int count = 0;
 
@@ -502,14 +501,15 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         int startRel = cur.relativePosition() + 1;
         std::string newText = endBlock->text();
         int endRel = curEnd.relativePosition();
-        endRel = endRel < newText.length() ? endRel : newText.length() - 1;
-        if (endRel < 0)
-            endRel = 0;
-        // app_t::instance()->log("delete %d %d", startRel, endRel);
+        endRel = endRel < newText.length() ? endRel : newText.length() - 1; 
+        
+        //app_t::instance()->log("execute delete %d %d", startRel, endRel);
 
         startText = startText.substr(0, startRel);
         if (endRel > 0) {
             newText = (newText + " ").substr(endRel);
+        } else {
+            newText = "";
         }
 
         if (startText.length() > 1) {
@@ -519,7 +519,7 @@ int cursorDeleteSelection(struct cursor_t* cursor)
 
         int linesToDelete = endBlock->lineNumber - startBlock->lineNumber;
         int lineNumber = startBlock->lineNumber + 1;
-        //app_t::instance()->log("lines to delete %d %d", lineNumber, linesToDelete);
+        //app_t::instance()->log("lines to delete %d %d", lineNumber, linesToDelete);; 
         doc->removeBlockAtLineNumber(lineNumber, linesToDelete);
         // warning these deletes are not yet counted
 
@@ -530,9 +530,14 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         return count;
     }
 
-    int count = curEnd.position() - cur.position() + 1;
-    cursorEraseText(&cur, count);
-    //app_t::instance()->log("delete %d %d", cur.position(), count);
+    int count = curEnd.relativePosition() - cur.relativePosition() + 1;
+
+    std::string startText = startBlock->text();
+    int startRel = cur.relativePosition(); 
+    startText.erase(startRel, count);
+    startBlock->setText(startText);  
+    
+    // app_t::instance()->log("execute delete %d %d", cur.position(), count);
     cursor->_position = cur._position;
     cursor->_anchor = cursor->_position;
 

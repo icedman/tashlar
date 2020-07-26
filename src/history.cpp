@@ -45,6 +45,17 @@ void history_t::_addInsert(struct cursor_t& cur, std::string t)
         mark();
 }
 
+void history_t::_addSplit(struct cursor_t& cur)
+{
+    if (inReplay) {
+        return;
+    }
+
+    editBatch.push_back({ .blockUid = cur.block()->uid,
+        .cursor = cur,
+        .edit = EDIT_SPLIT });
+}
+
 void history_t::_addDelete(struct cursor_t& cur, int c)
 {
     if (inReplay) {
@@ -65,23 +76,27 @@ void history_t::_addDeleteSelection(struct cursor_t& cur, struct cursor_t& curEn
 
     // todo.. fix this somewhere
     curEnd._document = cur._document;
+    app_t::instance()->log("add %d %d", cur.position(), curEnd.position());
 
     editBatch.push_back({ .blockUid = cur.block()->uid, 
         .cursor = cur,
         .blockEndUid = curEnd.block()->uid,
         .cursorEnd = curEnd, 
         .edit = EDIT_DELETE_SELECTION });
+
+    app_t::instance()->log("%d", editBatch.size());
 }
 
-void history_t::_addSplit(struct cursor_t& cur)
+void history_t::_addDeleteBlock(struct cursor_t& cur, size_t blockUid, size_t count)
 {
     if (inReplay) {
         return;
     }
 
-    editBatch.push_back({ .blockUid = cur.block()->uid,
+    editBatch.push_back({ .blockUid = blockUid,
         .cursor = cur,
-        .edit = EDIT_SPLIT });
+        .count = count, 
+        .edit = EDIT_DELETE_BLOCK });
 }
 
 void history_t::_addBlockSnapshot(struct cursor_t& cur)
@@ -116,7 +131,22 @@ static bool rebaseCursor(size_t blockUid, struct cursor_t& cur)
         }
     }
 
+    app_t::instance()->log("unable to rebase");
     return false;
+}
+
+static int blockLineNumber(size_t blockUid, struct cursor_t& cur)
+{
+    struct document_t* doc = cur.document();
+
+    for (auto& b : doc->blocks) {
+        if (b.uid == blockUid) { 
+            return b.lineNumber;
+        }
+    }
+
+    app_t::instance()->log("unable to find block");
+    return -1;
 }
 
 void history_t::replay()
@@ -151,9 +181,16 @@ void history_t::replay()
                     inReplay = false;
                     return;
                 }
-                e.cursor._anchor = e.cursorEnd._position;
+                e.cursor._anchor = e.cursorEnd._position; 
                 cursorDeleteSelection(&e.cursor);
                 break;
+            case EDIT_DELETE_BLOCK: {
+                int lineNumber = blockLineNumber(e.blockUid, e.cursor);
+                if (lineNumber != -1){
+                    e.cursor.document()->removeBlockAtLineNumber(lineNumber, e.count);
+                } 
+                break;
+            }
             case EDIT_SPLIT:
                 cursorSplitBlock(&e.cursor);
                 break;
@@ -166,6 +203,7 @@ void history_t::replay()
             }
 
             e.cursor.block()->data = nullptr;
+            e.cursor.document()->update(true);
             e.cursor.document()->setCursor(e.cursor);
         }
     }

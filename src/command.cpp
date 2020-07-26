@@ -132,8 +132,9 @@ bool processEditorCommand(command_t cmdt, char ch)
         return true;
 
     case CMD_DELETE_LINE:
-        app->commandBuffer.push_back(CMD_SELECT_LINE);
-        app->commandBuffer.push_back(CMD_DELETE); 
+        app->commandBuffer.push_back(CMD_SELECT_LINE);  
+        app->commandBuffer.push_back(CMD_DELETE);
+        app->commandBuffer.push_back(CMD_DELETE);
         return true;
 
     case CMD_MOVE_LINE_UP:
@@ -396,10 +397,7 @@ bool processEditorCommand(command_t cmdt, char ch)
 
         case CMD_DELETE_SELECTION:
             if (cur.hasSelection()) {
-                int count = cursorDeleteSelection(&cur);
-                if (count) {
-                    // doc->history().addDelete(cur, count);
-                }
+                cursorDeleteSelection(&cur);
                 cur.clearSelection();
                 update = true;
                 break;
@@ -420,17 +418,14 @@ bool processEditorCommand(command_t cmdt, char ch)
             break;
         }
         case CMD_DELETE:
-            // doc->history().addDelete(cur, 1);
             cursorEraseText(&cur, 1);
             update = true;
             handled = true;
             break;
 
         case CMD_BACKSPACE: {
-
             bool repositionMainCursor = cur.relativePosition() == 0;
             if (cursorMovePosition(&cur, cursor_t::Left)) {
-                // doc->history().addDelete(cur, 1);
                 cursorEraseText(&cur, 1);
             }
             update = true;
@@ -445,9 +440,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             break;
         }
 
-        case CMD_SPLIT_LINE: {
-
-            // doc->history().addSplit(cur);
+        case CMD_SPLIT_LINE: {; 
             cursorSplitBlock(&cur);
             update = true;
             handled = true;
