@@ -27,6 +27,7 @@ struct popup_t : public window_t {
     popup_t()
         : window_t(true)
         , currentItem(-1)
+        , historyIndex(0)
         , request(0)
     {
         focusable = true;
@@ -54,6 +55,10 @@ struct popup_t : public window_t {
     struct cursor_t cursor;
     std::vector<struct item_t> items;
     std::vector<struct item_t> commandItems;
+
+    int historyIndex;
+    std::vector<std::string> commandHistory;
+    std::vector<std::string> searchHistory;
 
     int request;
     int searchDirection;

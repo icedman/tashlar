@@ -35,14 +35,11 @@ void history_t::_addInsert(struct cursor_t& cur, std::string t)
     if (inReplay) {
         return;
     }
-
+ 
     editBatch.push_back({ .blockUid = cur.block()->uid,
         .cursor = cur,
         .text = t,
-        .edit = EDIT_INSERT });
-
-    if (t == " ")
-        mark();
+        .edit = EDIT_INSERT }); 
 }
 
 void history_t::_addSplit(struct cursor_t& cur)
@@ -74,8 +71,9 @@ void history_t::_addDeleteSelection(struct cursor_t& cur, struct cursor_t& curEn
         return;
     }
 
-    // todo.. fix this somewhere
+    // todo.. fix this at cursor code
     curEnd._document = cur._document;
+
     app_t::instance()->log("add %d %d", cur.position(), curEnd.position());
 
     editBatch.push_back({ .blockUid = cur.block()->uid, 
@@ -131,7 +129,7 @@ static bool rebaseCursor(size_t blockUid, struct cursor_t& cur)
         }
     }
 
-    app_t::instance()->log("unable to rebase");
+    app_t::instance()->log("unable to rebase %d", blockUid);
     return false;
 }
 
@@ -193,6 +191,7 @@ void history_t::replay()
             }
             case EDIT_SPLIT:
                 cursorSplitBlock(&e.cursor);
+                e.cursor.block()->uid = e.newBlockUid; 
                 break;
             case EDIT_PASTE_BUFFER:
                 e.cursor.document()->insertFromBuffer(e.cursor, e.buffer);

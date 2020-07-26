@@ -415,6 +415,9 @@ bool processEditorCommand(command_t cmdt, char ch)
             cur._anchor = cur._position;
             update = true;
             handled = true;
+            if (cmdt.args == " ") {
+                markHistory = true;
+            }
             break;
         }
         case CMD_DELETE:

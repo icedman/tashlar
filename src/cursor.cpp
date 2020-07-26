@@ -214,7 +214,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         search_results = search_t::instance()->findWords(block.text());
     }
 
-    app_t::instance()->log("block %d position: %d", cursor->block()->lineNumber, cursor->relativePosition());
+    // app_t::instance()->log("block %d position: %d", cursor->block()->lineNumber, cursor->relativePosition());
 
     switch (move) {
     case cursor_t::Move::Left:
@@ -250,8 +250,8 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
             return false;
         }
 
-        while (relativePosition > viewWidth) {
-            relativePosition -= viewWidth;
+        while (relativePosition + viewWidth < block.previous->length) {
+            relativePosition += viewWidth;
         }
         cursor->setPosition(block.previous, relativePosition);
         break;
@@ -345,7 +345,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
         cursorMovePosition(cursor, move, keepAnchor, count);
     }
 
-    app_t::instance()->log("new block %d position: %d", cursor->block()->lineNumber, cursor->relativePosition());
+    // app_t::instance()->log("new block %d position: %d", cursor->block()->lineNumber, cursor->relativePosition());
     return true;
 }
 
@@ -467,6 +467,9 @@ void cursorSplitBlock(struct cursor_t* cursor)
     newBlock.setText(block2);
     cursor->setPosition(&newBlock, 0);
     cursor->setAnchor(&newBlock, 0);
+
+    struct cursor_edit_t &edit = cursor->document()->history().editBatch.back();
+    edit.newBlockUid = newBlock.uid;
 }
 
 int cursorDeleteSelection(struct cursor_t* cursor)

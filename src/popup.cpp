@@ -577,6 +577,9 @@ void popup_t::onSubmit()
             return;
         }
 
+        searchHistory.push_back(text);
+        historyIndex = 0;
+
         struct cursor_t cur = cursor;
         bool found = cursorFindWord(&cursor, text, searchDirection);
         if (!found) {
@@ -611,7 +614,7 @@ void popup_t::onSubmit()
 
     if (type == POPUP_COMPLETION && currentItem >= 0 && currentItem < items.size()) {
         struct item_t& item = items[currentItem];
-        // app->log("insert %s", item.name.c_str());
+        app->log("insert %s", item.name.c_str());
         if (cursorMovePosition(&cursor, cursor_t::Move::Left)) {
             cursorSelectWord(&cursor);
             cursorDeleteSelection(&cursor);
@@ -624,13 +627,21 @@ void popup_t::onSubmit()
     }
 
     if (type == POPUP_COMMANDS) {
-        if (text.length() && text[0] == ':') {
+
+        if (text.length()) {
+        
+        commandHistory.push_back(text);
+        historyIndex = 0;
+
+        if (text[0] == ':') {
             std::string script = text;
             script.erase(script.begin(), script.begin() + 1);
             scripting_t::instance()->runScript(script);
         } else if (items.size() && currentItem >= 0 && currentItem < items.size()) {
             struct item_t& item = items[currentItem];
             scripting_t::instance()->runScript(item.script);
+        }
+
         }
         hide();
     }

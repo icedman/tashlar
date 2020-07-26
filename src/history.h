@@ -28,6 +28,7 @@ struct cursor_edit_t {
     struct cursor_t cursor;
     size_t blockEndUid;
     struct cursor_t cursorEnd;
+    size_t newBlockUid;
     std::string text;
     int count;
     cursor_edit_e edit;
