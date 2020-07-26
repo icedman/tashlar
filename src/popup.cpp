@@ -421,6 +421,7 @@ void popup_t::showCompletion()
     if (doc->cursors.size() == 1) {
         if (cursorMovePosition(&cursor, cursor_t::Move::Left)) {
             cursorSelectWord(&cursor);
+            // cursor.flipAnchor();
             prefix = cursor.selectedText();
             if (prefix.length() > 2) {
                 // cursor.position = cursor.anchorPosition;

@@ -623,7 +623,7 @@ bool editor_t::processCommand(command_t cmdt, char ch)
     }
 
     // proceed only if got focus
-    if (!isFocused()) {
+    if (!isFocused() && cmd != CMD_INSERT) {
         return false;
     }
 

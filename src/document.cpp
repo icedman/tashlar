@@ -224,7 +224,6 @@ struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
         return nullBlock;
     }
 
-    
     std::vector<struct block_t>::iterator it = blocks.begin();
     if (line > 0) {
         if (line >= blocks.size()) {
@@ -247,9 +246,11 @@ void document_t::addSnapshot()
     // app_t::instance()->log("addSnapshot");
 
     // discard any unmarked edits
+    /*
     if (snapShots.size()) {
         snapShots.back().editBatch.clear();
     }
+    */
 
     struct history_t _history;
     _history.initialize(this);
@@ -272,8 +273,9 @@ void document_t::undo()
     blocks = history().initialState;
     update(true);
     clearCursors();
-
+    ;
     _history.replay();
+
     update(true);
 
     clearSelections();
@@ -341,12 +343,12 @@ void document_t::updateCursor(struct cursor_t& cursor)
 void document_t::addCursor(struct cursor_t& cursor)
 {
     // limitation... can't add cursor on the same block
-    for(auto &c : cursors) {
+    for (auto& c : cursors) {
         if (c.block()->uid == cursor.block()->uid) {
             return;
         }
     }
-    
+
     struct cursor_t cur = cursor;
     cur.uid = cursorUid++;
     cursors.push_back(cur);

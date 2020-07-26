@@ -6,17 +6,21 @@
 void history_t::begin()
 {
     paused = true;
+    didMark = false;
 }
 
 void history_t::end()
 {
     paused = false;
-    mark();
+    if (didMark) {
+        mark();
+    }
 }
 
 void history_t::mark()
 {
     if (paused) {
+        didMark = true;
         return;
     }
 
@@ -28,23 +32,54 @@ void history_t::mark()
 
 void history_t::_addInsert(struct cursor_t& cur, std::string t)
 {
-    editBatch.push_back({ .block_uid = cur.block()->uid,
+    if (inReplay) {
+        return;
+    }
+
+    editBatch.push_back({ .blockUid = cur.block()->uid,
         .cursor = cur,
         .text = t,
         .edit = EDIT_INSERT });
+
+    if (t == " ")
+        mark();
 }
 
 void history_t::_addDelete(struct cursor_t& cur, int c)
 {
-    editBatch.push_back({ .block_uid = cur.block()->uid,
+    if (inReplay) {
+        return;
+    }
+
+    editBatch.push_back({ .blockUid = cur.block()->uid,
         .cursor = cur,
         .count = c,
         .edit = EDIT_DELETE });
 }
 
+void history_t::_addDeleteSelection(struct cursor_t& cur, struct cursor_t& curEnd)
+{
+    if (inReplay) {
+        return;
+    }
+
+    // todo.. fix this somewhere
+    curEnd._document = cur._document;
+
+    editBatch.push_back({ .blockUid = cur.block()->uid, 
+        .cursor = cur,
+        .blockEndUid = curEnd.block()->uid,
+        .cursorEnd = curEnd, 
+        .edit = EDIT_DELETE_SELECTION });
+}
+
 void history_t::_addSplit(struct cursor_t& cur)
 {
-    editBatch.push_back({ .block_uid = cur.block()->uid,
+    if (inReplay) {
+        return;
+    }
+
+    editBatch.push_back({ .blockUid = cur.block()->uid,
         .cursor = cur,
         .edit = EDIT_SPLIT });
 }
@@ -63,43 +98,25 @@ void history_t::addPasteBuffer(struct cursor_t& cur, std::shared_ptr<document_t>
     paused = false;
     mark();
 
-    editBatch.push_back({ .block_uid = cur.block()->uid,
+    editBatch.push_back({ .blockUid = cur.block()->uid,
         .cursor = cur,
         .edit = EDIT_PASTE_BUFFER,
         .buffer = buffer });
 }
 
-static bool rebaseCursor(cursor_edit_t edit, struct cursor_t& cur)
+static bool rebaseCursor(size_t blockUid, struct cursor_t& cur)
 {
-    /*
     struct document_t* doc = cur.document();
-    struct block_t* block;
+
     for (auto& b : doc->blocks) {
-        if (b.lineNumber == cur._block->lineNumber) {
-            block = &b;
-        }
-        if (b.uid == edit.block_uid) {
-            // app_t::instance()->log("rebased %d", b.uid);
-            cur._block = &b;
-            cur._position = b.position + cur._relativePosition;
-            if (cur._relativePosition > b.position + b.length - 1) {
-                cur._relativePosition = b.position + b.length - 1;
-            }
-            cur._anchorPosition = cur._position;
-            cur.update();
+        if (b.uid == blockUid) {
+            cur.setPosition(&b, cur.relativePosition());
+            cur._anchor = cur._position;
             return true;
         }
     }
 
-    // app_t::instance()->log("failed to rebase %d %d .. try at line", edit.block_uid, (int)edit.edit);
-    cur._block = block;
-    cur._position = block->position + cur._relativePosition;
-    if (cur._relativePosition > block->position + block->length - 1) {
-        cur._relativePosition = block->position + block->length - 1;
-    }
-    cur._anchorPosition = cur._position;
-    */
-    return true;
+    return false;
 }
 
 void history_t::replay()
@@ -108,13 +125,15 @@ void history_t::replay()
         return;
     }
 
+    inReplay = true;
     edit_batch_t last = edits.back();
     edits.pop_back();
 
     for (auto batch : edits) {
         for (auto e : batch) {
-            if (!rebaseCursor(e, e.cursor)) {
+            if (!rebaseCursor(e.blockUid, e.cursor)) {
                 edits.clear();
+                inReplay = false;
                 return;
             }
 
@@ -125,6 +144,15 @@ void history_t::replay()
                 break;
             case EDIT_DELETE:
                 cursorEraseText(&e.cursor, e.count);
+                break;
+            case EDIT_DELETE_SELECTION:
+                if (!rebaseCursor(e.blockEndUid, e.cursorEnd)) {
+                    edits.clear();
+                    inReplay = false;
+                    return;
+                }
+                e.cursor._anchor = e.cursorEnd._position;
+                cursorDeleteSelection(&e.cursor);
                 break;
             case EDIT_SPLIT:
                 cursorSplitBlock(&e.cursor);
@@ -138,9 +166,11 @@ void history_t::replay()
             }
 
             e.cursor.block()->data = nullptr;
-            // e.cursor.document()->setCursor(e.cursor);
+            e.cursor.document()->setCursor(e.cursor);
         }
     }
+
+    inReplay = false;
 }
 
 void history_t::initialize(struct document_t* document)

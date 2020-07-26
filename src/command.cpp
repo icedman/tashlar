@@ -129,14 +129,11 @@ bool processEditorCommand(command_t cmdt, char ch)
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_START_OF_LINE);
         app->commandBuffer.push_back(CMD_PASTE);
         app->commandBuffer.push_back(CMD_SPLIT_LINE);
-        // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     case CMD_DELETE_LINE:
         app->commandBuffer.push_back(CMD_SELECT_LINE);
-        // app->commandBuffer.push_back(CMD_COPY);
-        app->commandBuffer.push_back(CMD_DELETE);
-        // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
+        app->commandBuffer.push_back(CMD_DELETE); 
         return true;
 
     case CMD_MOVE_LINE_UP:
@@ -148,7 +145,6 @@ bool processEditorCommand(command_t cmdt, char ch)
         app->commandBuffer.push_back(CMD_PASTE);
         app->commandBuffer.push_back(CMD_SPLIT_LINE);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_UP);
-        // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     case CMD_MOVE_LINE_DOWN:
@@ -160,7 +156,6 @@ bool processEditorCommand(command_t cmdt, char ch)
         app->commandBuffer.push_back(CMD_PASTE);
         app->commandBuffer.push_back(CMD_SPLIT_LINE);
         app->commandBuffer.push_back(CMD_MOVE_CURSOR_UP);
-        // app->commandBuffer.push_back(CMD_HISTORY_SNAPSHOT); // TODO << wasteful of resources
         return true;
 
     default:
@@ -207,7 +202,7 @@ bool processEditorCommand(command_t cmdt, char ch)
         doc->history().mark();
         doc->addSnapshot();
     }
-
+ 
     //-----------
     // deal with cursors having selections
     //-----------
@@ -476,12 +471,12 @@ bool processEditorCommand(command_t cmdt, char ch)
     }
 
     if (markHistory) {
-        doc->history().mark();
+        doc->history().mark(); 
     }
 
     if (snapShot) {
         doc->addSnapshot();
-    }
+    } 
 
     return handled;
 }
