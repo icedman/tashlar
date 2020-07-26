@@ -187,6 +187,9 @@ void app_t::setupColors()
     while (it != theme->colorIndices.end()) {
         colorMap[it->first + SELECTED_OFFSET] = idx;
         init_pair(idx++, it->first, selBg);
+        if (it->first == selBg) {
+            colorMap[it->first + SELECTED_OFFSET] = idx+1;    
+        }
         it++;
     }
 

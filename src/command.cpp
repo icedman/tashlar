@@ -366,31 +366,23 @@ bool processEditorCommand(command_t cmdt, char ch)
         // document edits
         //-----------
         case CMD_INDENT: {
-            //doc->addSnapshot();
             if (cursors.size() > 1 && cur.isMultiBlockSelection()) {
-                // cur._position = cur.selectionStart();
-                // cur._anchorPosition = cur._position;
             }
             int count = cursorIndent(&cur);
             if (count) {
                 update = true;
             }
-            // doc->history().addDelete(cur, 0);
             handled = true;
             break;
         }
 
         case CMD_UNINDENT: {
-            //doc->addSnapshot();
             if (cursors.size() > 1 && cur.isMultiBlockSelection()) {
-                // cur._position = cur.selectionStart();
-                // cur._anchorPosition = cur._position;
             }
             int count = cursorUnindent(&cur);
             if (count) {
                 update = true;
             }
-            // doc->history().addDelete(cur, 0);
             handled = true;
             break;
         }

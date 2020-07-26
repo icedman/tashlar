@@ -614,14 +614,13 @@ void popup_t::onSubmit()
 
     if (type == POPUP_COMPLETION && currentItem >= 0 && currentItem < items.size()) {
         struct item_t& item = items[currentItem];
-        app->log("insert %s", item.name.c_str());
+        // app->log("insert %s", item.name.c_str());
         if (cursorMovePosition(&cursor, cursor_t::Move::Left)) {
             cursorSelectWord(&cursor);
             cursorDeleteSelection(&cursor);
             cursorInsertText(&cursor, item.name);
             cursorMovePosition(&cursor, cursor_t::Move::Right, false, item.name.length());
             doc->updateCursor(cursor);
-            doc->addSnapshot(); // TODO << wasteful of resources
         }
         hide();
     }
