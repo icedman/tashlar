@@ -132,7 +132,7 @@ bool processEditorCommand(command_t cmdt, char ch)
         return true;
 
     case CMD_DELETE_LINE:
-        app->commandBuffer.push_back(CMD_SELECT_LINE);  
+        app->commandBuffer.push_back(CMD_SELECT_LINE);
         app->commandBuffer.push_back(CMD_DELETE);
         app->commandBuffer.push_back(CMD_DELETE);
         return true;
@@ -203,7 +203,7 @@ bool processEditorCommand(command_t cmdt, char ch)
         doc->history().mark();
         doc->addSnapshot();
     }
- 
+
     //-----------
     // deal with cursors having selections
     //-----------
@@ -443,7 +443,8 @@ bool processEditorCommand(command_t cmdt, char ch)
             break;
         }
 
-        case CMD_SPLIT_LINE: {; 
+        case CMD_SPLIT_LINE: {
+            ;
             cursorSplitBlock(&cur);
             update = true;
             handled = true;
@@ -467,12 +468,12 @@ bool processEditorCommand(command_t cmdt, char ch)
     }
 
     if (markHistory) {
-        doc->history().mark(); 
+        doc->history().mark();
     }
 
     if (snapShot) {
         doc->addSnapshot();
-    } 
+    }
 
     return handled;
 }

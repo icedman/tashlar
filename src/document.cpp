@@ -223,7 +223,7 @@ struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
     if (blocks.size() < 2) {
         return nullBlock;
     }
- 
+
     std::vector<struct block_t>::iterator it = blocks.begin();
     if (line > 0) {
         if (line >= blocks.size()) {
@@ -275,7 +275,7 @@ void document_t::undo()
     blocks = history().initialState;
     update(true);
     clearCursors();
-    
+
     _history.replay();
 
     update(true);

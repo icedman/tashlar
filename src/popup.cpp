@@ -629,19 +629,18 @@ void popup_t::onSubmit()
     if (type == POPUP_COMMANDS) {
 
         if (text.length()) {
-        
-        commandHistory.push_back(text);
-        historyIndex = 0;
 
-        if (text[0] == ':') {
-            std::string script = text;
-            script.erase(script.begin(), script.begin() + 1);
-            scripting_t::instance()->runScript(script);
-        } else if (items.size() && currentItem >= 0 && currentItem < items.size()) {
-            struct item_t& item = items[currentItem];
-            scripting_t::instance()->runScript(item.script);
-        }
+            commandHistory.push_back(text);
+            historyIndex = 0;
 
+            if (text[0] == ':') {
+                std::string script = text;
+                script.erase(script.begin(), script.begin() + 1);
+                scripting_t::instance()->runScript(script);
+            } else if (items.size() && currentItem >= 0 && currentItem < items.size()) {
+                struct item_t& item = items[currentItem];
+                scripting_t::instance()->runScript(item.script);
+            }
         }
         hide();
     }

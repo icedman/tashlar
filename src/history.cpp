@@ -35,11 +35,11 @@ void history_t::_addInsert(struct cursor_t& cur, std::string t)
     if (inReplay) {
         return;
     }
- 
+
     editBatch.push_back({ .blockUid = cur.block()->uid,
         .cursor = cur,
         .text = t,
-        .edit = EDIT_INSERT }); 
+        .edit = EDIT_INSERT });
 }
 
 void history_t::_addSplit(struct cursor_t& cur)
@@ -76,10 +76,10 @@ void history_t::_addDeleteSelection(struct cursor_t& cur, struct cursor_t& curEn
 
     app_t::instance()->log("add %d %d", cur.position(), curEnd.position());
 
-    editBatch.push_back({ .blockUid = cur.block()->uid, 
+    editBatch.push_back({ .blockUid = cur.block()->uid,
         .cursor = cur,
         .blockEndUid = curEnd.block()->uid,
-        .cursorEnd = curEnd, 
+        .cursorEnd = curEnd,
         .edit = EDIT_DELETE_SELECTION });
 
     app_t::instance()->log("%d", editBatch.size());
@@ -93,7 +93,7 @@ void history_t::_addDeleteBlock(struct cursor_t& cur, size_t blockUid, size_t co
 
     editBatch.push_back({ .blockUid = blockUid,
         .cursor = cur,
-        .count = count, 
+        .count = count,
         .edit = EDIT_DELETE_BLOCK });
 }
 
@@ -138,7 +138,7 @@ static int blockLineNumber(size_t blockUid, struct cursor_t& cur)
     struct document_t* doc = cur.document();
 
     for (auto& b : doc->blocks) {
-        if (b.uid == blockUid) { 
+        if (b.uid == blockUid) {
             return b.lineNumber;
         }
     }
@@ -179,19 +179,19 @@ void history_t::replay()
                     inReplay = false;
                     return;
                 }
-                e.cursor._anchor = e.cursorEnd._position; 
+                e.cursor._anchor = e.cursorEnd._position;
                 cursorDeleteSelection(&e.cursor);
                 break;
             case EDIT_DELETE_BLOCK: {
                 int lineNumber = blockLineNumber(e.blockUid, e.cursor);
-                if (lineNumber != -1){
+                if (lineNumber != -1) {
                     e.cursor.document()->removeBlockAtLineNumber(lineNumber, e.count);
-                } 
+                }
                 break;
             }
             case EDIT_SPLIT:
                 cursorSplitBlock(&e.cursor);
-                e.cursor.block()->uid = e.newBlockUid; 
+                e.cursor.block()->uid = e.newBlockUid;
                 break;
             case EDIT_PASTE_BUFFER:
                 e.cursor.document()->insertFromBuffer(e.cursor, e.buffer);
