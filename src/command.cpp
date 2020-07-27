@@ -10,7 +10,7 @@ bool compareCursor(struct cursor_t a, struct cursor_t b)
 {
     return a.position() < b.position();
 }
- 
+
 // todo cursor implementation is still a mess
 bool processEditorCommand(command_t cmdt, char ch)
 {
@@ -114,11 +114,12 @@ bool processEditorCommand(command_t cmdt, char ch)
 
         if (mainCursor.hasSelection()) {
             if (cmd == CMD_ADD_CURSOR_FOR_SELECTED_WORD) {
-                struct cursor_t c = mainCursor; c.uid = 0;
+                struct cursor_t c = mainCursor;
+                c.uid = 0;
                 if (cursorFindWord(&mainCursor, mainCursor.selectedText())) {
                     doc->addCursor(c);
                     doc->updateCursor(mainCursor);
-                    app_t::instance()->log("! %d %d",c.position(), mainCursor.position());
+                    app_t::instance()->log("! %d %d", c.position(), mainCursor.position());
                 }
             }
         } else {
@@ -181,10 +182,10 @@ bool processEditorCommand(command_t cmdt, char ch)
     }
 
     std::sort(cursors.begin(), cursors.end(), compareCursor);
-    for(auto _c : cursors) {
+    for (auto _c : cursors) {
         app->log("%d", _c.position());
     }
-     
+
     bool handled = false;
     bool markHistory = false;
     bool snapShot = false;
@@ -646,8 +647,8 @@ bool processEditorCommand(command_t cmdt, char ch)
                 if (cmdt.cmd == CMD_INSERT) {
                     app_t::instance()->commandBuffer.insert(app_t::instance()->commandBuffer.begin(), cmdt);
                     continue;
-                } 
-            } 
+                }
+            }
 
             if (cmdt.cmd == CMD_SPLIT_LINE) {
                 std::vector<struct cursor_t> curs2 = curs;
@@ -655,7 +656,7 @@ bool processEditorCommand(command_t cmdt, char ch)
 
                 struct cursor_t& firstCursor = curs[0];
                 std::string text = firstCursor.block()->text() + " ";
- 
+
                 int r = 0;
                 for (int i = 0; i < curs.size(); i++) {
                     firstCursor._position.position = curs2[i].relativePosition() - r;
@@ -692,7 +693,7 @@ bool processEditorCommand(command_t cmdt, char ch)
         doc->addSnapshot();
     }
 
-    for(auto m : cursors) {
+    for (auto m : cursors) {
         doc->updateCursor(m);
     }
     return handled;

@@ -321,8 +321,8 @@ static void dumpInfo()
     struct document_t* doc = &editor->document;
 
     int idx = 0;
-    for(auto c : doc->cursors) {
-        app->log("cursor#%d:%d block:%d rel:%d pos:%d", idx++, c.uid, c.block()->uid, c.relativePosition(), c.position());  
+    for (auto c : doc->cursors) {
+        app->log("cursor#%d:%d block:%d rel:%d pos:%d", idx++, c.uid, c.block()->uid, c.relativePosition(), c.position());
     }
 }
 

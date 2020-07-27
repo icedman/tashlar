@@ -334,7 +334,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     case cursor_t::Move::NextBlock:
         if (block.next) {
             cursor->setPosition(block.next, relativePosition);
-        } 
+        }
         break;
 
     default:
