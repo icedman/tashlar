@@ -1,7 +1,6 @@
 #ifndef MINIMAP_H
 #define MINIMAP_H
 
-#include <curses.h>
 #include <string>
 #include <vector>
 

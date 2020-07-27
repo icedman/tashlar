@@ -215,7 +215,8 @@ struct block_t& document_t::addBlockAtLineNumber(size_t line)
         return blocks.back();
     }
 
-    return *blocks.emplace(it, b);
+    lastAddedBlock = &(*blocks.emplace(it, b));
+    return *lastAddedBlock;
 }
 
 struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
@@ -258,7 +259,7 @@ void document_t::addSnapshot()
 }
 
 void document_t::undo()
-{ 
+{
     struct history_t& _history = history();
     _history.mark();
 
@@ -336,7 +337,7 @@ void document_t::addCursor(struct cursor_t& cursor)
     // limitation... can't add cursor on the same block
     for (auto& c : cursors) {
         if (c.block()->uid == cursor.block()->uid) {
-            return;
+            // return;
         }
     }
 
@@ -361,6 +362,7 @@ void document_t::clearCursors()
 
 void document_t::clearSelections()
 {
+    app_t::instance()->log("doc clear selections");
     for (auto& c : cursors) {
         c.clearSelection();
     }
@@ -372,7 +374,7 @@ void document_t::update(bool force)
     // 1. lineNumbers must always be updated
     // 2. b.position .. may probably be dispensed with.. as edits now deal wil relative positions
     // 3. next & prev must be updated (perhaps at insertion/deletion)
-    // 4. length must be updated 
+    // 4. length must be updated
 
     if (!dirty && !force) {
         return;
@@ -392,11 +394,9 @@ void document_t::update(bool force)
         b.previous = prev;
         b.next = NULL;
 
-        /*
         if (b.content.length()) {
             b.length = b.content.length() + 1;
         }
-        */
 
         b.position = pos;
         b.lineNumber = l++;

@@ -77,7 +77,7 @@ struct block_t {
     size_t renderedLine;
 
     std::string content;
- 
+
     std::ifstream* file;
     size_t filePosition;
 
@@ -91,8 +91,8 @@ struct block_t {
     std::string text();
     void setText(std::string t);
     bool isValid();
-    
-    size_t length; 
+
+    size_t length;
 };
 
 struct document_t {
@@ -144,6 +144,8 @@ struct document_t {
 
     size_t blockUid;
     size_t cursorUid;
+
+    struct block_t* lastAddedBlock;
 };
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block);

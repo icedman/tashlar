@@ -14,6 +14,8 @@ static std::map<std::string, command_e> keybindings;
 
 void bindDefaults()
 {
+    bindKeySequence("ctrl+t+ctrl+d", CMD_DEBUG);
+
     bindKeySequence("ctrl+f", CMD_POPUP_SEARCH);
     bindKeySequence("ctrl+g", CMD_POPUP_SEARCH_LINE);
     bindKeySequence("ctrl+p", CMD_POPUP_FILES);

@@ -45,6 +45,10 @@ void tabbar_t::render()
                 .width = (int)e->document.fileName.length() + 2,
                 .editor = e
             };
+
+            if (!item.name.length()) {
+                item.name = "untitled";
+            }
             tabs.emplace_back(item);
         }
         sort(tabs.begin(), tabs.end(), compareFile);

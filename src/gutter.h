@@ -1,7 +1,6 @@
 #ifndef GUTTER_H
 #define GUTTER_H
 
-#include <curses.h>
 #include <string>
 #include <vector>
 

@@ -1,6 +1,6 @@
 start of document
 hello world
-    five cursors down
+five cursors down
 #include <iostream>
 #include <string>
 

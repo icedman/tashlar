@@ -49,7 +49,7 @@ void editor_proxy_t::update(int frames)
     app_t::instance()->currentEditor->update(frames);
 }
 
-static struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
+struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
 {
     span_info_t res;
     res.length = 0;
@@ -66,119 +66,6 @@ static struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
     }
 
     return res;
-}
-
-void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct block_t* block, int relativeLine)
-{
-    if (!line) {
-        return;
-    }
-
-    std::vector<struct cursor_t>* cursors = &document.cursors;
-
-    bool hasFocus = isFocused();
-
-    struct blockdata_t* blockData = block->data.get();
-
-    int colorPair = color_pair_e::NORMAL;
-    int colorPairSelected = color_pair_e::SELECTED;
-    int wrapOffset = relativeLine * viewWidth;
-
-    int skip = offsetX;
-    int c;
-    int idx = 0;
-    int x = 0;
-    while (c = line[wrapOffset + idx++]) {
-        if (skip-- > 0) {
-            continue;
-        }
-
-        colorPair = color_pair_e::NORMAL;
-        colorPairSelected = color_pair_e::SELECTED;
-
-        if (c == '\t') {
-            c = ' ';
-        }
-
-        int rpos = idx - 1;
-        int pos = block->position + idx - 1;
-        int colorIdx = -1;
-
-        // syntax here
-        if (block && block->data) {
-            struct span_info_t span = spanAtBlock(blockData, rpos + wrapOffset);
-            if (span.length) {
-                colorPair = pairForColor(span.colorIndex, false);
-                colorPairSelected = pairForColor(span.colorIndex, true);
-            }
-        }
-
-        // selection
-        bool firstCursor = true;
-        for (auto cur : *cursors) {
-            if (firstCursor && hasFocus) {
-                if (pos + 1 == cur.position() - wrapOffset) {
-                    cursorScreenX = x + 1;
-                    cursorScreenY = offsetY;
-                }
-                if (pos == cur.position() - wrapOffset) {
-                    cursorScreenX = x;
-                    cursorScreenY = offsetY;
-                }
-            }
-            if (pos == cur.position() - wrapOffset) {
-                if (firstCursor && hasFocus) {
-                    wattron(win, A_REVERSE);
-                } else {
-                    if (cur.hasSelection()) {
-                        wattron(win, A_UNDERLINE);
-                    }
-                }
-                if (colorIdx != -1) {
-                    colorPair = 0;
-                }
-                colorPair = colorPairSelected;
-            }
-            firstCursor = false;
-
-            // brackets matching
-            if (cursorBracket1.bracket != -1 && cursorBracket2.bracket != -1) {
-                if ((pos == cursorBracket1.absolutePosition - wrapOffset) || (pos == cursorBracket2.absolutePosition - wrapOffset)) {
-                    wattron(win, A_UNDERLINE);
-                }
-            }
-
-            if (!cur.hasSelection()) {
-                continue;
-            }
-            size_t startSel = cur.anchorPosition();
-            size_t endSel = cur.position();
-            if (startSel > endSel) {
-                startSel = cur.position() + 1;
-                endSel = cur.anchorPosition() + 1;
-            }
-            if (pos + wrapOffset >= startSel && pos + wrapOffset < endSel) {
-                colorPair = colorPairSelected;
-            }
-        }
-
-        wattron(win, COLOR_PAIR(colorPair));
-
-        if (!isprint(c)) {
-            // if (c < 0) {
-            // todo.. learn utf-8 read utf8.h
-            // }
-            c = '?';
-            waddch(win, c);
-        } else {
-            waddch(win, c);
-        }
-
-        wattroff(win, COLOR_PAIR(colorPair));
-        wattroff(win, A_REVERSE);
-        wattroff(win, A_UNDERLINE);
-        x++;
-    }
 }
 
 static void setFormatFromStyle(size_t start, size_t length, style_t& style, const char* line, struct blockdata_t* blockData, std::string scope)
@@ -528,19 +415,6 @@ void editor_t::layoutBlock(struct block_t& block)
     }
 }
 
-void editor_t::renderBlock(struct block_t& block, int offsetX, int offsetY)
-{
-    std::string t = block.text() + " ";
-    char* str = (char*)t.c_str();
-
-    for (int i = 0; i < block.lineCount; i++) {
-        wmove(win, offsetY + i, 0);
-        wclrtoeol(win);
-        renderLine(str, offsetX, offsetY + i, &block, i);
-        // str += viewWidth;
-    }
-}
-
 void editor_t::render()
 {
 }
@@ -877,5 +751,131 @@ void editor_t::toggleFold(size_t line)
             break;
         }
         block = block->next;
+    }
+}
+
+void editor_t::renderLine(const char* line, int offsetX, int offsetY, struct block_t* block, int relativeLine)
+{
+    if (!line) {
+        return;
+    }
+
+    std::vector<struct cursor_t>* cursors = &document.cursors;
+
+    bool hasFocus = isFocused();
+
+    struct blockdata_t* blockData = block->data.get();
+
+    int colorPair = color_pair_e::NORMAL;
+    int colorPairSelected = color_pair_e::SELECTED;
+    int wrapOffset = relativeLine * viewWidth;
+
+    int skip = offsetX;
+    int c;
+    int idx = 0;
+    int x = 0;
+    while (c = line[wrapOffset + idx++]) {
+        if (skip-- > 0) {
+            continue;
+        }
+
+        colorPair = color_pair_e::NORMAL;
+        colorPairSelected = color_pair_e::SELECTED;
+
+        if (c == '\t') {
+            c = ' ';
+        }
+
+        int rpos = idx - 1;
+        int pos = block->position + idx - 1;
+        int colorIdx = -1;
+
+        // syntax here
+        if (block && block->data) {
+            struct span_info_t span = spanAtBlock(blockData, rpos + wrapOffset);
+            if (span.length) {
+                colorPair = pairForColor(span.colorIndex, false);
+                colorPairSelected = pairForColor(span.colorIndex, true);
+            }
+        }
+
+        // selection
+        bool firstCursor = true;
+        for (auto cur : *cursors) {
+            if (firstCursor && hasFocus) {
+                if (pos + 1 == cur.position() - wrapOffset) {
+                    cursorScreenX = x + 1;
+                    cursorScreenY = offsetY;
+                }
+                if (pos == cur.position() - wrapOffset) {
+                    cursorScreenX = x;
+                    cursorScreenY = offsetY;
+                }
+            }
+            if (pos == cur.position() - wrapOffset) {
+                if (firstCursor && hasFocus) {
+                    wattron(win, A_REVERSE);
+                } else {
+                    if (cur.hasSelection()) {
+                        wattron(win, A_UNDERLINE);
+                    }
+                }
+                if (colorIdx != -1) {
+                    colorPair = 0;
+                }
+                colorPair = colorPairSelected;
+            }
+            firstCursor = false;
+
+            // brackets matching
+            if (cursorBracket1.bracket != -1 && cursorBracket2.bracket != -1) {
+                if ((pos == cursorBracket1.absolutePosition - wrapOffset) || (pos == cursorBracket2.absolutePosition - wrapOffset)) {
+                    wattron(win, A_UNDERLINE);
+                }
+            }
+
+            if (!cur.hasSelection()) {
+                continue;
+            }
+            size_t startSel = cur.anchorPosition();
+            size_t endSel = cur.position();
+            if (startSel > endSel) {
+                startSel = cur.position() + 1;
+                endSel = cur.anchorPosition() + 1;
+            }
+            if (pos + wrapOffset >= startSel && pos + wrapOffset < endSel) {
+                colorPair = colorPairSelected;
+            }
+        }
+
+        wattron(win, COLOR_PAIR(colorPair));
+
+        if (!isprint(c)) {
+            // if (c < 0) {
+            // todo.. learn utf-8 read utf8.h
+            // }
+            c = '?';
+            waddch(win, c);
+        } else {
+            waddch(win, c);
+        }
+
+        wattroff(win, COLOR_PAIR(colorPair));
+        wattroff(win, A_REVERSE);
+        wattroff(win, A_UNDERLINE);
+        x++;
+    }
+}
+
+void editor_t::renderBlock(struct block_t& block, int offsetX, int offsetY)
+{
+    std::string t = block.text() + " ";
+    char* str = (char*)t.c_str();
+
+    for (int i = 0; i < block.lineCount; i++) {
+        wmove(win, offsetY + i, 0);
+        wclrtoeol(win);
+        renderLine(str, offsetX, offsetY + i, &block, i);
+        // str += viewWidth;
     }
 }

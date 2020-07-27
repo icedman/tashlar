@@ -4,6 +4,13 @@
 #include "editor.h"
 #include "statusbar.h"
 
+#include <algorithm>
+
+bool compareCursor(struct cursor_t a, struct cursor_t b)
+{
+    return a.position() < b.position();
+}
+
 // todo cursor implementation is still a mess
 bool processEditorCommand(command_t cmdt, char ch)
 {
@@ -163,25 +170,26 @@ bool processEditorCommand(command_t cmdt, char ch)
         break;
     }
 
-    //-----------------
-    // multi cursor updates
-    //-----------------
     bool handled = false;
     bool markHistory = false;
     bool snapShot = false;
+
+    //-----------------
+    // multi cursor updates
+    //-----------------
+
     std::vector<struct cursor_t>& cursors = doc->cursors;
+    struct cursor_t& mainCursor = cursors[0];
 
     struct block_t* targetBlock = 0;
     struct blockdata_t* targetBlockData = 0;
 
-    std::vector<size_t> blockIds;
-
     //----------------
-    // check for multiline selections
+    // check need for snapshot
     //----------------
     for (int i = 0; i < cursors.size(); i++) {
         struct cursor_t& cur = cursors[i];
-        blockIds.push_back(cur.block()->uid);
+
         if (cur.isMultiBlockSelection()) {
             switch (cmd) {
             case CMD_INDENT:
@@ -190,6 +198,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             case CMD_DELETE:
             case CMD_BACKSPACE:
             case CMD_SPLIT_LINE:
+                // this becomes too complicated for our simplistic undo.. make a snapshot then
                 snapShot = true;
                 break;
             default:
@@ -204,18 +213,45 @@ bool processEditorCommand(command_t cmdt, char ch)
         doc->addSnapshot();
     }
 
+    std::vector<size_t> multiCursorBlocks;
+    bool hasPendingMultiCursorEdits = false;
+
     //-----------
-    // deal with cursors having selections
+    // find multi-cursors blocks .. these will be handled separately
+    //-----------
+    for (int i = 0; i < cursors.size(); i++) {
+        struct cursor_t& cur = cursors[i];
+        cur.blockUid = cur.block()->uid; // << save some cursor data
+        cur.isMultiCursorBlock = false;
+        cur.idx = i;
+
+        for (int j = 0; j < cursors.size(); j++) {
+            struct cursor_t& cur2 = cursors[j];
+            if (cur2.uid == cur.uid || cur2.blockUid != cur.blockUid) {
+                continue;
+            }
+
+            if (std::find(multiCursorBlocks.begin(), multiCursorBlocks.end(), cur.blockUid) == multiCursorBlocks.end()) {
+                multiCursorBlocks.push_back(cur.blockUid);
+            }
+            cur.isMultiCursorBlock = true;
+            cur2.isMultiCursorBlock = true;
+        }
+    }
+
+    //-----------
+    // deal with cursors having selections .. delete selected text if need be
     //-----------
     for (int i = 0; i < cursors.size(); i++) {
         struct cursor_t& cur = cursors[i];
         bool update = false;
 
-        if (!cur.hasSelection()) {
+        if (!cur.hasSelection() || cur.isMultiCursorBlock) {
             continue;
         }
 
         switch (cmd) {
+        case CMD_SPLIT_LINE:
         case CMD_DELETE:
         case CMD_BACKSPACE: {
             int count = cursorDeleteSelection(&cur);
@@ -239,8 +275,12 @@ bool processEditorCommand(command_t cmdt, char ch)
         doc->updateCursor(cur);
     }
 
+    //-------------------------
+    // now finally begin cursor updates
+    //-------------------------
     for (int i = 0; i < cursors.size(); i++) {
         struct cursor_t& cur = cursors[i];
+
         bool update = false;
 
         if (cur.hasSelection()) {
@@ -263,14 +303,17 @@ bool processEditorCommand(command_t cmdt, char ch)
             }
         }
 
+        //-------------------------
         // refresh cursor position
+        //-------------------------
         switch (cmd) {
         case CMD_BACKSPACE:
         case CMD_SPLIT_LINE: {
             for (auto& b : doc->blocks) {
-                if (b.uid == blockIds[i]) {
+                if (b.uid == cur.blockUid) {
                     cur.setPosition(&b, cur.relativePosition());
                     cur._anchor = cur._position;
+                    break;
                 }
             }
             break;
@@ -388,6 +431,14 @@ bool processEditorCommand(command_t cmdt, char ch)
         }
 
         case CMD_DELETE_SELECTION:
+            if (cur.isMultiCursorBlock) {
+                hasPendingMultiCursorEdits = true;
+                handled = true;
+                break;
+            }
+
+            app_t::instance()->log("del %d", cur.blockUid);
+
             if (cur.hasSelection()) {
                 cursorDeleteSelection(&cur);
                 cur.clearSelection();
@@ -402,41 +453,111 @@ bool processEditorCommand(command_t cmdt, char ch)
             break;
 
         case CMD_INSERT: {
-            int count = cursorInsertText(&cur, cmdt.args);
-            cur._position.position += cmdt.args.length();
+            if (cur.hasSelection() && cur.isMultiCursorBlock) {
+                hasPendingMultiCursorEdits = true;
+                handled = true;
+                break;
+            }
+
+            int count = cmdt.args.length();
+            cursorInsertText(&cur, cmdt.args);
+            cur._position.position += count;
             cur._anchor = cur._position;
             update = true;
             handled = true;
             if (cmdt.args == " ") {
                 markHistory = true;
             }
+
+            // update cursors on the same block
+            for (int j = 0; j < cursors.size(); j++) {
+                struct cursor_t& cur2 = cursors[j];
+                if (cur2.uid == cur.uid || cur2.blockUid != cur.blockUid) {
+                    continue;
+                }
+                if (cur2.relativePosition() > cur.relativePosition()) {
+                    cur2._position.position += count;
+                    cur2._anchor = cur2._position;
+                }
+            }
             break;
         }
         case CMD_DELETE:
+
+            if (cur.isMultiCursorBlock && cur.hasSelection()) {
+                hasPendingMultiCursorEdits = true;
+                handled = true;
+                break;
+            }
+
             cursorEraseText(&cur, 1);
             update = true;
             handled = true;
+
+            // update cursors on the same block
+            for (int j = 0; j < cursors.size(); j++) {
+                struct cursor_t& cur2 = cursors[j];
+                if (cur2.uid == cur.uid || cur2.blockUid != cur.blockUid) {
+                    continue;
+                }
+                if (cur2.relativePosition() > cur.relativePosition()) {
+                    cur2._position.position -= 1;
+                    cur2._anchor = cur2._position;
+                }
+            }
             break;
 
         case CMD_BACKSPACE: {
-            bool repositionMainCursor = cur.relativePosition() == 0;
+
+            if (cur.isMultiCursorBlock && cur.hasSelection()) {
+                hasPendingMultiCursorEdits = true;
+                handled = true;
+                break;
+            }
+
+            bool repositionMainCursor = cur.relativePosition() == 0; // << this instance, a line will be deleted
             if (cursorMovePosition(&cur, cursor_t::Left)) {
                 cursorEraseText(&cur, 1);
             }
             update = true;
             handled = true;
 
+            doc->update(i > 0 && repositionMainCursor);
+
+            // update cursors on the same block
+            for (int j = 0; j < cursors.size(); j++) {
+                struct cursor_t& cur2 = cursors[j];
+                if (cur2.uid == cur.uid || cur2.blockUid != cur.blockUid) {
+                    continue;
+                }
+
+                if (repositionMainCursor) {
+                    cursorMovePosition(&cur2, cursor_t::Move::PrevBlock, false);
+                    cur2._position.position += cur.relativePosition();
+                    cur2._anchor = cur2._position;
+                } else {
+                    if (cur2.relativePosition() > cur.relativePosition()) {
+                        cur2._position.position -= 1;
+                        cur2._anchor = cur2._position;
+                    }
+                }
+            }
+
             if (i > 0 && repositionMainCursor) {
-                doc->update(true);
-                if (doc->cursors[0].position() > cur.position()) {
-                    cursorMovePosition(&doc->cursors[0], cursor_t::Move::PrevBlock, false);
+                if (mainCursor.position() > cur.position()) {
+                    cursorMovePosition(&mainCursor, cursor_t::Move::PrevBlock, false);
                 }
             }
             break;
         }
 
         case CMD_SPLIT_LINE: {
-            ;
+           if (cur.isMultiCursorBlock) {
+                hasPendingMultiCursorEdits = true;
+                handled = true;
+                break;
+            }
+
             cursorSplitBlock(&cur);
             update = true;
             handled = true;
@@ -444,8 +565,8 @@ bool processEditorCommand(command_t cmdt, char ch)
 
             if (i > 0) {
                 doc->update(true);
-                if (doc->cursors[0].position() > cur.position()) {
-                    cursorMovePosition(&doc->cursors[0], cursor_t::Move::NextBlock, false);
+                if (mainCursor.position() > cur.position()) {
+                    cursorMovePosition(&mainCursor, cursor_t::Move::NextBlock, false);
                 }
             }
             break;
@@ -458,6 +579,100 @@ bool processEditorCommand(command_t cmdt, char ch)
         doc->update(update);
         doc->updateCursor(cur);
     }
+
+    app_t::instance()->log("edits:%d size:%d cmd:%d cmdt:%d", hasPendingMultiCursorEdits, multiCursorBlocks.size(), cmd, cmdt.cmd);
+
+    //-----------
+    // deal with multi-cursor blocks
+    //-----------
+    if (hasPendingMultiCursorEdits)
+        for (size_t blockUid : multiCursorBlocks) {
+            app_t::instance()->log("multicursor %d", blockUid);
+            std::vector<struct cursor_t> curs;
+            bool hasSelection = false;
+            for (int i = 0; i < cursors.size(); i++) {
+                struct cursor_t& cur = cursors[i];
+                // app_t::instance()->log("cur.blockuUid:%d blockUid:%d", cur.blockUid, blockUid);
+                if (cur.blockUid == blockUid) {
+                    curs.push_back(cur);
+                    hasSelection = hasSelection || cur.hasSelection();
+                    // app_t::instance()->log("multicursor sel %d %d", hasSelection, cmd);
+                }
+            }
+
+            if (!curs.size()) {
+                continue;
+            }
+ 
+            // delete selection
+            if (hasSelection) {
+                std::string text = curs[0].block()->text();
+
+                for (auto& c : curs) {
+                    struct cursor_t start = c.selectionStartCursor();
+                    struct cursor_t end = c.selectionEndCursor();
+                    int s = start.relativePosition();
+                    int l = end.relativePosition() - s;
+                    for (int i = 0; i <= l; i++) {
+                        text[s + i] = '\r';
+                    }
+                }
+
+                std::string newText = "";
+                int offset = 0;
+                for (int i = 0; i < text.length(); i++) {
+                    if (text[i] == '\r') {
+                        for (auto& c : curs) {
+                            if (cursors[c.idx]._position.position + offset > i) {
+                                cursors[c.idx]._position.position--;
+                                cursors[c.idx].clearSelection();
+                                c._position = cursors[c.idx]._position;
+                                c.clearSelection(); 
+                            }
+                        }
+                        offset++;
+                        continue;
+                    }
+                    newText += text[i];
+                }
+
+                curs[0].block()->setText(newText);
+                doc->update(true);
+                //continue;
+            }
+
+            if (cmdt.cmd == CMD_SPLIT_LINE) {
+ 
+                struct cursor_t &firstCursor = curs[0];
+                std::string text = firstCursor.block()->text() + " ";
+ 
+                std::vector<struct cursor_t> curs2 = curs;
+                std::sort(curs2.begin(), curs2.end(), compareCursor);
+ 
+                int r = 0;
+                for(int i=0; i<curs.size(); i++) {
+                    firstCursor._position.position = curs2[i].relativePosition() - r;
+                    r = curs2[i].relativePosition();
+                    cursorSplitBlock(&firstCursor);
+                    app_t::instance()->log("> %d", doc->lastAddedBlock->uid);
+                }
+ 
+                doc->update(true);
+
+                for(int i=0; i<curs.size(); i++) {
+                    cursors[curs[i].idx].setPosition(curs[0].block(), 0);
+                    for(int j=0; j<i; j++) {
+                        cursorMovePosition(&cursors[curs[i].idx], cursor_t::Move::PrevBlock, false); 
+                    }
+                }
+
+                cursors[0].setPosition(doc->lastAddedBlock, 0);
+                cursors[0].clearSelection();
+            }
+
+            doc->update(true);
+        }
+    
 
     if (markHistory) {
         doc->history().mark();

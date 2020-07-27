@@ -104,6 +104,8 @@ enum command_e {
     CMD_POPUP_FILES,
     CMD_POPUP_COMPLETION,
 
+    CMD_DEBUG,
+
     CMD_HISTORY_SNAPSHOT
 };
 

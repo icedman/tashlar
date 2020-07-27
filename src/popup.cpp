@@ -566,6 +566,10 @@ void popup_t::onSubmit()
     struct cursor_t cursor = doc->cursor();
     struct block_t& block = *cursor.block();
 
+    if (currentItem < 0) {
+        currentItem = 0;
+    }
+
     if (type == POPUP_SEARCH_LINE) {
         hide();
         return;

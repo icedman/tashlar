@@ -124,7 +124,7 @@ void fileitem_t::load(std::string p)
     sort(files.begin(), files.end(), compareFile);
 }
 
-static void buildFileList(std::vector<struct fileitem_t*>& list, struct fileitem_t* files, int depth, bool deep = false)
+void explorer_t::buildFileList(std::vector<struct fileitem_t*>& list, struct fileitem_t* files, int depth, bool deep)
 {
     for (auto file : files->files) {
         file->depth = depth;
@@ -148,7 +148,9 @@ void explorer_t::setRootFromFile(std::string path)
 {
     fileitem_t file;
     file.setPath(path);
-    path = path.erase(path.find(file.name));
+    if (path.length() && path[path.length() - 1] != '/') {
+        path = path.erase(path.find(file.name));
+    }
     files.load(path);
 }
 

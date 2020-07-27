@@ -1,7 +1,6 @@
 #ifndef EXPLORER_H
 #define EXPLORER_H
 
-#include <curses.h>
 #include <string>
 #include <vector>
 
@@ -50,6 +49,7 @@ struct explorer_t : public window_t {
     void update(int frames) override;
 
     void preloadFolders();
+    void buildFileList(std::vector<struct fileitem_t*>& list, struct fileitem_t* files, int depth, bool deep = false);
 
     std::vector<struct fileitem_t*> fileList();
 

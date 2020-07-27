@@ -40,6 +40,7 @@ struct editor_t : public window_t {
     void highlightPreceedingBlocks(struct block_t& block);
     void highlightBlock(struct block_t& block);
     void layoutBlock(struct block_t& block);
+
     void renderBlock(struct block_t& block, int offsetX, int offsetY);
     void renderLine(const char* line, int offsetX = 0, int offsetY = 0, struct block_t* block = 0, int relativeLine = 0);
 
@@ -77,5 +78,7 @@ struct editor_proxy_t : public window_t {
 };
 
 typedef std::shared_ptr<struct editor_t> editor_ptr;
+
+struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos);
 
 #endif // EDITOR_H

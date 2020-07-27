@@ -1,4 +1,3 @@
-#include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -17,13 +16,14 @@ void gutter_t::render()
         return;
     }
 
-    struct editor_t* editor = app_t::instance()->currentEditor.get();
+    struct app_t* app = app_t::instance();
+    struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     struct block_t& block = *cursor.block();
 
-    if (app_t::instance()->showSidebar) {
-        int explorerWidth = app_t::instance()->explorer->viewWidth;
+    if (app->showSidebar) {
+        int explorerWidth = app->explorer->viewWidth;
         viewX += explorerWidth;
     }
 
@@ -51,7 +51,10 @@ void gutter_t::render()
         }
 
         std::string lineNo = std::to_string(1 + b.lineNumber);
-        // std::string lineNo = std::to_string(b.uid);
+        if (app->debug) {
+            lineNo = std::to_string(b.uid);
+        }
+
         int x = viewWidth - (lineNo.length() + 1);
 
         int pair = colorPair;

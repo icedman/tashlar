@@ -57,6 +57,8 @@ struct app_t {
     bool showSidebar;
     bool showMinimap;
 
+    bool debug;
+
     // colors
     std::string themeName;
     int fg;

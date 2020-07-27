@@ -8,6 +8,8 @@
 
 struct window_t {
     window_t(bool focusable);
+    ~window_t();
+
     virtual void layout(int w, int h) = 0;
     virtual void update(int frames);
     virtual void render() = 0;

@@ -126,6 +126,7 @@ bool cursor_t::isMultiBlockSelection()
 void cursor_t::clearSelection()
 {
     _anchor = _position;
+    app_t::instance()->log("cursor clear selections");
 }
 
 size_t cursor_t::position()
@@ -500,19 +501,24 @@ int cursorDeleteSelection(struct cursor_t* cursor)
 
         struct block_t* next = startBlock->next;
 
-        std::string startText = startBlock->text();
+        std::string startText = startBlock->text() + " ";
         int startRel = cur.relativePosition() + 1;
         std::string newText = endBlock->text();
         int endRel = curEnd.relativePosition();
         endRel = endRel < newText.length() ? endRel : newText.length();
-        endRel ++;
+        endRel++;
 
-        //app_t::instance()->log("execute delete %d %d", startRel, endRel);
+        app_t::instance()->log("execute delete %d %d", startRel, endRel);
 
-        startText = startText.substr(0, startRel);
-        newText = (newText + " ").substr(endRel); 
+        if (startRel == 0) {
+            startText = "";
+        } else {
+            startText = startText.substr(0, startRel );
+        }
 
-        if (startText.length() > 1) {
+        newText = (newText + "  ").substr(endRel);
+
+        if (startText.length()) {
             startText.pop_back(); // drop newline
         }
         cur.block()->setText(startText + newText);
@@ -609,12 +615,12 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t, int direction)
             if (found.isValid()) {
                 cursor->setPosition(cur.block(), found.end - 1);
                 cursor->setAnchor(cur.block(), found.begin);
-                app_t::instance()->log("found word! %d", cursor->position());
+                // app_t::instance()->log("found word! %d", cursor->position());
                 return true;
             }
         }
 
-        app_t::instance()->log("find next");
+        // app_t::instance()->log("find next");
         if (direction == 1) {
             if (!cursorMovePosition(&cur, cursor_t::Move::PrevBlock)) {
                 return false;
@@ -628,7 +634,7 @@ bool cursorFindWord(struct cursor_t* cursor, std::string t, int direction)
         cursorMovePosition(&cur, cursor_t::Move::StartOfLine);
         firstCursor = false;
         if (cur.position() == prevPos) {
-            app_t::instance()->log("this shouldn't have happened: %s", text.c_str());
+            // app_t::instance()->log("this shouldn't have happened: %s", text.c_str());
             break;
         }
         prevPos = cur.position();
@@ -695,7 +701,7 @@ int cursorIndent(struct cursor_t* cursor)
     if (blocks.size() > 1) {
 
         struct cursor_t posCur = cursor->selectionStartCursor();
-        struct cursor_t anchorCur = cursor->selectionEndCursor(); 
+        struct cursor_t anchorCur = cursor->selectionEndCursor();
 
         for (auto b : blocks) {
             struct cursor_t cur = *cursor;
@@ -719,7 +725,7 @@ int cursorIndent(struct cursor_t* cursor)
     }
 
     int count = _cursorIndent(cursor);
-    return count; 
+    return count;
 }
 
 int _cursorUnindent(struct cursor_t* cursor)
@@ -735,14 +741,14 @@ int _cursorUnindent(struct cursor_t* cursor)
         deleted = deleted % tab_size;
     }
 
-    if (deleted > 0) { 
+    if (deleted > 0) {
         cur._position.position = 0;
         cursorEraseText(&cur, deleted);
         cursor->_position.position -= deleted;
         cursor->_anchor.position -= deleted;
     }
 
-    return deleted; 
+    return deleted;
 }
 
 int cursorUnindent(struct cursor_t* cursor)
@@ -751,7 +757,7 @@ int cursorUnindent(struct cursor_t* cursor)
     if (blocks.size() > 1) {
 
         struct cursor_t posCur = cursor->selectionStartCursor();
-        struct cursor_t anchorCur = cursor->selectionEndCursor(); 
+        struct cursor_t anchorCur = cursor->selectionEndCursor();
 
         for (auto b : blocks) {
             struct cursor_t cur = *cursor;
@@ -775,6 +781,6 @@ int cursorUnindent(struct cursor_t* cursor)
     }
 
     int count = _cursorUnindent(cursor);
-    return count;; 
+    return count;
+    ;
 }
-

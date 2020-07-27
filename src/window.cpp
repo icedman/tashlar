@@ -15,6 +15,13 @@ window_t::window_t(bool f)
     focusable = f;
 }
 
+window_t::~window_t()
+{
+    if (win) {
+        delwin(win);
+    }
+}
+
 void window_t::renderCursor()
 {
 }

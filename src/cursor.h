@@ -42,6 +42,9 @@ struct cursor_t {
     cursor_t();
 
     size_t uid;
+    size_t blockUid; // << this is ephemeral
+    bool isMultiCursorBlock;
+    int idx;
 
     struct document_t* _document;
 

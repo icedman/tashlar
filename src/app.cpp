@@ -188,7 +188,7 @@ void app_t::setupColors()
         colorMap[it->first + SELECTED_OFFSET] = idx;
         init_pair(idx++, it->first, selBg);
         if (it->first == selBg) {
-            colorMap[it->first + SELECTED_OFFSET] = idx+1;    
+            colorMap[it->first + SELECTED_OFFSET] = idx + 1;
         }
         it++;
     }
@@ -316,6 +316,14 @@ void app_t::render()
 
 bool app_t::processCommand(command_t cmd, char ch)
 {
+    switch (cmd.cmd) {
+    case CMD_DEBUG:
+        debug = true;
+        break;
+    default:
+        break;
+    }
+
     bool handled = false;
     for (auto window : windows) {
         if ((handled = window->processCommand(cmd, ch))) {
