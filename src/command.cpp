@@ -11,6 +11,11 @@ bool compareCursor(struct cursor_t a, struct cursor_t b)
     return a.position() < b.position();
 }
 
+bool compareCursorReverse(struct cursor_t a, struct cursor_t b)
+{
+    return a.position() > b.position();
+}
+
 // todo cursor implementation is still a mess
 bool processEditorCommand(command_t cmdt, char ch)
 {
@@ -552,7 +557,7 @@ bool processEditorCommand(command_t cmdt, char ch)
         }
 
         case CMD_SPLIT_LINE: {
-           if (cur.isMultiCursorBlock) {
+            if (cur.isMultiCursorBlock) {
                 hasPendingMultiCursorEdits = true;
                 handled = true;
                 break;
@@ -585,9 +590,9 @@ bool processEditorCommand(command_t cmdt, char ch)
     //-----------
     // deal with multi-cursor blocks
     //-----------
-    if (hasPendingMultiCursorEdits)
+    if (hasPendingMultiCursorEdits) {
         for (size_t blockUid : multiCursorBlocks) {
-            app_t::instance()->log("multicursor %d", blockUid);
+            // app_t::instance()->log("multicursor %d", blockUid);
             std::vector<struct cursor_t> curs;
             bool hasSelection = false;
             for (int i = 0; i < cursors.size(); i++) {
@@ -603,7 +608,7 @@ bool processEditorCommand(command_t cmdt, char ch)
             if (!curs.size()) {
                 continue;
             }
- 
+
             // delete selection
             if (hasSelection) {
                 std::string text = curs[0].block()->text();
@@ -627,7 +632,7 @@ bool processEditorCommand(command_t cmdt, char ch)
                                 cursors[c.idx]._position.position--;
                                 cursors[c.idx].clearSelection();
                                 c._position = cursors[c.idx]._position;
-                                c.clearSelection(); 
+                                c.clearSelection();
                             }
                         }
                         offset++;
@@ -638,31 +643,35 @@ bool processEditorCommand(command_t cmdt, char ch)
 
                 curs[0].block()->setText(newText);
                 doc->update(true);
-                //continue;
-            }
+
+                if (cmdt.cmd == CMD_INSERT) {
+                    app_t::instance()->commandBuffer.insert(app_t::instance()->commandBuffer.begin(), cmdt);
+                }
+
+                continue; 
+            } 
 
             if (cmdt.cmd == CMD_SPLIT_LINE) {
- 
-                struct cursor_t &firstCursor = curs[0];
+               std::vector<struct cursor_t> curs2 = curs;
+                std::sort(curs2.begin(), curs2.end(), compareCursor);
+
+                struct cursor_t& firstCursor = curs[0];
                 std::string text = firstCursor.block()->text() + " ";
  
-                std::vector<struct cursor_t> curs2 = curs;
-                std::sort(curs2.begin(), curs2.end(), compareCursor);
- 
                 int r = 0;
-                for(int i=0; i<curs.size(); i++) {
+                for (int i = 0; i < curs.size(); i++) {
                     firstCursor._position.position = curs2[i].relativePosition() - r;
                     r = curs2[i].relativePosition();
                     cursorSplitBlock(&firstCursor);
                     app_t::instance()->log("> %d", doc->lastAddedBlock->uid);
                 }
- 
+
                 doc->update(true);
 
-                for(int i=0; i<curs.size(); i++) {
+                for (int i = 0; i < curs.size(); i++) {
                     cursors[curs[i].idx].setPosition(curs[0].block(), 0);
-                    for(int j=0; j<i; j++) {
-                        cursorMovePosition(&cursors[curs[i].idx], cursor_t::Move::PrevBlock, false); 
+                    for (int j = 0; j < i; j++) {
+                        cursorMovePosition(&cursors[curs[i].idx], cursor_t::Move::PrevBlock, false);
                     }
                 }
 
@@ -672,7 +681,7 @@ bool processEditorCommand(command_t cmdt, char ch)
 
             doc->update(true);
         }
-    
+    }
 
     if (markHistory) {
         doc->history().mark();

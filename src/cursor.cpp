@@ -513,7 +513,7 @@ int cursorDeleteSelection(struct cursor_t* cursor)
         if (startRel == 0) {
             startText = "";
         } else {
-            startText = startText.substr(0, startRel );
+            startText = startText.substr(0, startRel);
         }
 
         newText = (newText + "  ").substr(endRel);
