@@ -112,9 +112,9 @@ struct document_t {
     void saveAs(const char* path, bool replacePath = false);
 
     struct cursor_t cursor();
-    void setCursor(struct cursor_t& cursor);
-    void updateCursor(struct cursor_t& cursor);
-    void addCursor(struct cursor_t& cursor);
+    void setCursor(struct cursor_t cursor);
+    void updateCursor(struct cursor_t cursor);
+    void addCursor(struct cursor_t cursor);
     void clearCursors();
     void clearSelections();
 

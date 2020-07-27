@@ -149,6 +149,9 @@ void cursor_t::setPosition(struct block_t* block, size_t pos)
     if (pos >= block->length) {
         pos = block->length - 1;
     }
+
+    // app_t::instance()->log("b %d %d", block->uid, pos);
+
     _position.block = block;
     _position.position = pos;
 }
@@ -331,7 +334,7 @@ bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool 
     case cursor_t::Move::NextBlock:
         if (block.next) {
             cursor->setPosition(block.next, relativePosition);
-        }
+        } 
         break;
 
     default:

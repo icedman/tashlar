@@ -314,11 +314,24 @@ void app_t::render()
     }
 }
 
+static void dumpInfo()
+{
+    struct app_t* app = app_t::instance();
+    struct editor_t* editor = app->currentEditor.get();
+    struct document_t* doc = &editor->document;
+
+    int idx = 0;
+    for(auto c : doc->cursors) {
+        app->log("cursor#%d:%d block:%d rel:%d pos:%d", idx++, c.uid, c.block()->uid, c.relativePosition(), c.position());  
+    }
+}
+
 bool app_t::processCommand(command_t cmd, char ch)
 {
     switch (cmd.cmd) {
     case CMD_DEBUG:
         debug = true;
+        dumpInfo();
         break;
     default:
         break;

@@ -215,6 +215,8 @@ struct block_t& document_t::addBlockAtLineNumber(size_t line)
         return blocks.back();
     }
 
+    dirty = true;
+
     lastAddedBlock = &(*blocks.emplace(it, b));
     return *lastAddedBlock;
 }
@@ -236,6 +238,8 @@ struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
     if (it == blocks.end()) {
         return nullBlock;
     }
+
+    dirty = true;
 
     struct block_t& block = *it;
     blocks.erase(it, it + count);
@@ -311,7 +315,7 @@ struct cursor_t document_t::cursor()
     return cursors[0];
 }
 
-void document_t::setCursor(struct cursor_t& cursor)
+void document_t::setCursor(struct cursor_t cursor)
 {
     if (!cursors[0].uid) {
         cursors[0].uid = cursorUid++;
@@ -321,7 +325,7 @@ void document_t::setCursor(struct cursor_t& cursor)
     updateCursor(cursor);
 }
 
-void document_t::updateCursor(struct cursor_t& cursor)
+void document_t::updateCursor(struct cursor_t cursor)
 {
     for (auto& c : cursors) {
         if (c.uid == cursor.uid) {
@@ -332,19 +336,12 @@ void document_t::updateCursor(struct cursor_t& cursor)
     }
 }
 
-void document_t::addCursor(struct cursor_t& cursor)
+void document_t::addCursor(struct cursor_t cursor)
 {
-    // limitation... can't add cursor on the same block
-    for (auto& c : cursors) {
-        if (c.block()->uid == cursor.block()->uid) {
-            // return;
-        }
-    }
-
     struct cursor_t cur = cursor;
     cur.uid = cursorUid++;
     cursors.push_back(cur);
-    // std::cout << "add cursor " << cursor.position << std::endl;
+    app_t::instance()->log("add cursor %d", cursor.position());
 }
 
 void document_t::clearCursors()
