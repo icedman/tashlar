@@ -75,7 +75,7 @@ void renderEditor(struct editor_t& editor)
     }
 
     // scroll to cursor
-    // TODO: use math not loops
+    // TODO: use math not loops -- leverage vector random access
     while (true) {
         long blockVirtualLine = block.screenLine > block.lineNumber ? block.screenLine : block.lineNumber;
         long blockScreenLine = blockVirtualLine - editor.scrollY;

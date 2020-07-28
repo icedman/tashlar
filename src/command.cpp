@@ -680,7 +680,6 @@ bool processEditorCommand(command_t cmdt, char ch)
                     r = curs2[i].relativePosition();
                     cursorSplitBlock(&firstCursor);
                     linesSplit++;
-                    app_t::instance()->log("> %d", doc->lastAddedBlock->uid);
                 }
 
                 cursorAdjust[b->lineNumber] = linesSplit;

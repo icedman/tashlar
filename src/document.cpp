@@ -218,11 +218,10 @@ struct block_t& document_t::addBlockAtLineNumber(size_t line)
 
     dirty = true;
 
-    lastAddedBlock = &(*blocks.emplace(it, b));
-    return *lastAddedBlock;
+    return *blocks.emplace(it, b);
 }
 
-struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
+struct block_t document_t::removeBlockAtLineNumber(size_t line, size_t count)
 {
     if (blocks.size() < 2) {
         return nullBlock;
@@ -242,7 +241,7 @@ struct block_t& document_t::removeBlockAtLineNumber(size_t line, size_t count)
 
     dirty = true;
 
-    struct block_t& block = *it;
+    struct block_t block = *it;
     blocks.erase(it, it + count);
     return block;
 }
@@ -393,6 +392,7 @@ void document_t::clearSelections()
 
 void document_t::update(bool force)
 {
+    // TODO: eliminate this altogether
     // TODO: This is used all over.. perpetually improve (update only changed)
     // 1. lineNumbers must always be updated
     // 2. b.position .. may probably be dispensed with.. as edits now deal wil relative positions

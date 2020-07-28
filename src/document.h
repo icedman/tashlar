@@ -126,7 +126,7 @@ struct document_t {
     void clearSelections();
 
     struct block_t& addBlockAtLineNumber(size_t line);
-    struct block_t& removeBlockAtLineNumber(size_t line, size_t count = 1);
+    struct block_t removeBlockAtLineNumber(size_t line, size_t count = 1);
 
     void addBufferDocument(const std::string& largeText);
     void insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer);
@@ -150,8 +150,6 @@ struct document_t {
 
     size_t blockUid;
     size_t cursorUid;
-
-    struct block_t* lastAddedBlock;
 };
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block);
