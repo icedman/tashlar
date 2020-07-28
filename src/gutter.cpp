@@ -51,7 +51,7 @@ void gutter_t::render()
         }
 
         std::string lineNo = std::to_string(1 + b.lineNumber);
-        if (app->debug) {
+        if (app->debug == true) {
             lineNo = std::to_string(b.uid);
         }
 

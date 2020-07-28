@@ -411,7 +411,7 @@ void editor_t::layoutBlock(struct block_t& block)
 {
     block.lineCount = 1;
     if (app_t::instance()->lineWrap) {
-        block.lineCount += block.length / viewWidth;
+        block.lineCount += block.length() / viewWidth;
     }
 }
 

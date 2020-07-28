@@ -242,6 +242,7 @@ app_t::app_t()
     , idle(false)
     , idleIndex(0)
     , idleCount(0)
+    , debug(false)
 {
     appInstance = this;
 

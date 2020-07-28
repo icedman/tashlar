@@ -164,6 +164,8 @@ void history_t::replay()
                 inReplay = false;
                 return;
             }
+    
+            bool update = false;
 
             switch (e.edit) {
 
@@ -172,6 +174,7 @@ void history_t::replay()
                 break;
             case EDIT_DELETE:
                 cursorEraseText(&e.cursor, e.count);
+                e.cursor.document()->update(true);
                 break;
             case EDIT_DELETE_SELECTION:
                 if (!rebaseCursor(e.blockEndUid, e.cursorEnd)) {
@@ -181,20 +184,24 @@ void history_t::replay()
                 }
                 e.cursor._anchor = e.cursorEnd._position;
                 cursorDeleteSelection(&e.cursor);
+                e.cursor.document()->update(true);
                 break;
             case EDIT_DELETE_BLOCK: {
                 int lineNumber = blockLineNumber(e.blockUid, e.cursor);
                 if (lineNumber != -1) {
                     e.cursor.document()->removeBlockAtLineNumber(lineNumber, e.count);
                 }
+                e.cursor.document()->update(true);
                 break;
             }
             case EDIT_SPLIT:
                 cursorSplitBlock(&e.cursor);
                 e.cursor.block()->uid = e.newBlockUid;
+                e.cursor.document()->update(true);
                 break;
             case EDIT_PASTE_BUFFER:
                 e.cursor.document()->insertFromBuffer(e.cursor, e.buffer);
+                e.cursor.document()->update(true);
                 break;
             case EDIT_BLOCK_SNAPSHOT:
                 // app_t::instance()->log("todo: implement block snapshot");
@@ -202,7 +209,6 @@ void history_t::replay()
             }
 
             e.cursor.block()->data = nullptr;
-            e.cursor.document()->update(true);
             e.cursor.document()->setCursor(e.cursor);
         }
     }
@@ -212,13 +218,26 @@ void history_t::replay()
 
 void history_t::initialize(struct document_t* document)
 {
-    initialState = document->blocks;
-    for (auto& b : initialState) {
-        b.previous = 0;
-        b.next = 0;
-        if (b.data) {
-            b.data = nullptr;
-        }
+    initialState.clear();
+
+    for (auto& block : document->blocks) {
+        struct block_t b;
+
+        b.document = document;
+        b.uid = block.uid;
+        b.lineNumber = block.lineNumber;
+        b.originalLineNumber = block.originalLineNumber;
+        b.position = block.position;
+        b._length = block._length;
+        
+        b._content = std::make_shared<struct blockcontent_t>();   
+        b._content->text = block._content->text;
+        b._content->file = block._content->file;
+        b._content->filePosition = block._content->filePosition;
+        b._content->dirty = block._content->dirty; 
+
+        initialState.emplace_back(b);
     }
+
     edits.clear();
 }

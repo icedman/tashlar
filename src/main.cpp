@@ -101,7 +101,7 @@ void renderEditor(struct editor_t& editor)
     while (cursor.position() - block.position + 1 - editor.scrollX > editor.viewWidth) {
         if (app_t::instance()->lineWrap)
             break;
-        if (editor.scrollX + 1 >= block.length) {
+        if (editor.scrollX + 1 >= block.length()) {
             editor.scrollX = 0;
             break;
         }

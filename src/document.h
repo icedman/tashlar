@@ -39,6 +39,19 @@ struct bracket_info_t {
     bool unpaired;
 };
 
+struct blockcontent_t {
+    blockcontent_t()
+        : file(0)
+        , filePosition(0)
+        , dirty(false)
+    {}
+
+    std::string text;
+    std::ifstream* file;
+    size_t filePosition;
+    bool dirty;
+};
+
 struct blockdata_t {
     blockdata_t();
     ~blockdata_t();
@@ -75,24 +88,18 @@ struct block_t {
     size_t position;
     size_t screenLine;
     size_t renderedLine;
-
-    std::string content;
-
-    std::ifstream* file;
-    size_t filePosition;
-
+ 
     struct block_t* next;
-    struct block_t* previous;
-
-    bool dirty;
-
+    struct block_t* previous; 
+ 
     std::shared_ptr<blockdata_t> data;
+    std::shared_ptr<blockcontent_t> _content;
+    size_t _length;
 
     std::string text();
     void setText(std::string t);
     bool isValid();
-
-    size_t length;
+    size_t length();
 };
 
 struct document_t {
@@ -138,7 +145,6 @@ struct document_t {
     std::vector<std::string> tmpPaths;
     std::vector<struct history_t> snapShots;
 
-    bool runOn;
     bool dirty;
     bool windowsLineEnd;
 

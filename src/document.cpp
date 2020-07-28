@@ -13,8 +13,6 @@
 #define WINDOWS_LINE_END "\r\n"
 #define LINUX_LINE_END "\n"
 
-static size_t leakWatchCount = 0;
-
 blockdata_t::blockdata_t()
     : dirty(true)
     , folded(false)
@@ -24,7 +22,6 @@ blockdata_t::blockdata_t()
     , indent(0)
     , lastPrevBlockRule(0)
 {
-    // leakWatchCount++;
 }
 
 blockdata_t::~blockdata_t()
@@ -32,19 +29,16 @@ blockdata_t::~blockdata_t()
     if (dots) {
         free(dots);
     }
-
-    // leakWatchCount--;
-}
+} 
 
 block_t::block_t()
     : uid(0)
     , document(0)
-    , file(0)
     , lineNumber(0)
     , lineCount(0)
     , position(0)
     , screenLine(0)
-    , dirty(false)
+    , _length(0)
     , next(0)
     , previous(0)
 {
@@ -56,16 +50,16 @@ block_t::~block_t()
 
 std::string block_t::text()
 {
-    if (dirty) {
-        return content;
+    if (_content->dirty) {
+        return _content->text;
     }
 
     std::string text;
-    if (file) {
-        file->seekg(filePosition, file->beg);
-        size_t pos = file->tellg();
-        if (std::getline(*file, text)) {
-            length = text.length() + 1;
+    if (_content->file) {
+        _content->file->seekg(_content->filePosition, _content->file->beg);
+        size_t pos = _content->file->tellg();
+        if (std::getline(*_content->file, text)) {
+            _length = text.length() + 1;
             return text;
         }
     }
@@ -74,10 +68,11 @@ std::string block_t::text()
 }
 
 void block_t::setText(std::string t)
-{
-    content = t;
-    length = content.length() + 1;
-    dirty = true;
+{ 
+    _content->text = t;
+    _length = t.length() + 1;
+    
+    _content->dirty = true;
     if (data) {
         data->dirty = true;
     }
@@ -93,6 +88,11 @@ bool block_t::isValid()
         return false;
     }
     return true;
+}
+
+size_t block_t::length()
+{
+    return _length;
 }
 
 std::vector<struct block_t>::iterator findBlock(std::vector<struct block_t>& blocks, struct block_t& block)
@@ -113,7 +113,6 @@ document_t::document_t()
     , blockUid(1)
     , cursorUid(1)
     , dirty(true)
-    , runOn(false)
     , windowsLineEnd(false)
 {
 }
@@ -143,32 +142,32 @@ bool document_t::open(const char* path)
     while (std::getline(file, line)) {
         struct block_t b;
         b.document = this;
-        b.file = &file;
-        b.position = pos;
+        // b.file = &file; 
         b.originalLineNumber = lineNo++;
-        b.filePosition = pos;
+        //b.filePosition = pos;
 
+        b._content = std::make_shared<struct blockcontent_t>();
+        b._content->file = &file;
+        b._content->filePosition = pos;
+
+        //--------------------------
+        b.position = pos; // << everchanging  
+        b.lineNumber = b.originalLineNumber;
         if (line.length() && line[line.length() - 1] == '\r') {
             line.pop_back();
             offset++;
             windowsLineEnd = true;
         }
+        b._length = line.length() + 1;
+        //--------------------------
 
-        b.length = line.length() + 1;
         blocks.emplace_back(b);
         pos = file.tellg();
         pos -= offset;
         tmp << line << std::endl;
-        if (b.length > 2000) {
-            runOn = true;
-        }
     }
 
     tmp.close();
-
-    // if (runOn) {
-    // blocks.clear();
-    // }
 
     if (!blocks.size()) {
         addBlockAtLineNumber(0);
@@ -208,6 +207,8 @@ struct block_t& document_t::addBlockAtLineNumber(size_t line)
 
     struct block_t b;
     b.document = this;
+    b._content = std::make_shared<struct blockcontent_t>();
+
     b.uid = blockUid++;
     b.setText("");
     if (it == blocks.end()) {
@@ -264,10 +265,35 @@ void document_t::addSnapshot()
 
 void document_t::undo()
 {
+    if (snapShots.size() > 1) {
+        if (!history().edits.size()) {
+            snapShots.pop_back();
+        }
+    }
+
     struct history_t& _history = history();
     _history.mark();
+  
+    blocks.clear();
+    for (auto& block : history().initialState) {
+        struct block_t b;
 
-    blocks = history().initialState;
+        b.document = this;
+        b.uid = block.uid;
+        b.lineNumber = block.lineNumber;
+        b.originalLineNumber = block.originalLineNumber;
+        b.position = block.position;
+        b._length = block._length;
+        
+        b._content = std::make_shared<struct blockcontent_t>();   
+        b._content->text = block._content->text;
+        b._content->file = block._content->file;
+        b._content->filePosition = block._content->filePosition;
+        b._content->dirty = block._content->dirty; 
+
+        blocks.emplace_back(b);
+    }
+
     update(true);
     clearCursors();
 
@@ -371,7 +397,7 @@ void document_t::update(bool force)
     // 1. lineNumbers must always be updated
     // 2. b.position .. may probably be dispensed with.. as edits now deal wil relative positions
     // 3. next & prev must be updated (perhaps at insertion/deletion)
-    // 4. length must be updated
+    // 4. length must be updated at - setText?
 
     if (!dirty && !force) {
         return;
@@ -388,13 +414,9 @@ void document_t::update(bool force)
         if (prev) {
             prev->next = &b;
         }
+
         b.previous = prev;
         b.next = NULL;
-
-        if (b.content.length()) {
-            b.length = b.content.length() + 1;
-        }
-
         b.position = pos;
         b.lineNumber = l++;
         b.screenLine = 0;
@@ -403,7 +425,7 @@ void document_t::update(bool force)
             b.uid += blockUid++;
         }
 
-        pos += b.length;
+        pos += b._length;
         prev = &b;
     }
 
@@ -438,12 +460,16 @@ void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<docum
     std::vector<struct block_t> bufferBlocks;
     size_t ln = cursor.block()->lineNumber;
     for (auto bb : buffer->blocks) {
-        //struct block_t& b = addBlockAtLineNumber(ln++); // too slow
+
         struct block_t b;
+
         b.document = buffer.get();
-        b.file = &buffer->file;
-        b.filePosition = bb.position;
-        b.length = bb.length;
+        b.uid = blockUid++;
+        b._length = bb._length;
+        b._content = std::make_shared<struct blockcontent_t>();   
+        b._content->file = bb._content->file;
+        b._content->filePosition = bb._content->filePosition;
+ 
         bufferBlocks.push_back(b);
     }
     blocks.insert(blocks.begin() + ln, make_move_iterator(bufferBlocks.begin()), make_move_iterator(bufferBlocks.end()));
