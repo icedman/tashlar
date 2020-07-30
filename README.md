@@ -1,12 +1,5 @@
-~~~
-# tashlar 1 # tashlar 2 # tashlar 3 # tashlar 4
-a
-b
-c
-d
-e
-f
-# tashlar 5 # tashlar 6 # tashlar 7 # tashlar 8 
+# tashlar 
+
 
 terminal version of the ashlar text editor
 

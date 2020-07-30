@@ -93,7 +93,7 @@ void history_t::_addDeleteBlock(struct cursor_t& cur, size_t blockUid, size_t co
 
     editBatch.push_back({ .blockUid = blockUid,
         .cursor = cur,
-        .count = count,
+        .count = (int)count,
         .edit = EDIT_DELETE_BLOCK });
 }
 
