@@ -472,8 +472,10 @@ void cursorSplitBlock(struct cursor_t* cursor)
     cursor->setPosition(&newBlock, 0);
     cursor->setAnchor(&newBlock, 0);
 
-    struct cursor_edit_t& edit = cursor->document()->history().editBatch.back();
-    edit.newBlockUid = newBlock.uid;
+    if (cursor->document()->history().editBatch.size()) {
+        struct cursor_edit_t& edit = cursor->document()->history().editBatch.back();
+        edit.newBlockUid = newBlock.uid;
+    }
 }
 
 int cursorDeleteSelection(struct cursor_t* cursor)

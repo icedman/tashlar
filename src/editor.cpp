@@ -700,7 +700,6 @@ struct cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, 
 void editor_t::toggleFold(size_t line)
 {
     struct document_t* doc = &document;
-    ;
     struct block_t folder;
 
     for (auto b : doc->blocks) {

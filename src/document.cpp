@@ -38,6 +38,8 @@ block_t::block_t()
     , lineCount(0)
     , position(0)
     , screenLine(0)
+    , _content(nullptr)
+    , data(nullptr)
     , _length(0)
     , next(0)
     , previous(0)
@@ -84,7 +86,7 @@ void block_t::setText(std::string t)
 
 bool block_t::isValid()
 {
-    if (document == 0) {
+    if (document == 0 || _content == nullptr) {
         return false;
     }
     return true;
@@ -141,17 +143,17 @@ bool document_t::open(const char* path)
     size_t lineNo = 0;
     while (std::getline(file, line)) {
         struct block_t b;
+        b.uid += blockUid++;
         b.document = this;
-        // b.file = &file; 
         b.originalLineNumber = lineNo++;
-        //b.filePosition = pos;
 
         b._content = std::make_shared<struct blockcontent_t>();
         b._content->file = &file;
         b._content->filePosition = pos;
 
         //--------------------------
-        b.position = pos; // << everchanging  
+        // << everchanging items
+        b.position = pos;  
         b.lineNumber = b.originalLineNumber;
         if (line.length() && line[line.length() - 1] == '\r') {
             line.pop_back();
@@ -420,11 +422,7 @@ void document_t::update(bool force)
         b.position = pos;
         b.lineNumber = l++;
         b.screenLine = 0;
-
-        if (!b.uid) {
-            b.uid += blockUid++;
-        }
-
+ 
         pos += b._length;
         prev = &b;
     }

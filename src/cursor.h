@@ -16,6 +16,7 @@ struct cursor_position_t {
     {
     }
 
+    // todo un-pointer this
     struct block_t* block;
     int position;
 

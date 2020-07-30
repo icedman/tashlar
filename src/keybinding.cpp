@@ -44,7 +44,7 @@ void bindDefaults()
     bindKeySequence("ctrl+c", CMD_COPY);
     bindKeySequence("ctrl+x", CMD_CUT);
     bindKeySequence("ctrl+v", CMD_PASTE);
-    bindKeySequence("ctrl+z", CMD_UNDO);
+    bindKeySequence("ctrl+n", CMD_UNDO);
 
     bindKeySequence("ctrl+l+ctrl+l", CMD_SELECT_LINE);
     bindKeySequence("ctrl+l+ctrl+v", CMD_DUPLICATE_LINE);
