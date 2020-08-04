@@ -1,7 +1,6 @@
 #include "extension.h"
 
 #include <algorithm>
-#include <iostream>
 #include <string.h>
 
 #include "app.h"

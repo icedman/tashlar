@@ -1,4 +1,3 @@
-#include <curses.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,12 +10,12 @@
 #include "app.h"
 #include "editor.h"
 #include "explorer.h"
-#include "statusbar.h"
+// #include "statusbar.h"
 #include "util.h"
 
-#define EXPLORER_WIDTH 20
 #define PRELOAD_LOOP 8
 #define MAX_PRELOAD_DEPTH 3
+#define EXPLORER_WIDTH 20
 
 static bool compareFile(std::shared_ptr<struct fileitem_t> f1, std::shared_ptr<struct fileitem_t> f2)
 {
@@ -124,6 +123,26 @@ void fileitem_t::load(std::string p)
     sort(files.begin(), files.end(), compareFile);
 }
 
+static struct explorer_t* explorerInstance = 0;
+
+struct explorer_t* explorer_t::instance()
+{
+    return explorerInstance;
+}
+
+explorer_t::explorer_t()
+    : view_t("explorer")
+    , currentItem(-1)
+{
+    preferredWidth = EXPLORER_WIDTH;
+
+    canFocus = true;
+    loadDepth = 0;
+    allFilesLoaded = false;
+
+    explorerInstance = this;
+}
+
 void explorer_t::buildFileList(std::vector<struct fileitem_t*>& list, struct fileitem_t* files, int depth, bool deep)
 {
     for (auto file : files->files) {
@@ -152,141 +171,6 @@ void explorer_t::setRootFromFile(std::string path)
         path = path.erase(path.find(file.name));
     }
     files.load(path);
-}
-
-void explorer_t::render()
-{
-    if (!app_t::instance()->showSidebar) {
-        return;
-    }
-
-    struct editor_t* editor = app_t::instance()->currentEditor.get();
-    struct document_t* doc = &editor->document;
-    struct cursor_t cursor = doc->cursor();
-    struct block_t& block = *cursor.block();
-
-    if (!win) {
-        win = newwin(viewHeight, viewWidth, 0, 0);
-    }
-
-    mvwin(win, viewY, viewX);
-    wresize(win, viewHeight, viewWidth);
-
-    wmove(win, 0, 0);
-
-    if (renderList.size() == 0) {
-        buildFileList(renderList, &files, 0);
-    }
-
-    bool hasFocus = isFocused();
-    if (currentItem == -1) {
-        currentItem = 0;
-    }
-
-    // scroll to cursor
-    // TODO: use math not loops
-    while (true) {
-        int blockVirtualLine = currentItem;
-        int blockScreenLine = blockVirtualLine - scrollY;
-
-        // app_t::instance()->log(">%d %d scroll:%d items:%d h:%d", blockScreenLine, currentItem, scrollY, renderList.size(), viewHeight);
-
-        if (blockScreenLine + 1 >= viewHeight) {
-            scrollY++;
-        } else if (blockScreenLine < 0) {
-            scrollY--;
-        } else {
-            break;
-        }
-    }
-
-    int idx = 0;
-    int skip = scrollY;
-    int y = 0;
-    for (auto file : renderList) {
-        if (skip-- > 0) {
-            idx++;
-            continue;
-        }
-
-        int pair = colorPair;
-        wmove(win, y, 0);
-        wclrtoeol(win);
-
-        if (hasFocus && currentItem == idx) {
-            if (hasFocus) {
-                // pair = colorPairSelected;
-                wattron(win, A_REVERSE);
-            } else {
-                wattron(win, A_BOLD);
-            }
-            for (int i = 0; i < viewWidth; i++) {
-                waddch(win, ' ');
-            }
-        }
-
-        int x = 0;
-        wmove(win, y++, 0);
-        wattron(win, COLOR_PAIR(pair));
-        int indent = file->depth;
-        for (int i = 0; i < indent; i++) {
-            waddch(win, ' ');
-            x++;
-        }
-        if (file->isDirectory) {
-            wattron(win, COLOR_PAIR(colorPairIndicator));
-
-#ifdef ENABLE_UTF8
-            waddwstr(win, file->expanded ? L"\u2191" : L"\u2192");
-#else
-            waddch(win, file->expanded ? '-' : '+');
-#endif
-
-            wattroff(win, COLOR_PAIR(colorPairIndicator));
-            wattron(win, COLOR_PAIR(pair));
-        } else {
-            waddch(win, ' ');
-        }
-        waddch(win, ' ');
-        x += 2;
-
-        renderLine(file->name.c_str(), x);
-
-        //for (int i = 0; i < viewWidth - x; i++) {
-        //    waddch(win, ' ');
-        //}
-        if (hasFocus && currentItem == idx) {
-            if (hasFocus) {
-                // pair = colorPairSelected;
-                wattron(win, A_REVERSE);
-            } else {
-                wattron(win, A_BOLD);
-            }
-            for (int i = 0; i < viewWidth - x; i++) {
-                waddch(win, ' ');
-            }
-        }
-
-        wattroff(win, COLOR_PAIR(pair));
-        wattroff(win, A_REVERSE);
-        wattroff(win, A_BOLD);
-
-        if (y >= viewHeight) {
-            break;
-        }
-
-        idx++;
-    }
-
-    while (y < viewHeight) {
-        wmove(win, y++, 0);
-        // wclrtoeol(win);
-        for (int i = 0; i < viewWidth; i++) {
-            waddch(win, ' ');
-        }
-    }
-
-    wrefresh(win);
 }
 
 void explorer_t::preloadFolders()
@@ -321,50 +205,28 @@ void explorer_t::preloadFolders()
     if (loaded > 0) {
         allFiles.clear();
         renderList.clear();
-        render();
-        app_t::instance()->refresh();
+        // render();
+        // app_t::instance()->refresh();
     }
 }
 
-void explorer_t::update(int frames)
+void explorer_t::update(int delta)
 {
+    /*
     if (!allFilesLoaded && app_t::instance()->isIdle() == 2) {
         preloadFolders();
     }
+    */
 }
 
-void explorer_t::renderLine(const char* line, int& x)
+void explorer_t::applyTheme()
 {
-    char c;
-    int idx = 0;
-    while ((c = line[idx++])) {
-        waddch(win, c);
-        if (++x >= viewWidth - 1) {
-            break;
-        }
-    }
-}
+    app_t* app = app_t::instance();
+    theme_ptr theme = app->theme;
+    style_t comment = theme->styles_for_scope("comment");
 
-void explorer_t::layout(int w, int h)
-{
-    if (!app_t::instance()->showSidebar) {
-        viewWidth = 0;
-        return;
-    }
-    viewX = 0;
-    viewY = 0;
-    viewWidth = EXPLORER_WIDTH;
-    viewHeight = h;
-
-    if (app_t::instance()->showStatusBar) {
-        int statusbarHeight = app_t::instance()->statusbar->viewHeight;
-        viewHeight -= statusbarHeight;
-    }
-}
-
-void explorer_t::renderCursor()
-{
-    wmove(win, 0, 0);
+    colorPrimary = pairForColor(comment.foreground.index, false);
+    colorIndicator = pairForColor(app->tabActiveBorder, false);
 }
 
 static struct fileitem_t* parentItem(struct fileitem_t* item, std::vector<struct fileitem_t*>& list)
@@ -383,22 +245,26 @@ static struct fileitem_t* parentItem(struct fileitem_t* item, std::vector<struct
     return item;
 }
 
-bool explorer_t::processCommand(command_t cmdt, char ch)
+bool explorer_t::input(char ch, std::string keys)
 {
-    // proceed only if got focus
     if (!isFocused()) {
         return false;
     }
 
-    command_e cmd = cmdt.cmd;
     struct app_t* app = app_t::instance();
     struct fileitem_t* item = renderList[currentItem];
 
+    operation_e cmd = operationFromKeys(keys);
+
     switch (cmd) {
-    case CMD_MOVE_CURSOR_RIGHT:
-    case CMD_ENTER:
+    case MOVE_FOCUS_LEFT:
+    case MOVE_FOCUS_RIGHT:
+        view_t::setFocus(app->currentEditor.get());
+        return true;
+    case MOVE_CURSOR_RIGHT:
+    case ENTER:
         if (item->isDirectory) {
-            item->expanded = !item->expanded || cmd == CMD_MOVE_CURSOR_RIGHT;
+            item->expanded = !item->expanded || cmd == MOVE_CURSOR_RIGHT;
             app->log("expand/collapse folder %s", item->fullPath.c_str());
             if (item->canLoadMore) {
                 item->load();
@@ -408,13 +274,12 @@ bool explorer_t::processCommand(command_t cmdt, char ch)
             renderList.clear();
             return true;
         }
-        if (cmd == CMD_ENTER) {
+        if (cmd == ENTER) {
             app->log("open file %s", item->fullPath.c_str());
             app->openEditor(item->fullPath);
-            app->refresh();
         }
         return true;
-    case CMD_MOVE_CURSOR_LEFT:
+    case MOVE_CURSOR_LEFT:
         if (item->isDirectory && item->expanded) {
             item->expanded = false;
             allFiles.clear();
@@ -423,23 +288,23 @@ bool explorer_t::processCommand(command_t cmdt, char ch)
         }
         currentItem = parentItem(item, renderList)->lineNumber;
         break;
-    case CMD_MOVE_CURSOR_UP:
+    case MOVE_CURSOR_UP:
         currentItem--;
         break;
-    case CMD_MOVE_CURSOR_DOWN:
+    case MOVE_CURSOR_DOWN:
         currentItem++;
         break;
-    case CMD_MOVE_CURSOR_START_OF_DOCUMENT:
+    case MOVE_CURSOR_START_OF_DOCUMENT:
         currentItem = 0;
         break;
-    case CMD_MOVE_CURSOR_END_OF_DOCUMENT:
+    case MOVE_CURSOR_END_OF_DOCUMENT:
         currentItem = renderList.size() - 1;
         break;
-    case CMD_MOVE_CURSOR_PREVIOUS_PAGE:
-        currentItem -= viewHeight;
+    case MOVE_CURSOR_PREVIOUS_PAGE:
+        currentItem -= height;
         break;
-    case CMD_MOVE_CURSOR_NEXT_PAGE:
-        currentItem += viewHeight;
+    case MOVE_CURSOR_NEXT_PAGE:
+        currentItem += height;
         break;
     default:
         break;
@@ -455,7 +320,7 @@ bool explorer_t::processCommand(command_t cmdt, char ch)
 
     struct fileitem_t* nextItem = renderList[currentItem];
     if (nextItem != item) {
-        app->statusbar->setStatus(nextItem->fullPath, 3500);
+        // app->statusbar->setStatus(nextItem->fullPath, 3500);
         return true;
     }
 

@@ -1,25 +1,12 @@
-#include <curses.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-
-#include <cstring>
-
 #include "app.h"
-#include "editor.h"
 #include "util.h"
 
-#include "explorer.h"
-#include "gutter.h"
-#include "minimap.h"
-#include "statusbar.h"
-#include "tabbar.h"
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+#include <curses.h>
 
-#include "extension.h"
-
-#include "json/json.h"
-#include "reader.h"
+#define LOG_FILE "/tmp/ashlar.log"
 
 static struct app_t* appInstance = 0;
 
@@ -71,286 +58,52 @@ static color_info_t darker(color_info_t c, int x)
     return lighter(c, -x);
 }
 
-void app_t::setupColors()
+struct app_t* app_t::instance()
 {
-    colorMap.clear();
-
-    style_t s = theme->styles_for_scope("default");
-    // std::cout << theme->colorIndices.size() << " colors used" << std::endl;
-
-    color_info_t colorFg = color(250, 250, 250);
-    color_info_t colorSelBg = color(250, 250, 250);
-    color_info_t colorSelFg = color(50, 50, 50);
-    if (theme->colorIndices.find(colorFg.index) == theme->colorIndices.end()) {
-        theme->colorIndices.emplace(colorFg.index, colorFg);
-    }
-    if (theme->colorIndices.find(colorSelBg.index) == theme->colorIndices.end()) {
-        theme->colorIndices.emplace(colorSelBg.index, colorSelBg);
-    }
-    if (theme->colorIndices.find(colorSelFg.index) == theme->colorIndices.end()) {
-        theme->colorIndices.emplace(colorSelFg.index, colorSelFg);
-    }
-
-    bg = -1;
-    fg = colorFg.index;
-    selBg = colorSelBg.index;
-    selFg = colorSelFg.index;
-    color_info_t clr;
-    theme->theme_color("editor.background", clr);
-    if (!clr.is_blank()) {
-        // bg = clr.index;
-    }
-
-    theme->theme_color("editor.foreground", clr);
-    if (!clr.is_blank()) {
-        fg = clr.index;
-    }
-    if (!s.foreground.is_blank()) {
-        fg = s.foreground.index;
-    }
-
-    theme->theme_color("editor.selectionBackground", clr);
-    if (!clr.is_blank()) {
-        selBg = clr.index;
-    }
-
-    //----------
-    // tree
-    //----------
-    treeFg = fg;
-    treeBg = bg;
-    theme->theme_color("list.activeSelectionBackground", clr);
-    if (!clr.is_blank()) {
-        treeBg = clr.index;
-    }
-    theme->theme_color("list.activeSelectionForeground", clr);
-    if (!clr.is_blank()) {
-        treeFg = clr.index;
-    }
-
-    //----------
-    // tab
-    //----------
-    theme->theme_color("tab.activeBackground", clr);
-    if (!clr.is_blank()) {
-        tabBg = clr.index;
-    }
-    theme->theme_color("tab.activeForeground", clr);
-    if (!clr.is_blank()) {
-        tabFg = clr.index;
-    }
-    // theme->theme_color("tab.inactiveBackground", clr);
-    // theme->theme_color("tab.inactiveForeground", clr);
-
-    tabHoverFg = fg;
-    tabHoverBg = bg;
-    theme->theme_color("tab.hoverBackground", clr);
-    if (!clr.is_blank()) {
-        tabHoverFg = clr.index;
-    }
-    theme->theme_color("tab.hoverForeground", clr);
-    if (!clr.is_blank()) {
-        tabHoverBg = clr.index;
-    }
-    tabActiveBorder = fg;
-    theme->theme_color("tab.activeBorderTop", clr);
-    if (!clr.is_blank()) {
-        tabActiveBorder = clr.index;
-    }
-
-    //----------
-    // statusbar
-    //----------
-    // theme->theme_color("statusBar.background", clr);
-    // theme->theme_color("statusBar.foreground", clr);
-
-    app_t::instance()->log("%d registered colors", theme->colorIndices.size());
-
-    //---------------
-    // build the color pairs
-    //---------------
-    use_default_colors();
-    start_color();
-
-    int idx = 32;
-    init_pair(color_pair_e::NORMAL, fg, bg);
-    init_pair(color_pair_e::SELECTED, selFg, selBg);
-
-    auto it = theme->colorIndices.begin();
-    while (it != theme->colorIndices.end()) {
-        colorMap[it->first] = idx;
-        init_pair(idx++, it->first, bg);
-        it++;
-    }
-
-    it = theme->colorIndices.begin();
-    while (it != theme->colorIndices.end()) {
-        colorMap[it->first + SELECTED_OFFSET] = idx;
-        init_pair(idx++, it->first, selBg);
-        if (it->first == selBg) {
-            colorMap[it->first + SELECTED_OFFSET] = idx + 1;
-        }
-        it++;
-    }
-
-    applyColors();
+    return appInstance;
 }
 
-void app_t::applyColors()
+static void initLog()
 {
-    minimap->theme = theme;
-    statusbar->theme = theme;
-    gutter->theme = theme;
-    explorer->theme = theme;
-    popup->theme = theme;
-
-    for (auto e : editors) {
-        e->theme = theme;
-        for (auto& b : e->document.blocks) {
-            b.data = nullptr;
-        }
-    }
-
-    style_t comment = theme->styles_for_scope("comment");
-    statusbar->colorPair = pairForColor(comment.foreground.index, false);
-    gutter->colorPair = pairForColor(comment.foreground.index, false);
-    gutter->colorPairIndicator = pairForColor(tabActiveBorder, false);
-    minimap->colorPair = pairForColor(comment.foreground.index, false);
-    minimap->colorPairIndicator = pairForColor(tabActiveBorder, false);
-
-    tabbar->colorPair = pairForColor(comment.foreground.index, false);
-    tabbar->colorPairIndicator = pairForColor(tabActiveBorder, false);
-    explorer->colorPair = pairForColor(comment.foreground.index, false);
-    explorer->colorPairIndicator = pairForColor(tabActiveBorder, false);
-
-    popup->colorPair = pairForColor(comment.foreground.index, false);
-    popup->colorPairIndicator = pairForColor(tabActiveBorder, false);
-
-    // tabbar->colorPair = pairForColor(tabFg, false);
-    // tabbar->colorPairSelected = pairForColor(tabHoverFg, true);
-    // tabbar->colorPairIndicator = pairForColor(tabActiveBorder, false);
-    // explorer->colorPair = pairForColor(treeFg, false);
-    // explorer->colorPairSelected = pairForColor(treeFg, true);
+    FILE* log_file = fopen(LOG_FILE, "w");
+    fclose(log_file);
 }
 
 app_t::app_t()
-    : lineWrap(false)
-    , statusbar(0)
-    , gutter(0)
-    , explorer(0)
-    , refreshLoop(8)
-    , idle(false)
-    , idleIndex(0)
-    , idleCount(0)
-    , debug(false)
+    : view_t("app")
 {
     appInstance = this;
-
-    // simple by default
-    showStatusBar = false;
-    showTabbar = false;
-    showGutter = false;
-    showSidebar = false;
-    showMinimap = false;
-
     initLog();
+
+    viewLayout = LAYOUT_VERTICAL;
+    addView(&mainView);
+    addView(&bottomBar);
+    bottomBar.name = "bottom";
+    bottomBar.preferredHeight = 1;
+    mainView.addView(&explorer);
+    mainView.addView(&tabView);
+
+    tabView.viewLayout = LAYOUT_VERTICAL;
+    tabView.addView(&tabBar);
+    tabView.addView(&tabContent);
+
+    bottomBar.addView(&statusBar);
+
+    addView(&popup);
 }
 
 app_t::~app_t()
 {
 }
 
-struct app_t* app_t::instance()
+void app_t::setClipboard(std::string text)
 {
-    return appInstance;
+    clipText = text;
 }
 
-void app_t::update(int frames)
+std::string app_t::clipboard()
 {
-    for (int i = 0; i < windows.size(); i++) {
-        windows[i]->update(150);
-    }
-
-    idleCount++;
-    if (idleCount > 20000) {
-        // app_t::instance()->log("idle");
-        idleIndex++;
-        if (idleIndex > 4) {
-            idleIndex = 1;
-        }
-        idle = true;
-        idleCount = 0;
-    } else {
-        idle = false;
-    }
-}
-
-void app_t::resetIdle()
-{
-    idleCount = 0;
-    idle = false;
-}
-
-int app_t::isIdle()
-{
-    return idle ? idleIndex : 0;
-}
-
-void app_t::layout()
-{
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    width = w.ws_col;
-    height = w.ws_row;
-    for (auto window : windows) {
-        window->layout(w.ws_col, w.ws_row);
-    }
-}
-
-void app_t::render()
-{
-    renderEditor(*currentEditor);
-    for (int i = 0; i < windows.size(); i++) {
-        windows[i]->render();
-    }
-}
-
-static void dumpInfo()
-{
-    struct app_t* app = app_t::instance();
-    struct editor_t* editor = app->currentEditor.get();
-    struct document_t* doc = &editor->document;
-
-    int idx = 0;
-    for (auto c : doc->cursors) {
-        app->log("cursor#%d:%d block:%d rel:%d pos:%d", idx++, c.uid, c.block()->uid, c.relativePosition(), c.position());
-    }
-}
-
-bool app_t::processCommand(command_t cmd, char ch)
-{
-    switch (cmd.cmd) {
-    case CMD_DEBUG:
-        debug = true;
-        dumpInfo();
-        break;
-    default:
-        break;
-    }
-
-    bool handled = false;
-    for (auto window : windows) {
-        if ((handled = window->processCommand(cmd, ch))) {
-            break;
-        }
-    }
-    return handled;
-}
-
-void app_t::initLog()
-{
-    FILE* log_file = fopen("/tmp/ashlar.log", "w");
-    fclose(log_file);
+    return clipText;
 }
 
 void app_t::log(const char* format, ...)
@@ -362,7 +115,7 @@ void app_t::log(const char* format, ...)
     vsnprintf(string, 1024, format, args);
     va_end(args);
 
-    FILE* log_file = fopen("/tmp/ashlar.log", "a");
+    FILE* log_file = fopen(LOG_FILE, "a");
     if (!log_file) {
         return;
     }
@@ -491,53 +244,215 @@ void app_t::configure(int argc, char** argv)
     }
 }
 
+void app_t::setupColors()
+{
+    colorMap.clear();
+
+    style_t s = theme->styles_for_scope("default");
+    // std::cout << theme->colorIndices.size() << " colors used" << std::endl;
+
+    color_info_t colorFg = color(250, 250, 250);
+    color_info_t colorSelBg = color(250, 250, 250);
+    color_info_t colorSelFg = color(50, 50, 50);
+    if (theme->colorIndices.find(colorFg.index) == theme->colorIndices.end()) {
+        theme->colorIndices.emplace(colorFg.index, colorFg);
+    }
+    if (theme->colorIndices.find(colorSelBg.index) == theme->colorIndices.end()) {
+        theme->colorIndices.emplace(colorSelBg.index, colorSelBg);
+    }
+    if (theme->colorIndices.find(colorSelFg.index) == theme->colorIndices.end()) {
+        theme->colorIndices.emplace(colorSelFg.index, colorSelFg);
+    }
+
+    bg = -1;
+    fg = colorFg.index;
+    selBg = colorSelBg.index;
+    selFg = colorSelFg.index;
+    color_info_t clr;
+    theme->theme_color("editor.background", clr);
+    if (!clr.is_blank()) {
+        // bg = clr.index;
+    }
+
+    theme->theme_color("editor.foreground", clr);
+    if (!clr.is_blank()) {
+        fg = clr.index;
+    }
+    if (!s.foreground.is_blank()) {
+        fg = s.foreground.index;
+    }
+
+    theme->theme_color("editor.selectionBackground", clr);
+    if (!clr.is_blank()) {
+        selBg = clr.index;
+    }
+
+    //----------
+    // tree
+    //----------
+    treeFg = fg;
+    treeBg = bg;
+    theme->theme_color("list.activeSelectionBackground", clr);
+    if (!clr.is_blank()) {
+        treeBg = clr.index;
+    }
+    theme->theme_color("list.activeSelectionForeground", clr);
+    if (!clr.is_blank()) {
+        treeFg = clr.index;
+    }
+
+    //----------
+    // tab
+    //----------
+    theme->theme_color("tab.activeBackground", clr);
+    if (!clr.is_blank()) {
+        tabBg = clr.index;
+    }
+    theme->theme_color("tab.activeForeground", clr);
+    if (!clr.is_blank()) {
+        tabFg = clr.index;
+    }
+    // theme->theme_color("tab.inactiveBackground", clr);
+    // theme->theme_color("tab.inactiveForeground", clr);
+
+    tabHoverFg = fg;
+    tabHoverBg = bg;
+    theme->theme_color("tab.hoverBackground", clr);
+    if (!clr.is_blank()) {
+        tabHoverFg = clr.index;
+    }
+    theme->theme_color("tab.hoverForeground", clr);
+    if (!clr.is_blank()) {
+        tabHoverBg = clr.index;
+    }
+    tabActiveBorder = fg;
+    theme->theme_color("tab.activeBorderTop", clr);
+    if (!clr.is_blank()) {
+        tabActiveBorder = clr.index;
+    }
+
+    //----------
+    // statusbar
+    //----------
+    // theme->theme_color("statusBar.background", clr);
+    // theme->theme_color("statusBar.foreground", clr);
+
+    app_t::instance()->log("%d registered colors", theme->colorIndices.size());
+
+    int idx = 32;
+
+    //---------------
+    // build the color pairs
+    //---------------
+    init_pair(color_pair_e::NORMAL, fg, bg);
+    init_pair(color_pair_e::SELECTED, selFg, selBg);
+
+    auto it = theme->colorIndices.begin();
+    while (it != theme->colorIndices.end()) {
+        colorMap[it->first] = idx;
+        init_pair(idx++, it->first, bg);
+        it++;
+    }
+
+    it = theme->colorIndices.begin();
+    while (it != theme->colorIndices.end()) {
+        colorMap[it->first + SELECTED_OFFSET] = idx;
+        init_pair(idx++, it->first, selBg);
+        if (it->first == selBg) {
+            colorMap[it->first + SELECTED_OFFSET] = idx + 1;
+        }
+        it++;
+    }
+
+    applyTheme();
+}
+
 editor_ptr app_t::openEditor(std::string path)
 {
     log("open: %s", path.c_str());
-    for (auto e : editors) {
+    for (auto gem : editors) {
+        gem->setVisible(false);
+    }
+
+    for (auto gem : editors) {
+        editor_ptr e = gem->editor;
         if (e->document.fullPath == path) {
             log("reopening existing tab");
             currentEditor = e;
-            focused = currentEditor.get();
+            view_t::setFocus(currentEditor.get());
+            gem->setVisible(true);
+            // focused = currentEditor.get();
             return e;
         }
     }
 
     const char* filename = path.c_str();
-    editor_ptr editor = std::make_shared<struct editor_t>();
-    editor->lang = language_from_file(filename, extensions);
-    editor->theme = theme;
-    editor->document.open(filename);
-    editors.emplace_back(editor);
+
+    gem_ptr gem = std::make_shared<gem_t>();
+    editor_ptr editor = gem->editor;
+    editor->highlighter.lang = language_from_file(filename, extensions);
+    editor->highlighter.theme = theme;
+    editors.emplace_back(gem);
+
+    editor->pushOp("OPEN", filename);
+    editor->update(0);
+
+    tabContent.addView(gem.get());
 
     currentEditor = editor;
-    focused = currentEditor.get();
+    editor->name = "editor:";
+    editor->name += path;
 
-    tabbar->tabs.clear();
-    refresh();
+    gem->applyTheme();
+    view_t::setFocus(currentEditor.get());
     return editor;
 }
 
-void app_t::refresh()
+void app_t::layout(int x, int y, int width, int height)
 {
-    refreshLoop = 2;
+    views.pop_back();
+    view_t::layout(x, y, width, height);
+
+    // popup is handled separately
+    views.push_back(&popup);
+    popup.layout(x, y, width, height);
 }
 
-void app_t::close()
+bool app_t::input(char ch, std::string keys)
 {
-    std::vector<editor_ptr>::iterator it = editors.begin();
-    while (it != editors.end()) {
-        if ((*it)->id == currentEditor->id) {
-            editors.erase(it);
-            break;
-        }
-        it++;
-    }
-    if (editors.size()) {
-        currentEditor = editors.front();
-        focused = currentEditor.get();
+    operation_e cmd = operationFromKeys(keys);
+
+    switch (cmd) {
+    case CANCEL:
+        popup.hide();
+        return false;
+    case POPUP_SEARCH:
+        popup.search("");
+        return true;
+    case POPUP_SEARCH_LINE:
+        popup.search(":");
+        return true;
+    case POPUP_COMMANDS:
+        popup.commands();
+        return true;
+    case POPUP_FILES:
+        popup.files();
+        return true;
+    case MOVE_FOCUS_LEFT:
+        view_t::shiftFocus(-1, 0);
+        return true;
+    case MOVE_FOCUS_RIGHT:
+        view_t::shiftFocus(1, 0);
+        return true;
+    case MOVE_FOCUS_UP:
+        view_t::shiftFocus(0, -1);
+        return true;
+    case MOVE_FOCUS_DOWN:
+        view_t::shiftFocus(0, 1);
+        return true;
+    default:
+        break;
     }
 
-    tabbar->tabs.clear();
-    refresh();
+    return view_t::input(ch, keys);
 }

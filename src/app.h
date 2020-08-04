@@ -1,52 +1,47 @@
 #ifndef APP_H
 #define APP_H
 
-#include <string>
-#include <vector>
-
-#include "command.h"
-#include "editor.h"
+#include "explorer.h"
 #include "extension.h"
+#include "gem.h"
 #include "popup.h"
-#include "theme.h"
-#include "window.h"
+#include "statusbar.h"
+#include "tabbar.h"
+#include "view.h"
 
-struct statusbar_t;
-struct gutter_t;
-struct tabbar_t;
-struct explorer_t;
-struct minimap_t;
-struct popup_t;
+#include <string>
 
-#define ENABLE_UTF8
+enum color_pair_e {
+    NORMAL = 0,
+    SELECTED
+};
 
-struct app_t {
-
+struct app_t : view_t {
     app_t();
     ~app_t();
 
     static app_t* instance();
+    static void log(const char* format, ...);
 
-    struct statusbar_t* statusbar;
-    struct explorer_t* explorer;
-    struct tabbar_t* tabbar;
-    struct window_t* gutter;
-    struct window_t* minimap;
-    struct window_t* popup;
-    struct window_t* focused;
+    void setClipboard(std::string text);
+    std::string clipboard();
+    std::string clipText;
 
-    int refreshLoop;
+    void configure(int argc, char** argv);
+    void setupColors();
 
-    std::vector<editor_ptr> editors;
-    editor_ptr currentEditor;
+    // view
+    /*
+    void update(int delta) override;
+    void render() override;
+    void calculate() override;
+    */
 
-    std::vector<command_t> commandBuffer;
-    std::string inputBuffer;
+    void layout(int x, int y, int width, int height) override;
+    bool input(char ch, std::string keys) override;
 
-    std::string clipBoard;
-
+    extension_list extensions;
     theme_ptr theme;
-    std::vector<struct extension_t> extensions;
 
     // settings
     int tabSize;
@@ -73,37 +68,24 @@ struct app_t {
     int tabHoverBg;
     int tabActiveBorder;
 
-    void configure(int argc, char** argv);
-    void setupColors();
-    void applyColors();
-    void close();
-    void refresh();
-    void layout();
-    void render();
-
-    void update(int frames);
-    void resetIdle();
-    int isIdle();
-
-    bool processCommand(command_t cmd, char ch);
-
-    // log
-    static void initLog();
-    static void log(const char* format, ...);
-
-    editor_ptr openEditor(std::string path);
-
-    std::vector<struct window_t*> windows;
-    int width;
-    int height;
-
     std::vector<std::string> excludeFiles;
     std::vector<std::string> excludeFolders;
     std::string scriptPath;
 
-    bool idle;
-    int idleIndex;
-    int idleCount;
+    gem_list editors;
+    explorer_t explorer;
+    statusbar_t statusBar;
+    tabbar_t tabBar;
+    popup_t popup;
+
+    view_t mainView;
+    view_t tabView;
+    view_t tabContent;
+    view_t topBar;
+    view_t bottomBar;
+
+    editor_ptr openEditor(std::string path);
+    editor_ptr currentEditor;
 };
 
 int pairForColor(int colorIdx, bool selected);

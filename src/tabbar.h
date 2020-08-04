@@ -5,8 +5,7 @@
 #include <vector>
 
 #include "editor.h"
-#include "extension.h"
-#include "window.h"
+#include "view.h"
 
 struct tabitem_t {
     std::string name;
@@ -17,19 +16,13 @@ struct tabitem_t {
     editor_ptr editor;
 };
 
-struct tabbar_t : public window_t {
+struct tabbar_t : view_t {
 
-    tabbar_t()
-        : window_t(true)
-    {
-    }
+    tabbar_t();
 
-    bool processCommand(command_t cmd, char ch) override;
-    void layout(int w, int h) override;
     void render() override;
-    void renderLine(const char* line, int& offsetX, int& x);
-
-    void renderWidget();
+    void applyTheme() override;
+    bool input(char ch, std::string keys) override;
 
     std::vector<struct tabitem_t> tabs;
 };

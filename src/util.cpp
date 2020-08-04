@@ -6,8 +6,6 @@
 #include <strings.h>
 #include <wordexp.h>
 
-#include <iostream>
-
 #include "util.h"
 
 std::vector<std::string> split_path(const std::string& str, const std::set<char> delimiters)
@@ -54,7 +52,7 @@ std::vector<size_t> split_path_to_indices(const std::string& str, const std::set
 
 std::vector<std::string> enumerate_dir(const std::string path)
 {
-    std::cout << path << std::endl;
+    // std::cout << path << std::endl;
 
     std::vector<std::string> res;
     DIR* dir;

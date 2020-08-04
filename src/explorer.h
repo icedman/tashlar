@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "extension.h"
-#include "window.h"
+#include "view.h"
 
 struct fileitem_t {
 
@@ -29,24 +29,21 @@ struct fileitem_t {
     void load(std::string path = "");
 };
 
-struct explorer_t : public window_t {
+struct explorer_t : view_t {
 
-    explorer_t()
-        : window_t(true)
-        , currentItem(-1)
-    {
-        focusable = true;
-        loadDepth = 0;
-        allFilesLoaded = false;
-    }
+    explorer_t();
 
-    bool processCommand(command_t cmd, char ch) override;
-    void layout(int w, int h) override;
+    static explorer_t* instance();
+
+    // view
+    void update(int delta) override;
+    // void layout(int x, int y, int width, int height) override;
     void render() override;
-    void renderCursor() override;
-    void renderLine(const char* line, int& offsetX);
+    // void calculate() override;
+    void applyTheme() override;
+    bool input(char ch, std::string keys) override;
+
     void setRootFromFile(std::string path);
-    void update(int frames) override;
 
     void preloadFolders();
     void buildFileList(std::vector<struct fileitem_t*>& list, struct fileitem_t* files, int depth, bool deep = false);

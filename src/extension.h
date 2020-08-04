@@ -50,4 +50,6 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
 bool color_is_dark(color_info_t& color);
 bool theme_is_dark(theme_ptr theme);
 
+typedef std::vector<extension_t> extension_list;
+
 #endif // EXTENSION_H

@@ -1,22 +1,26 @@
 #ifndef GUTTER_H
 #define GUTTER_H
 
-#include <string>
-#include <vector>
+#include "editor.h"
+#include "view.h"
 
-#include "extension.h"
-#include "window.h"
+struct gutter_t : view_t {
 
-struct gutter_t : public window_t {
+    gutter_t();
+    ~gutter_t();
 
-    gutter_t()
-        : window_t(false)
-    {
-    }
+    // view
+    /*
+    void update(int delta) override;
+    void layout(int x, int y, int width, int height) override;
+    bool input(char ch, std::string keys) override;
+    */
 
-    void layout(int w, int h) override;
+    void applyTheme() override;
     void render() override;
-    void renderLine(const char* line);
+    void calculate() override;
+
+    editor_ptr editor;
 };
 
 #endif // GUTTER_H

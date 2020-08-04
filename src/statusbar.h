@@ -5,15 +5,13 @@
 #include <vector>
 
 #include "extension.h"
-#include "window.h"
+#include "view.h"
 
-struct statusbar_t : public window_t {
+struct statusbar_t : public view_t {
 
-    statusbar_t()
-        : window_t(false)
-        , frames(0)
-    {
-    }
+    statusbar_t();
+
+    static statusbar_t* instance();
 
     std::string status;
     std::map<int, std::string> text;
@@ -22,10 +20,9 @@ struct statusbar_t : public window_t {
     void setText(std::string text, int pos = 0, int size = 12);
     void setStatus(std::string status, int frames = 2000);
 
-    void layout(int w, int h) override;
+    void update(int delta) override;
     void render() override;
-    void renderLine(const char* line, int offsetX = 0, int size = 0);
-    void update(int tick);
+    void applyTheme() override;
 
     int frames; // x mseconds from last kbhit (corresponds to kbhit timeout)
     std::string prevStatus;

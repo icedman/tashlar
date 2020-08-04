@@ -2,59 +2,94 @@
 #define KEYBINDING_H
 
 #include <string>
+#include <vector>
 
-#include "command.h"
+enum operation_e {
+    UNKNOWN = 0,
+    CANCEL,
+    CUT,
+    COPY,
+    PASTE,
+    SELECT_WORD,
 
-#define CTRL_KEY(k) ((k)&0x1f)
+    INDENT,
+    UNINDENT,
 
-enum KEY_ACTION {
-    KEY_NULL = 0, /* NULL */
-    ENTER = 13,
-    TAB = 9,
-    ESC = 27,
-    BACKSPACE = 127,
-    RESIZE = 150,
-    /* The following are just soft codes, not really reported by the terminal directly. */
-    ALT_ = 1000,
-    CTRL_,
-    CTRL_ALT_,
-    CTRL_SHIFT_,
-    CTRL_SHIFT_ALT_,
-    CTRL_UP,
-    CTRL_DOWN,
-    CTRL_LEFT,
-    CTRL_RIGHT,
-    CTRL_HOME,
-    CTRL_END,
-    CTRL_SHIFT_UP,
-    CTRL_SHIFT_DOWN,
-    CTRL_SHIFT_LEFT,
-    CTRL_SHIFT_RIGHT,
-    CTRL_SHIFT_HOME,
-    CTRL_SHIFT_END,
-    CTRL_ALT_UP,
-    CTRL_ALT_DOWN,
-    CTRL_ALT_LEFT,
-    CTRL_ALT_RIGHT,
-    CTRL_ALT_HOME,
-    CTRL_ALT_END,
-    CTRL_SHIFT_ALT_LEFT,
-    CTRL_SHIFT_ALT_RIGHT,
-    CTRL_SHIFT_ALT_HOME,
-    CTRL_SHIFT_ALT_END,
-    SHIFT_HOME,
-    SHIFT_END,
-    HOME_KEY,
-    END_KEY,
-    PAGE_UP,
-    PAGE_DOWN
+    SELECT_ALL,
+    SELECT_LINE,
+    DUPLICATE_LINE,
+    DELETE_LINE,
+    MOVE_LINE_UP,
+    MOVE_LINE_DOWN,
+
+    CLEAR_SELECTION,
+    DUPLICATE_SELECTION,
+    DELETE_SELECTION,
+    ADD_CURSOR_AND_MOVE_UP,
+    ADD_CURSOR_AND_MOVE_DOWN,
+    ADD_CURSOR_FOR_SELECTED_WORD,
+    CLEAR_CURSORS,
+
+    MOVE_CURSOR_LEFT,
+    MOVE_CURSOR_RIGHT,
+    MOVE_CURSOR_UP,
+    MOVE_CURSOR_DOWN,
+    MOVE_CURSOR_NEXT_WORD,
+    MOVE_CURSOR_PREVIOUS_WORD,
+    MOVE_CURSOR_START_OF_LINE,
+    MOVE_CURSOR_END_OF_LINE,
+    MOVE_CURSOR_START_OF_DOCUMENT,
+    MOVE_CURSOR_END_OF_DOCUMENT,
+    MOVE_CURSOR_NEXT_PAGE,
+    MOVE_CURSOR_PREVIOUS_PAGE,
+
+    MOVE_CURSOR_LEFT_ANCHORED,
+    MOVE_CURSOR_RIGHT_ANCHORED,
+    MOVE_CURSOR_UP_ANCHORED,
+    MOVE_CURSOR_DOWN_ANCHORED,
+    MOVE_CURSOR_NEXT_WORD_ANCHORED,
+    MOVE_CURSOR_PREVIOUS_WORD_ANCHORED,
+    MOVE_CURSOR_START_OF_LINE_ANCHORED,
+    MOVE_CURSOR_END_OF_LINE_ANCHORED,
+    MOVE_CURSOR_START_OF_DOCUMENT_ANCHORED,
+    MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED,
+    MOVE_CURSOR_NEXT_PAGE_ANCHORED,
+    MOVE_CURSOR_PREVIOUS_PAGE_ANCHORED,
+
+    MOVE_FOCUS_LEFT,
+    MOVE_FOCUS_RIGHT,
+    MOVE_FOCUS_UP,
+    MOVE_FOCUS_DOWN,
+
+    OPEN,
+    SAVE,
+    SAVE_AS,
+    SAVE_COPY,
+    UNDO,
+    REDO,
+    CLOSE,
+
+    TAB,
+    ENTER,
+    DELETE,
+    BACKSPACE,
+    INSERT,
+    
+    POPUP_SEARCH,
+    POPUP_SEARCH_LINE,
+    POPUP_COMMANDS,
+    POPUP_FILES,
+    POPUP_COMPLETION
 };
 
-int kbhit(int timeout = 500);
+struct operation_t {
+    operation_e op;
+    std::string params;
+};
 
-int readKey(std::string& keySequence);
-void bindDefaults();
-void bindKeySequence(std::string keys, command_e command);
-command_e commandKorKeys(std::string keys);
+typedef std::vector<operation_t> operation_list;
+
+operation_e operationFromName(std::string name);
+operation_e operationFromKeys(std::string keys);
 
 #endif // KEYBINDING_H

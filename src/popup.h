@@ -2,7 +2,7 @@
 #define POPUP_H
 
 #include "cursor.h"
-#include "window.h"
+#include "view.h"
 
 struct item_t {
     std::string name;
@@ -13,7 +13,7 @@ struct item_t {
     std::string script;
 };
 
-struct popup_t : public window_t {
+struct popup_t : view_t {
 
     enum popup_e {
         POPUP_UNKNOWN,
@@ -24,21 +24,17 @@ struct popup_t : public window_t {
         POPUP_COMPLETION
     };
 
-    popup_t()
-        : window_t(true)
-        , currentItem(-1)
-        , historyIndex(0)
-        , request(0)
-    {
-        focusable = true;
-    }
+    popup_t();
 
-    bool processCommand(command_t cmd, char ch) override;
-    void layout(int w, int h) override;
+    static popup_t* instance();
+
+    void update(int delta) override;
+    void layout(int x, int y, int width, int height) override;
     void render() override;
-    void renderCursor() override;
-    void renderLine(const char* line, int offsetX, int& x);
-    void update(int frames) override;
+    void calculate() override;
+    bool input(char ch, std::string keys) override;
+    void applyTheme() override;
+
     void hide();
     void search(std::string text);
     void files();

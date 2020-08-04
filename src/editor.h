@@ -1,84 +1,54 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include <string>
-
-#include "command.h"
 #include "document.h"
+#include "highlighter.h"
+#include "keybinding.h"
+#include "view.h"
 
-// syntax highlighter
-#include "grammar.h"
-#include "parse.h"
-#include "reader.h"
-#include "theme.h"
+typedef std::vector<operation_t> operation_list;
 
-#include "extension.h"
-#include "window.h"
+struct editor_t : view_t {
+    editor_t();
+    ~editor_t();
 
-// 20K
-// beyond this threshold, paste will use an additional file buffer
-#define SIMPLE_PASTE_THRESHOLD 20000
+    void pushOp(std::string op, std::string params = "");
+    void pushOp(operation_e op, std::string params = "");
+    void pushOp(operation_t op);
+    void runOp(operation_t op);
 
-enum color_pair_e {
-    NORMAL = 0,
-    SELECTED
-};
+    void undo();
 
-struct editor_t : public window_t {
-    editor_t()
-        : window_t(true)
-        , frames(0)
-    {
-    }
-
-    bool processCommand(command_t cmd, char ch) override;
-    void layout(int w, int h) override;
-    void render() override;
-    void renderCursor() override;
-    void update(int frames) override;
-
-    void highlightPreceedingBlocks(struct block_t& block);
-    void highlightBlock(struct block_t& block);
-    void layoutBlock(struct block_t& block);
-
-    void renderBlock(struct block_t& block, int offsetX, int offsetY);
-    void renderLine(const char* line, int offsetX = 0, int offsetY = 0, struct block_t* block = 0, int relativeLine = 0);
-
-    void gatherBrackets(struct block_t& block, char* first, char* last);
     void matchBracketsUnderCursor();
-    struct bracket_info_t bracketAtCursor(struct cursor_t& cursor);
-    struct cursor_t cursorAtBracket(struct bracket_info_t bracket);
-    struct cursor_t findLastOpenBracketCursor(struct block_t& block);
-    struct cursor_t findBracketMatchCursor(struct bracket_info_t bracket, struct cursor_t cursor);
+    bracket_info_t bracketAtCursor(cursor_t& cursor);
+    cursor_t cursorAtBracket(bracket_info_t bracket);
+    cursor_t findLastOpenBracketCursor(block_ptr block);
+    cursor_t findBracketMatchCursor(bracket_info_t bracket, cursor_t cursor);
 
     void toggleFold(size_t line);
 
-    struct document_t document;
-    language_info_ptr lang;
-    theme_ptr theme;
-
-    struct bracket_info_t cursorBracket1;
-    struct bracket_info_t cursorBracket2;
-
-    int frames;
-};
-
-struct editor_proxy_t : public window_t {
-    editor_proxy_t()
-        : window_t(true)
-    {
-    }
-
-    bool processCommand(command_t cmd, char ch) override;
-    void layout(int w, int h) override;
+    // view
+    void update(int delta) override;
+    void layout(int x, int y, int width, int height) override;
     void render() override;
-    void renderCursor() override;
-    bool isFocused() override;
-    void update(int frames) override;
+    void calculate() override;
+    bool input(char ch, std::string keys) override;
+
+    document_t document;
+    operation_list operations;
+
+    void createSnapshot();
+    block_list snapshot;
+    operation_list history;
+
+    std::string inputBuffer;
+
+    highlighter_t highlighter;
+    bracket_info_t cursorBracket1;
+    bracket_info_t cursorBracket2;
 };
 
 typedef std::shared_ptr<struct editor_t> editor_ptr;
-
-struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos);
+typedef std::vector<editor_ptr> editor_list;
 
 #endif // EDITOR_H

@@ -1,8 +1,7 @@
 #include "search.h"
-#include "app.h"
+#include "editor.h"
 
 #include <cstring>
-#include <iostream>
 
 static struct search_t* searchInstance = 0;
 
@@ -91,18 +90,21 @@ std::vector<search_result_t> search_t::find(std::string str, std::string pat)
 {
     if (lastWord != pat) {
         lastWord = pat;
+
+        // cleanup - non-regex
         for (int i = 0; i < pat.length(); i++) {
-            if (pat[i] == '(' || pat[i] == ')') {
+            if (pat[i] == '(' || pat[i] == ')' || pat[i] == '[' || pat[i] == ']') {
                 pat[i] = '.';
             }
         }
+
         word = regexp::pattern_t(pat, "is");
     }
 
     return findWords(str, &word);
 }
 
-std::vector<search_result_t> search_t::findCompletion(std::string str)
+std::vector<search_result_t> search_t::findCompletion(editor_t* editor, std::string str)
 {
     std::string pat = str;
     pat += "[a-zA-Z_]+";
@@ -110,22 +112,25 @@ std::vector<search_result_t> search_t::findCompletion(std::string str)
     lastWord = pat;
 
     std::vector<search_result_t> result;
-    struct editor_t* editor = app_t::instance()->currentEditor.get();
-    struct document_t* doc = &editor->document;
-    struct cursor_t cursor = doc->cursor();
-    struct block_t& block = *cursor.block();
+    document_t* doc = &editor->document;
+    cursor_t cursor = doc->cursor();
+    block_ptr block = cursor.block();
 
     int skipWatch = 0;
     for (auto b : doc->blocks) {
+
+        /*
         if (b.data && b.data->state == BLOCK_STATE_COMMENT) {
             continue;
         }
 
         // search only words within the first 1000 lines
-        if (!b.data && skipWatch++ > 1000)
+        if (!b.data && skipWatch++ > 1000) {
             break;
+        }
+        */
 
-        std::vector<search_result_t> res = findWords(b.text(), &word);
+        std::vector<search_result_t> res = findWords(b->text(), &word);
         for (int j = 0; j < res.size(); j++) {
             auto r = res[j];
             bool duplicate = false;

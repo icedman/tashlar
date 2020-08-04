@@ -1,94 +1,72 @@
 #ifndef CURSOR_H
 #define CURSOR_H
 
-#include <cstddef>
-#include <string>
-#include <vector>
-
-struct document_t;
-struct block_t;
-struct cursor_t;
+#include "block.h"
 
 struct cursor_position_t {
-    cursor_position_t()
-        : block(0)
-        , position(0)
-    {
-    }
+    cursor_position_t();
 
-    // todo un-pointer this
-    struct block_t* block;
-    int position;
-
-    size_t absolutePosition();
+    block_ptr block;
+    size_t position;
 };
 
 struct cursor_t {
-    enum Move {
-        NoMove,
-        Up,
-        Down,
-        Left,
-        Right,
-        PrevBlock,
-        NextBlock,
-        WordLeft,
-        WordRight,
-        StartOfLine,
-        EndOfLine,
-        StartOfDocument,
-        EndOfDocument
-    };
 
     cursor_t();
+    ~cursor_t();
 
     size_t uid;
-    size_t blockUid; // << this is ephemeral
-    bool isMultiCursorBlock;
-    int idx;
 
-    struct document_t* _document;
+    cursor_position_t cursor;
+    cursor_position_t anchor;
 
-    cursor_position_t _position;
-    cursor_position_t _anchor;
-    size_t _preferredRelativePosition;
-
-    bool hasSelection();
     bool isNull();
 
-    void setPosition(struct block_t* block, size_t position);
-    void setAnchor(struct block_t* block, size_t anchor);
-    void flipAnchor();
-
-    size_t position();
-    size_t anchorPosition();
-    size_t relativePosition();
-
+    void setPosition(block_ptr block, size_t pos, bool keepAnchor = false);
+    void setPosition(cursor_position_t pos, bool keepAnchor = false);
+    void setAnchor(block_ptr block, size_t pos);
     void clearSelection();
-    size_t selectionStart();
-    size_t selectionEnd();
-
-    struct cursor_t selectionStartCursor();
-    struct cursor_t selectionEndCursor();
-
-    struct document_t* document();
-    struct block_t* block();
-
-    std::vector<struct block_t*> selectedBlocks();
-    std::string selectedText();
+    bool hasSelection();
     bool isMultiBlockSelection();
+    void selectWord();
+
+    cursor_position_t selectionStart();
+    cursor_position_t selectionEnd();
+    std::string selectedText();
+    block_list selectedBlocks();
+    bool eraseSelection();
+
+    bool moveStartOfLine(bool keepAnchor = false);
+    bool moveEndOfLine(bool keepAnchor = false);
+    bool moveStartOfDocument(bool keepAnchor = false);
+    bool moveEndOfDocument(bool keepAnchor = false);
+    bool moveLeft(int count = 1, bool keepAnchor = false);
+    bool moveRight(int count = 1, bool keepAnchor = false);
+    bool moveUp(int count = 1, bool keepAnchor = false);
+    bool moveDown(int count = 1, bool keepAnchor = false);
+    bool moveNextBlock(int count = 1, bool keepAnchor = false);
+    bool movePreviousBlock(int count = 1, bool keepAnchor = false);
+    bool moveNextWord(bool keepAnchor = false);
+    bool movePreviousWord(bool keepAnchor = false);
+
+    bool insertText(std::string);
+    bool eraseText(int count = 1);
+    bool splitLine();
+    bool mergeNextLine();
+
+    block_ptr block();
+    size_t position();
+    block_ptr anchorBlock();
+    size_t anchorPosition();
+
+    void print();
 };
 
-bool cursorMovePosition(struct cursor_t* cursor, enum cursor_t::Move move, bool keepAnchor = false, int count = 1);
-int cursorInsertText(struct cursor_t* cursor, std::string t);
-int cursorEraseText(struct cursor_t* cursor, int c);
-void cursorSplitBlock(struct cursor_t* cursor);
-void cursorSelectWord(struct cursor_t* cursor);
-bool cursorFindWord(struct cursor_t* cursor, std::string t, int direction = 0);
-int cursorDeleteSelection(struct cursor_t* cursor);
-int cursorIndent(struct cursor_t* cursor);
-int cursorUnindent(struct cursor_t* cursor);
+typedef std::vector<cursor_t> cursor_list;
 
-int countToTabStop(struct cursor_t* cursor);
+struct cursor_util {
+    static void sortCursors(cursor_list& cursors);
+    static void advanceBlockCursors(cursor_list& cursors, cursor_t cur, int advance);
+};
 
 #endif // CURSOR_H
