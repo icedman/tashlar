@@ -1,1 +1,0 @@
-[{"name": "ncursesw", "version": "6.2.20200212", "compile_args": ["-D_DEFAULT_SOURCE", "-D_XOPEN_SOURCE=600"], "link_args": ["-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now", "-lncursesw"]}]
