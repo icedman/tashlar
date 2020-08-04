@@ -49,7 +49,7 @@ void editor_proxy_t::update(int frames)
     app_t::instance()->currentEditor->update(frames);
 }
 
-struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
+static struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
 {
     span_info_t res;
     res.length = 0;

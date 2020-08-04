@@ -11,6 +11,7 @@ add_global_arguments('-D_XOPEN_SOURCE_EXTENDED=1', language: 'cpp')
 tashlar_files = [
     'src/main.cpp',
     'src/app.cpp',
+    'src/block.cpp',
     'src/command.cpp',
     'src/cursor.cpp',
     'src/document.cpp',

@@ -8,10 +8,15 @@
 
 size_t cursor_position_t::absolutePosition()
 {
-    if (!block) {
+    if (!block()) {
         return 0;
     }
-    return block->position + position;
+    return _block->position + position;
+}
+
+struct block_t* cursor_position_t::block()
+{
+    return _block;
 }
 
 cursor_t::cursor_t()
@@ -28,7 +33,7 @@ struct document_t* cursor_t::document()
 
 struct block_t* cursor_t::block()
 {
-    return _position.block;
+    return _position.block();
 }
 
 bool cursor_t::isNull()
@@ -38,11 +43,11 @@ bool cursor_t::isNull()
 
 bool cursor_t::hasSelection()
 {
-    if (!_anchor.block) {
+    if (!_anchor.block()) {
         return false;
     }
 
-    return _anchor.block != _position.block || (_anchor.block == _position.block && _anchor.position != _position.position);
+    return _anchor.block() != _position.block() || (_anchor.block() == _position.block() && _anchor.position != _position.position);
 }
 
 void cursor_t::flipAnchor()
@@ -150,9 +155,7 @@ void cursor_t::setPosition(struct block_t* block, size_t pos)
         pos = block->length() - 1;
     }
 
-    // app_t::instance()->log("b %d %d", block->uid, pos);
-
-    _position.block = block;
+    _position._block = block;
     _position.position = pos;
 }
 
@@ -161,7 +164,7 @@ void cursor_t::setAnchor(struct block_t* block, size_t pos)
     if (pos >= block->length()) {
         pos = block->length() - 1;
     }
-    _anchor.block = block;
+    _anchor._block = block;
     _anchor.position = pos;
 }
 

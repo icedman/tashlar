@@ -5,19 +5,22 @@
 #include <string>
 #include <vector>
 
+#include "block.h"
+
 struct document_t;
-struct block_t;
 struct cursor_t;
 
 struct cursor_position_t {
     cursor_position_t()
-        : block(0)
+        : _block(0)
         , position(0)
     {
     }
 
+    struct block_t* block();
+
     // todo un-pointer this
-    struct block_t* block;
+    struct block_t* _block;
     int position;
 
     size_t absolutePosition();
