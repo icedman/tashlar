@@ -15,14 +15,17 @@ struct gem_t : view_t {
     gutter_t gutter;
     editor_ptr editor;
     minimap_t minimap;
+    bool split;
 
+    bool isVisible() override;
+    bool input(char ch, std::string keys) override;
+    void update(int delta) override;
+    
     // view
     /*
-    void update(int delta) override;
     void layout(int x, int y, int width, int height) override;
     void render() override;
     void calculate() override;
-    bool input(char ch, std::string keys) override;
     */
 };
 

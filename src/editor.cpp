@@ -620,7 +620,7 @@ void editor_t::createSnapshot()
         snapshot.push_back(b);
     }
 }
-
+    
 bool editor_t::input(char ch, std::string keySequence)
 {
     if (!isFocused())

@@ -257,10 +257,6 @@ bool explorer_t::input(char ch, std::string keys)
     operation_e cmd = operationFromKeys(keys);
 
     switch (cmd) {
-    case MOVE_FOCUS_LEFT:
-    case MOVE_FOCUS_RIGHT:
-        view_t::setFocus(app->currentEditor.get());
-        return true;
     case MOVE_CURSOR_RIGHT:
     case ENTER:
         if (item->isDirectory) {

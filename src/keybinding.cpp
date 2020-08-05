@@ -71,6 +71,8 @@ static const operation_name operation_names[] = {
     { "MOVE_FOCUS_RIGHT", MOVE_FOCUS_RIGHT, "ctrl+alt+right" },
     { "MOVE_FOCUS_UP", MOVE_FOCUS_UP, "ctrl+alt+up" },
     { "MOVE_FOCUS_DOWN", MOVE_FOCUS_DOWN, "ctrl+alt+down" },
+    
+    { "SPLIT_VIEW", SPLIT_VIEW, "ctrl+k" },
 
     { "OPEN", OPEN, "" },
     { "SAVE", SAVE, "ctrl+s" },

@@ -192,6 +192,6 @@ void editor_t::render()
         move(y + l, x);
         _clrtoeol(width);
         move(y + l++, x);
-        addch('~');
+        // addch('~');
     }
 }

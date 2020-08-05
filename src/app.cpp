@@ -371,6 +371,7 @@ editor_ptr app_t::openEditor(std::string path)
 {
     log("open: %s", path.c_str());
     for (auto gem : editors) {
+        if (!gem->split)
         gem->setVisible(false);
     }
 
@@ -442,7 +443,11 @@ bool app_t::input(char ch, std::string keys)
         view_t::shiftFocus(-1, 0);
         return true;
     case MOVE_FOCUS_RIGHT:
-        view_t::shiftFocus(1, 0);
+        if (explorer.isFocused()) {
+            view_t::setFocus(currentEditor.get());
+        } else {
+            view_t::shiftFocus(1, 0);
+        }
         return true;
     case MOVE_FOCUS_UP:
         view_t::shiftFocus(0, -1);

@@ -63,6 +63,8 @@ enum operation_e {
     MOVE_FOCUS_UP,
     MOVE_FOCUS_DOWN,
 
+    SPLIT_VIEW,
+
     OPEN,
     SAVE,
     SAVE_AS,

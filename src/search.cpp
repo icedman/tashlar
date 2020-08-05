@@ -106,7 +106,8 @@ std::vector<search_result_t> search_t::find(std::string str, std::string pat)
 
 std::vector<search_result_t> search_t::findCompletion(editor_t* editor, std::string str)
 {
-    std::string pat = str;
+    std::string pat = "\\b";
+    pat += str;
     pat += "[a-zA-Z_]+";
     word = regexp::pattern_t(pat, "is");
     lastWord = pat;

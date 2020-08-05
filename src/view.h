@@ -56,7 +56,7 @@ struct view_t {
     bool isFocused();
 
     void setVisible(bool visible);
-    bool isVisible();
+    virtual bool isVisible();
 
     bool visible;
     bool canFocus;
