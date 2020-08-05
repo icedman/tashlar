@@ -19,6 +19,7 @@ gutter_t::~gutter_t()
 
 void gutter_t::calculate()
 {
+    if (!isVisible()) return;
     block_ptr block = editor->document.lastBlock();
     std::string lineNo = std::to_string(1 + block->lineNumber);
     preferredWidth = (lineNo.length() + 1);

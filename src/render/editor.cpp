@@ -28,7 +28,7 @@ void editor_t::layout(int _x, int _y, int w, int h)
 
 void editor_t::calculate()
 {
-    if (width == 0 || height == 0 || !isVisible() || !isFocused())
+    if (width == 0 || height == 0 || !isVisible())
         return;
 
     cursor_t mainCursor = document.cursor();

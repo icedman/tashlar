@@ -5,6 +5,8 @@
 
 #include <curses.h>
 
+void _clrtoeol(int w);
+
 static void renderLine(const char* line, int& x, int width)
 {
     char c;
@@ -137,8 +139,6 @@ void explorer_t::render()
 
     while (y < height) {
         move(y++, x);
-        for (int i = 0; i < width; i++) {
-            addch(' ');
-        }
+        _clrtoeol(width);
     }
 }

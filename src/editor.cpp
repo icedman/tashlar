@@ -2,6 +2,9 @@
 #include "app.h"
 #include "keyinput.h"
 
+#include <sstream>
+#include <iostream>
+
 editor_t::editor_t()
     : view_t("editor")
 {
@@ -36,7 +39,6 @@ void editor_t::runOp(operation_t op)
     history.push_back(op);
 
     int intParam = 0;
-
     try {
         intParam = std::stoi(op.params);
     } catch (std::exception e) {
@@ -189,6 +191,30 @@ void editor_t::runOp(operation_t op)
             }
             break;
 
+        case MOVE_CURSOR:
+        case MOVE_CURSOR_ANCHORED: {
+            std::vector<std::string> strings;
+            std::istringstream f(strParam);
+            std::string s;    
+            while (getline(f, s, ':')) {
+                strings.push_back(s);
+            }
+
+            if (strings.size() == 2) {
+                size_t line = 0;
+                size_t pos = 0;
+                try {
+                    line = std::stoi(strings[0]);
+                    pos = std::stoi(strings[1]);
+                    cur.setPosition(document.blockAtLine(line), pos, _op == MOVE_CURSOR_ANCHORED);
+                    app_t::log("> %d %d", line, pos);
+                } catch (std::exception e) {
+                }
+            }
+            // 
+        }        
+            break;
+
         case MOVE_CURSOR_LEFT:
         case MOVE_CURSOR_LEFT_ANCHORED:
             cur.moveLeft(intParam, _op == MOVE_CURSOR_LEFT_ANCHORED);
@@ -269,7 +295,8 @@ void editor_t::runOp(operation_t op)
         case INSERT:
             cur.insertText(strParam);
             cursor_util::advanceBlockCursors(cursors, cur, strParam.length());
-            cur.moveRight(strParam.length());
+            cur.moveRight(strParam.length());            
+            popup_t::instance()->showCompletion();
             break;
 
         default:
@@ -600,14 +627,27 @@ bool editor_t::input(char ch, std::string keySequence)
         return false;
 
     editor_t* editor = this;
-
+    popup_t* popup = popup_t::instance();
+    
     operation_e op = operationFromKeys(keySequence);
+
+    if (popup->isVisible()) { 
+        if (!popup->isCompletion()) {
+            return false;
+        }
+        if (op == MOVE_CURSOR_UP || op == MOVE_CURSOR_DOWN || op == ENTER || op == TAB) {
+            return popup->input(ch, keySequence);
+        }
+    }
+
     if (op == UNDO) {
         editor->undo();
+        popup->hide();
         return true;
     }
     if (op != UNKNOWN) {
         editor->pushOp(op);
+        popup->hide();
         return true;
     }
 
@@ -622,6 +662,5 @@ bool editor_t::input(char ch, std::string keySequence)
     std::string s;
     s += (char)ch;
     editor->pushOp("INSERT", s);
-
     return true;
 }

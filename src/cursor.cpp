@@ -358,6 +358,58 @@ bool cursor_t::moveNextWord(bool keepAnchor)
     return true;
 }
 
+bool cursor_t::findWord(std::string t, int direction)
+{
+    struct cursor_t cur = *this;    
+    bool firstCursor = true;
+    
+    block_ptr block = cur.block();
+    size_t prevPos = cur.position();
+    
+    while(block) {
+        std::string text = block->text();
+        std::vector<search_result_t> res = search_t::instance()->find(text, t);
+        if (res.size()) {
+            search_result_t found;
+            if (firstCursor) {
+                for (auto& r : res) {
+                    if (r.end <= cur.position() || r.begin <= cur.position()) {
+                        continue;
+                    }
+                    found = r;
+                    break;
+                }
+            } else {
+                found = res[0];
+            }
+
+            if (found.isValid()) {
+                setPosition(cur.block(), found.end - 1);
+                setAnchor(cur.block(), found.begin);
+                return true;
+            }
+        }
+
+        if (direction == 1) {
+            if (!cur.movePreviousBlock()) {
+                break;
+            }
+        } else {
+            if (!cur.moveNextBlock()) {
+                break;
+            }
+        }
+
+        cur.moveStartOfLine();
+        firstCursor = false;
+        
+        block = cur.block();
+        prevPos = cur.position();
+    }
+
+    return false;
+}
+
 void cursor_t::selectWord()
 {
     std::vector<search_result_t> search_results = search_t::instance()->findWords(block()->text());

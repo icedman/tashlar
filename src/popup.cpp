@@ -12,7 +12,7 @@
 #include "statusbar.h"
 
 #define POPUP_SEARCH_WIDTH 24
-#define POPUP_PALETTE_WIDTH 48
+#define POPUP_PALETTE_WIDTH 40
 #define POPUP_HEIGHT 1
 #define POPUP_MAX_HEIGHT 12
 
@@ -59,13 +59,9 @@ void popup_t::layout(int _x, int _y, int w, int h)
         width = w;
     }
 
-    height = POPUP_HEIGHT + items.size();
+    height = POPUP_HEIGHT + items.size() + 1;
     if (type == POPUP_COMPLETION) {
         height--;
-    } else {
-        if (items.size()) {
-            height++;
-        }
     }
 
     if (height > POPUP_MAX_HEIGHT) {
@@ -90,7 +86,7 @@ void popup_t::layout(int _x, int _y, int w, int h)
         y = editor->y + cursor.block()->screenLine + 1;
 
         bool reverse = false;
-        if (y > (h * 2 / 3)) {
+        if (y > (editor->height * 2 / 3)) {
             y -= (height + 1);
             reverse = true;
             if (x + width >= w) {
@@ -121,7 +117,7 @@ void popup_t::applyTheme()
     
 bool popup_t::input(char ch, std::string keys)
 {
-    if (!isFocused()) {
+    if (!isVisible()) {
         return false;
     }
 
@@ -284,7 +280,6 @@ void popup_t::commands()
     type = POPUP_COMMANDS;
     placeholder = "enter command";
     items.clear();
-    view_t::setFocus(this);
     setVisible(true);
 }
 
@@ -299,19 +294,17 @@ void popup_t::update(int delta)
 
 void popup_t::completion()
 {
-    // if (app_t::instance()->inputBuffer.length()) {
-    // return;
-    // }
-
+    struct app_t* app = app_t::instance();
+    struct editor_t* editor = app->currentEditor.get();
+    if (editor->inputBuffer.length()) {
+        return;
+    }
     request = 10000;
-    // struct editor_t* editor = app_t::instance()->currentEditor.get();
-    // struct document_t* doc = &editor->document;
-    //cursor = doc->cursor();
 }
 
 void popup_t::showCompletion()
 {
-    if (isFocused()) {
+    if (isVisible()) {
         hide();
     }
 
@@ -320,35 +313,34 @@ void popup_t::showCompletion()
     struct app_t* app = app_t::instance();
     struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
-
-    struct cursor_t request_cursor = cursor;
     cursor = doc->cursor();
 
     struct block_t& block = *cursor.block();
 
     if (doc->cursors.size() == 1) {
-        // if (cursorMovePosition(&cursor, cursor_t::Move::Left)) {
-        // cursorSelectWord(&cursor);
-        // prefix = cursor.selectedText();
-        // if (prefix.length() > 2) {
-
-        // } else {
-        // request = 0;
-        // hide();
-        // return;
-        // }
-        // }
+        if (cursor.moveLeft(1)) {
+            cursor.selectWord();
+            prefix = cursor.selectedText();
+        }
     } else {
         return;
     }
 
+
+    if (prefix.length() < 2) {
+        request = 0;
+        hide();
+        return;
+    }
+    
     // text = prefix;
     type = POPUP_COMPLETION;
     placeholder = "";
 
     int prevSize = items.size();
     items.clear();
-
+    currentItem = -1;
+    
     std::vector<search_result_t> res = search_t::instance()->findCompletion(editor, prefix);
     for (int j = 0; j < res.size(); j++) {
         auto r = res[j];
@@ -365,11 +357,7 @@ void popup_t::showCompletion()
     }
 
     if (items.size()) {
-        currentItem = -1;
-        view_t::setFocus(this);
-        if (prevSize != items.size()) {
-            // !
-        }
+        setVisible(true);
     }
 }
 
@@ -397,6 +385,7 @@ void popup_t::onInput()
         std::stringstream(text) >> line;
         for (auto b : doc->blocks) {
             if (b->lineNumber == line - 1) {
+                // TODO .. convert to API
                 cursor.setPosition(b, 0);
                 cursor.clearSelection();
                 doc->setCursor(cursor);
@@ -488,22 +477,33 @@ void popup_t::onSubmit()
         searchHistory.push_back(text);
         historyIndex = 0;
 
-        // struct cursor_t cur = cursor;
-        // bool found = cursorFindWord(&cursor, text, searchDirection);
-        // if (!found) {
-        // cursorMovePosition(&cursor, searchDirection == 0 ? cursor_t::Move::StartOfDocument : cursor_t::Move::EndOfDocument);
-        // found = cursorFindWord(&cursor, text);
-        // }
+        struct cursor_t cur = cursor;
+        bool found = cur.findWord(text, searchDirection);
+        if (!found) {
+            if (searchDirection == 0) {
+                cur.moveStartOfDocument();
+            } else {
+                cur.moveEndOfDocument();
+            }
+            found = cur.findWord(text, searchDirection);
+        }
 
-        // if (found) {
-        // doc->updateCursor(cursor);
-        // cursor.flipAnchor();
-        // doc->setCursor(cursor);
-        // app->refresh();
-        // return;
-        // } else {
-        // app->statusbar->setStatus("no match found", 2500);
-        // }
+        if (found) {
+            std::ostringstream ss;
+            ss << (cur.block()->lineNumber + 1);
+            ss << ":";
+            ss << cur.anchorPosition();
+            editor->pushOp(MOVE_CURSOR, ss.str());
+            ss.str("");
+            ss.clear();
+            ss << (cur.block()->lineNumber + 1);
+            ss << ":";
+            ss << cur.position();
+            editor->pushOp(MOVE_CURSOR_ANCHORED, ss.str());
+            return;
+        } else {
+            statusbar_t::instance()->setStatus("no match found", 2500);
+        }
     }
 
     if (type == POPUP_FILES && currentItem >= 0 && currentItem < items.size()) {
@@ -522,14 +522,10 @@ void popup_t::onSubmit()
 
     if (type == POPUP_COMPLETION && currentItem >= 0 && currentItem < items.size()) {
         struct item_t& item = items[currentItem];
-        // app->log("insert %s", item.name.c_str());
-        // if (cursorMovePosition(&cursor, cursor_t::Move::Left)) {
-        // cursorSelectWord(&cursor);
-        // cursorDeleteSelection(&cursor);
-        // cursorInsertText(&cursor, item.name);
-        // cursorMovePosition(&cursor, cursor_t::Move::Right, false, item.name.length());
-        // doc->updateCursor(cursor);
-        // }
+        editor->pushOp(MOVE_CURSOR_LEFT);
+        editor->pushOp(SELECT_WORD);
+        editor->pushOp(DELETE_SELECTION);
+        editor->pushOp(INSERT, item.name.c_str());
         hide();
     }
 
@@ -552,3 +548,9 @@ void popup_t::onSubmit()
         hide();
     }
 }
+
+bool popup_t::isCompletion()
+{
+    return type == POPUP_COMPLETION && isVisible();
+}
+    

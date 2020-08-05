@@ -43,6 +43,9 @@ struct popup_t : view_t {
     void showCompletion();
     void onInput();
     void onSubmit();
+
+    bool isCompletion();
+    
     std::string placeholder;
     std::string text;
     int currentItem;

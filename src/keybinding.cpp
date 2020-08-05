@@ -39,6 +39,7 @@ static const operation_name operation_names[] = {
     { "ADD_CURSOR_FOR_SELECTED_WORD", ADD_CURSOR_FOR_SELECTED_WORD, "ctrl+d" },
     { "CLEAR_CURSORS", CLEAR_CURSORS, "" },
 
+    { "MOVE_CURSOR", MOVE_CURSOR, "" },
     { "MOVE_CURSOR_LEFT", MOVE_CURSOR_LEFT, "left" },
     { "MOVE_CURSOR_RIGHT", MOVE_CURSOR_RIGHT, "right" },
     { "MOVE_CURSOR_UP", MOVE_CURSOR_UP, "up" },
@@ -52,6 +53,7 @@ static const operation_name operation_names[] = {
     { "MOVE_CURSOR_NEXT_PAGE", MOVE_CURSOR_NEXT_PAGE, "pagedown" },
     { "MOVE_CURSOR_PREVIOUS_PAGE", MOVE_CURSOR_PREVIOUS_PAGE, "pageup" },
 
+    { "MOVE_CURSOR_ANCHORED", MOVE_CURSOR_ANCHORED, "" },
     { "MOVE_CURSOR_LEFT_ANCHORED", MOVE_CURSOR_LEFT_ANCHORED, "shift+left" },
     { "MOVE_CURSOR_RIGHT_ANCHORED", MOVE_CURSOR_RIGHT_ANCHORED, "shift+right" },
     { "MOVE_CURSOR_UP_ANCHORED", MOVE_CURSOR_UP_ANCHORED, "shift+up" },

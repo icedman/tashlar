@@ -63,6 +63,8 @@ int main(int argc, char** argv)
             if (ch != -1) {
                 break;
             }
+
+            app.update(100);
         }
 
         if (keySequence == "ctrl+q") {

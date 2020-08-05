@@ -46,11 +46,11 @@ void popup_t::render()
     // box(win, ' ', ' ');
 
     if (!text.length()) {
-        move(_y, _x + 3);
+        move(_y, _x + 2);
         addstr(placeholder.c_str());
     }
 
-    move(_y, _x + 2);
+    move(_y, _x + 1);
     int offsetX = 0;
     int x = 1;
 
@@ -64,10 +64,10 @@ void popup_t::render()
     if (text.length() > width - 3) {
         offsetX = text.length() - (width - 3);
     }
-
-    app_t::log(">>%s %d", str, offsetX);
+;
     renderLine(str, offsetX, x, width);
-    
+
+    attron(COLOR_PAIR(colorIndicator));    
     addch('|');
     attroff(COLOR_PAIR(colorIndicator));
     attron(COLOR_PAIR(colorPrimary));

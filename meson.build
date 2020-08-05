@@ -70,7 +70,7 @@ jsoncpp_dep = jsoncpp_proj.get_variable('jsoncpp_dep')
 textmate_inc = include_directories('libs/tm-parser/textmate')
 subdir('libs/tm-parser/textmate')
     
-executable('doc',
+executable('tashlar',
     tashlar_files,
     include_directories: [ './src', parser_inc, scopes_inc, theme_inc ],
     dependencies: [ qjs_dep, dl_dep, pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
