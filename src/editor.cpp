@@ -84,9 +84,14 @@ void editor_t::runOp(operation_t op)
         document.open(strParam);
         createSnapshot();
         return;
-    case SAVE:
+    case SAVE: {
         document.save();
+        std::ostringstream ss;
+        ss << "saved ";
+        ss << document.fullPath;
+        statusbar_t::instance()->setStatus(ss.str(), 3500);
         return;
+    }
     case SAVE_AS:
         return;
     case SAVE_COPY:
@@ -295,8 +300,8 @@ void editor_t::runOp(operation_t op)
         case INSERT:
             cur.insertText(strParam);
             cursor_util::advanceBlockCursors(cursors, cur, strParam.length());
-            cur.moveRight(strParam.length());            
-            popup_t::instance()->showCompletion();
+            cur.moveRight(strParam.length());
+            popup_t::instance()->completion();
             break;
 
         default:
@@ -638,6 +643,10 @@ bool editor_t::input(char ch, std::string keySequence)
         if (op == MOVE_CURSOR_UP || op == MOVE_CURSOR_DOWN || op == ENTER || op == TAB) {
             return popup->input(ch, keySequence);
         }
+        if (ch == K_ESC) {
+            popup->hide();
+            return true;
+        }
     }
 
     if (op == UNDO) {
@@ -651,7 +660,7 @@ bool editor_t::input(char ch, std::string keySequence)
         return true;
     }
 
-    if ((char)ch == K_ESC || keySequence != "") {
+    if (ch == K_ESC || keySequence != "") {
         cursor_t mainCursor = editor->document.cursor();
         mainCursor.clearSelection();
         editor->document.clearCursors();

@@ -42,11 +42,6 @@ void statusbar_t::update(int delta)
     if (frames < 500) {
         status = "";
     }
-
-    if (prevStatus != status) {
-        render();
-    }
-    prevStatus = status;
 }
 
 void statusbar_t::applyTheme()

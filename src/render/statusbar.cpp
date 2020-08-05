@@ -69,7 +69,7 @@ void statusbar_t::render()
 
     int offset = 2;
     if (status.length()) {
-        // renderLine(status.c_str(), offset, width);
+        renderLine(status.c_str(), y, x + offset, sizes[0], width);
     } else {
         for (int i = 0; i < STATUS_ITEMS; i++) {
             std::string s = text[i];

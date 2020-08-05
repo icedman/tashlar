@@ -316,7 +316,7 @@ bool explorer_t::input(char ch, std::string keys)
 
     struct fileitem_t* nextItem = renderList[currentItem];
     if (nextItem != item) {
-        // app->statusbar->setStatus(nextItem->fullPath, 3500);
+        statusbar_t::instance()->setStatus(nextItem->fullPath, 3500);
         return true;
     }
 

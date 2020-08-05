@@ -87,7 +87,7 @@ void popup_t::layout(int _x, int _y, int w, int h)
 
         bool reverse = false;
         if (y > (editor->height * 2 / 3)) {
-            y -= (height + 1);
+            y -= height;
             reverse = true;
             if (x + width >= w) {
                 y += 2;
@@ -285,11 +285,11 @@ void popup_t::commands()
 
 void popup_t::update(int delta)
 {
-    if (request > 0) {
-        if ((request -= delta) <= 0) {
-            showCompletion();
-        }
-    }
+    // if (request > 0) {
+        // if ((request -= delta) <= 0) {
+            // showCompletion();
+        // }
+    // }
 }
 
 void popup_t::completion()
@@ -299,7 +299,8 @@ void popup_t::completion()
     if (editor->inputBuffer.length()) {
         return;
     }
-    request = 10000;
+    // request = 10000;
+    showCompletion();
 }
 
 void popup_t::showCompletion()
@@ -313,19 +314,21 @@ void popup_t::showCompletion()
     struct app_t* app = app_t::instance();
     struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
+    
+    if (doc->cursors.size() > 1) {
+        return;
+    }
+    
     cursor = doc->cursor();
 
     struct block_t& block = *cursor.block();
 
-    if (doc->cursors.size() == 1) {
-        if (cursor.moveLeft(1)) {
-            cursor.selectWord();
-            prefix = cursor.selectedText();
-        }
-    } else {
-        return;
+    if (cursor.moveLeft(1)) {
+        cursor.selectWord();
+        prefix = cursor.selectedText();
+        cursor.cursor = cursor.anchor;
+        cursor.cursor.position--;
     }
-
 
     if (prefix.length() < 2) {
         request = 0;
@@ -340,10 +343,15 @@ void popup_t::showCompletion()
     int prevSize = items.size();
     items.clear();
     currentItem = -1;
+
+    app_t::log("prefix: %s", prefix.c_str());
     
     std::vector<search_result_t> res = search_t::instance()->findCompletion(editor, prefix);
     for (int j = 0; j < res.size(); j++) {
         auto r = res[j];
+
+        if (prefix.length() + 1 == r.text.length()) continue;
+                                                
         struct item_t item = {
             .name = r.text,
             .description = "",
@@ -352,6 +360,7 @@ void popup_t::showCompletion()
             .depth = 0,
             .script = ""
         };
+
         // item.name += std::to_string(item.score);
         items.push_back(item);
     }
@@ -385,7 +394,6 @@ void popup_t::onInput()
         std::stringstream(text) >> line;
         for (auto b : doc->blocks) {
             if (b->lineNumber == line - 1) {
-                // TODO .. convert to API
                 cursor.setPosition(b, 0);
                 cursor.clearSelection();
                 doc->setCursor(cursor);
