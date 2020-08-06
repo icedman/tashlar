@@ -312,8 +312,7 @@ void editor_t::runOp(operation_t op)
 }
 
 void editor_t::update(int delta)
-{
-    
+{    
     while (operations.size()) {
         operation_t op = operations.front();
         operations.erase(operations.begin());
@@ -672,3 +671,15 @@ bool editor_t::input(char ch, std::string keySequence)
     editor->pushOp("INSERT", s);
     return true;
 }
+
+void editor_t::applyTheme()
+{
+    for(auto b : document.blocks) {
+        if (b->data) {
+            b->data->dirty = true;
+        }
+    }
+
+    highlighter.theme = app_t::instance()->theme;
+}
+    

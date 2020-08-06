@@ -26,6 +26,7 @@ tashlar_files = [
     'src/minimap.cpp',
     'src/popup.cpp',
     'src/search.cpp',
+    'src/scripting.cpp',
     'src/tabbar.cpp',
     'src/statusbar.cpp',
     'src/util.cpp',

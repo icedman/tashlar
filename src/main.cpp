@@ -9,6 +9,7 @@
 #include "editor.h"
 #include "explorer.h"
 #include "search.h"
+#include "scripting.h"
 
 #include "keyinput.h" // terminal input
 
@@ -27,11 +28,11 @@ int main(int argc, char** argv)
     curs_set(0);
     clear();
 
+    scripting_t scripting;
     search_t search;
     app_t app;
     app.configure(argc, argv);
     app.setupColors();
-
     // editor
     char* file = 0;
     if (argc > 1) {
@@ -43,6 +44,7 @@ int main(int argc, char** argv)
     app.explorer.setRootFromFile(file);
 
     app.applyTheme();
+    scripting.initialize();
 
     while (true) {
 

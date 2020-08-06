@@ -34,6 +34,7 @@ struct editor_t : view_t {
     void render() override;
     void calculate() override;
     bool input(char ch, std::string keys) override;
+    void applyTheme() override;
 
     document_t document;
     operation_list operations;
