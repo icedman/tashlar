@@ -29,7 +29,7 @@ enum operation_e {
     ADD_CURSOR_AND_MOVE_DOWN,
     ADD_CURSOR_FOR_SELECTED_WORD,
     CLEAR_CURSORS,
-    
+
     MOVE_CURSOR,
     MOVE_CURSOR_LEFT,
     MOVE_CURSOR_RIGHT,
@@ -78,7 +78,7 @@ enum operation_e {
     DELETE,
     BACKSPACE,
     INSERT,
-    
+
     POPUP_SEARCH,
     POPUP_SEARCH_LINE,
     POPUP_COMMANDS,

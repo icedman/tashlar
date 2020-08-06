@@ -1,5 +1,6 @@
 #include "app.h"
 #include "util.h"
+#include "search.h"
 
 #include <cstdarg>
 #include <cstdio>
@@ -372,7 +373,7 @@ editor_ptr app_t::openEditor(std::string path)
     log("open: %s", path.c_str());
     for (auto gem : editors) {
         if (!gem->split)
-        gem->setVisible(false);
+            gem->setVisible(false);
     }
 
     for (auto gem : editors) {
@@ -406,6 +407,8 @@ editor_ptr app_t::openEditor(std::string path)
 
     gem->applyTheme();
     view_t::setFocus(currentEditor.get());
+
+    // editor->highlighter.run(editor.get());
     return editor;
 }
 

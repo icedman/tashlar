@@ -35,9 +35,14 @@ document_t::~document_t()
 
 void document_t::updateBlocks(block_list& blocks, size_t lineNumber)
 {
+    if (lineNumber > 0) {
+        lineNumber--;
+    }
     std::vector<block_ptr>::iterator it = blocks.begin();
     it += lineNumber;
-    size_t screenLine = 0;
+
+    size_t screenLine = (*it)->screenLine;
+
     while (it != blocks.end()) {
         block_ptr block = *it;
         block->lineNumber = lineNumber++;

@@ -57,12 +57,15 @@ void editor_t::calculate()
     if (screenX - scrollX + 2 > width) {
         scrollX = -(width - screenX) + 2;
     }
+
+    app_t::log("b:%d screenY:%d scrollY:%d", cursorBlock->lineNumber, cursorBlock->screenLine, scrollY);
 }
 
 void editor_t::render()
 {
-    if (!isVisible()) return;
-    
+    if (!isVisible())
+        return;
+
     editor_t* editor = this;
     int cols = editor->width;
     int rows = editor->height;
@@ -89,6 +92,7 @@ void editor_t::render()
         idx = 0;
     }
     it += idx;
+    
     int c = 0;
     while (it != document.blocks.end()) {
         block_ptr b = *it;
@@ -97,6 +101,12 @@ void editor_t::render()
         if (c++ > height + preceedingBlocks)
             break;
     }
+
+    // if (hlTarget == nullptr && it != document.blocks.end()) {
+        // hlTarget = *it;
+        // highlighter.run(this);
+    // }
+    
     //---------------
 
     it = document.blocks.begin();
@@ -117,6 +127,8 @@ void editor_t::render()
 
         std::string text = b->text() + " ";
         char* line = (char*)text.c_str();
+
+        editor->completer.addLine(text);
 
         move(y + l, x);
         _clrtoeol(width);

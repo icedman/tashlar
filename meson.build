@@ -14,6 +14,7 @@ tashlar_files = [
     'src/app.cpp',
     'src/block.cpp',
     'src/cursor.cpp',
+    'src/completer.cpp',
     'src/document.cpp',
     'src/dots.cpp',
     'src/editor.cpp',

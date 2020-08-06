@@ -32,7 +32,7 @@ void popup_t::render()
     int _x = this->x;
 
     attron(COLOR_PAIR(colorPrimary));
-    
+
     for (int i = 0; i < height - 1 || i == 0; i++) {
         move(_y + i, _x + 1);
         _clrtoeol(width - 2);
@@ -63,11 +63,10 @@ void popup_t::render()
     char* str = (char*)text.c_str();
     if (text.length() > width - 3) {
         offsetX = text.length() - (width - 3);
-    }
-;
+    };
     renderLine(str, offsetX, x, width);
 
-    attron(COLOR_PAIR(colorIndicator));    
+    attron(COLOR_PAIR(colorIndicator));
     addch('|');
     attroff(COLOR_PAIR(colorIndicator));
     attron(COLOR_PAIR(colorPrimary));
@@ -120,11 +119,11 @@ void popup_t::render()
         }
         attron(COLOR_PAIR(colorPrimary));
         renderLine(item.name.c_str(), offsetX, x, width);
-        
+
         for (int i = x; i < width - 1; i++) {
             addch(' ');
         }
-        
+
         attroff(COLOR_PAIR(colorPrimary));
         attroff(A_REVERSE);
         if (y >= height - 1) {
@@ -135,4 +134,3 @@ void popup_t::render()
     attroff(COLOR_PAIR(colorIndicator));
     attroff(COLOR_PAIR(colorPrimary));
 }
-

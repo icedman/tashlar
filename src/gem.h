@@ -20,7 +20,7 @@ struct gem_t : view_t {
     bool isVisible() override;
     bool input(char ch, std::string keys) override;
     void update(int delta) override;
-    
+
     // view
     /*
     void layout(int x, int y, int width, int height) override;

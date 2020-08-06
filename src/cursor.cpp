@@ -360,13 +360,13 @@ bool cursor_t::moveNextWord(bool keepAnchor)
 
 bool cursor_t::findWord(std::string t, int direction)
 {
-    struct cursor_t cur = *this;    
+    struct cursor_t cur = *this;
     bool firstCursor = true;
-    
+
     block_ptr block = cur.block();
     size_t prevPos = cur.position();
-    
-    while(block) {
+
+    while (block) {
         std::string text = block->text();
         std::vector<search_result_t> res = search_t::instance()->find(text, t);
         if (res.size()) {
@@ -402,7 +402,7 @@ bool cursor_t::findWord(std::string t, int direction)
 
         cur.moveStartOfLine();
         firstCursor = false;
-        
+
         block = cur.block();
         prevPos = cur.position();
     }

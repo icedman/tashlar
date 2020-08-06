@@ -1,8 +1,13 @@
 #include "highlighter.h"
 #include "document.h"
 #include "parse.h"
+#include "app.h"
 
 #include <cstring>
+
+highlighter_t::highlighter_t()
+{
+}
 
 struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
 {
@@ -336,4 +341,29 @@ void highlighter_t::gatherBrackets(block_ptr block, char* first, char* last)
 
         // app_t::instance()->log("brackets %d %d", blockData->brackets.size(), blockData->foldingBrackets.size());
     }
+}
+
+void* hl(void* arg) 
+{
+    editor_t *editor = (editor_t*)arg;    
+    document_t* doc = &editor->document;
+
+    block_ptr blk = editor->hlTarget;
+    if (!blk) return NULL;
+
+    int idx = 0;
+    while(blk) {
+        app_t::log("hl:%d", blk->lineNumber);
+        editor->highlighter.highlightBlock(blk);
+        blk = blk->next();
+        if (idx++ > 200) break;
+    }
+
+    editor->hlTarget = nullptr;
+    return NULL;
+}
+
+void highlighter_t::run(editor_t* editor)
+{
+    pthread_create(&threadId, NULL, &hl, editor); 
 }

@@ -2,8 +2,8 @@
 #include "app.h"
 #include "keyinput.h"
 
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 editor_t::editor_t()
     : view_t("editor")
@@ -200,7 +200,7 @@ void editor_t::runOp(operation_t op)
         case MOVE_CURSOR_ANCHORED: {
             std::vector<std::string> strings;
             std::istringstream f(strParam);
-            std::string s;    
+            std::string s;
             while (getline(f, s, ':')) {
                 strings.push_back(s);
             }
@@ -216,9 +216,8 @@ void editor_t::runOp(operation_t op)
                 } catch (std::exception e) {
                 }
             }
-            // 
-        }        
-            break;
+            //
+        } break;
 
         case MOVE_CURSOR_LEFT:
         case MOVE_CURSOR_LEFT_ANCHORED:
@@ -314,6 +313,7 @@ void editor_t::runOp(operation_t op)
 
 void editor_t::update(int delta)
 {
+    
     while (operations.size()) {
         operation_t op = operations.front();
         operations.erase(operations.begin());
@@ -357,7 +357,6 @@ struct bracket_info_t editor_t::bracketAtCursor(struct cursor_t& cursor)
 {
     bracket_info_t b;
     b.bracket = -1;
-    ;
 
     block_ptr block = cursor.block();
     if (!block) {
@@ -625,7 +624,7 @@ void editor_t::createSnapshot()
         snapshot.push_back(b);
     }
 }
-    
+
 bool editor_t::input(char ch, std::string keySequence)
 {
     if (!isFocused())
@@ -633,10 +632,10 @@ bool editor_t::input(char ch, std::string keySequence)
 
     editor_t* editor = this;
     popup_t* popup = popup_t::instance();
-    
+
     operation_e op = operationFromKeys(keySequence);
 
-    if (popup->isVisible()) { 
+    if (popup->isVisible()) {
         if (!popup->isCompletion()) {
             return false;
         }

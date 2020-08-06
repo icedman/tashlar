@@ -26,10 +26,6 @@ void tabbar_t::applyTheme()
 
 bool tabbar_t::input(char ch, std::string keys)
 {
-    if (!isFocused()) {
-        return false;
-    }
-
     struct app_t* app = app_t::instance();
 
     operation_e cmd = operationFromKeys(keys);

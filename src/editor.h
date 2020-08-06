@@ -1,6 +1,7 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
+#include "completer.h"
 #include "document.h"
 #include "highlighter.h"
 #include "keybinding.h"
@@ -33,7 +34,7 @@ struct editor_t : view_t {
     void render() override;
     void calculate() override;
     bool input(char ch, std::string keys) override;
-    
+
     document_t document;
     operation_list operations;
 
@@ -46,6 +47,10 @@ struct editor_t : view_t {
     highlighter_t highlighter;
     bracket_info_t cursorBracket1;
     bracket_info_t cursorBracket2;
+
+    block_ptr hlTarget;
+    
+    completer_t completer;
 };
 
 typedef std::shared_ptr<struct editor_t> editor_ptr;

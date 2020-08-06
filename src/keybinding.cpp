@@ -9,7 +9,7 @@ typedef struct {
 static const operation_name operation_names[] = {
     { "UNKNOWN", UNKNOWN, "" },
     { "CANCEL", CANCEL, "escape" },
-    
+
     { "TAB", TAB, "tab" },
     { "ENTER", ENTER, "enter" },
     { "DELETE", DELETE, "delete" },
@@ -71,7 +71,7 @@ static const operation_name operation_names[] = {
     { "MOVE_FOCUS_RIGHT", MOVE_FOCUS_RIGHT, "ctrl+alt+right" },
     { "MOVE_FOCUS_UP", MOVE_FOCUS_UP, "ctrl+alt+up" },
     { "MOVE_FOCUS_DOWN", MOVE_FOCUS_DOWN, "ctrl+alt+down" },
-    
+
     { "SPLIT_VIEW", SPLIT_VIEW, "ctrl+k" },
 
     { "OPEN", OPEN, "" },
@@ -81,7 +81,7 @@ static const operation_name operation_names[] = {
     { "UNDO", UNDO, "ctrl+z" },
     { "REDO", REDO, "" },
     { "CLOSE", CLOSE, "alt+w" },
-    
+
     { "POPUP_SEARCH", POPUP_SEARCH, "ctrl+f" },
     { "POPUP_SEARCH_LINE", POPUP_SEARCH_LINE, "ctrl+g" },
     { "POPUP_COMMANDS", POPUP_COMMANDS, "ctrl+o" },

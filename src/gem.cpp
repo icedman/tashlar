@@ -30,7 +30,7 @@ bool gem_t::input(char ch, std::string keys)
     }
 
     operation_e op = operationFromKeys(keys);
-    switch(op) {
+    switch (op) {
     case SPLIT_VIEW:
         split = true;
         app_t::log("split!");
@@ -38,7 +38,7 @@ bool gem_t::input(char ch, std::string keys)
     default:
         break;
     }
-    
+
     return view_t::input(ch, keys);
 }
 

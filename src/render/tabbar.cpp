@@ -83,7 +83,7 @@ void tabbar_t::render()
 
     int offsetX = scrollX;
     int x = 0;
-    
+
     move(y, _x);
     _clrtoeol(width);
     move(y, _x);

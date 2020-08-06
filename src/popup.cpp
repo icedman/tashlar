@@ -30,7 +30,7 @@ struct popup_t* popup_t::instance()
 {
     return popupInstance;
 }
-    
+
 popup_t::popup_t()
     : view_t("popup")
     , currentItem(-1)
@@ -46,7 +46,7 @@ popup_t::popup_t()
 }
 
 void popup_t::layout(int _x, int _y, int w, int h)
-{   
+{
     // view_t::layout(0, 0, POPUP_SEARCH_WIDTH, POPUP_MAX_HEIGHT);
 
     if (type == POPUP_SEARCH || type == POPUP_COMPLETION || type == POPUP_SEARCH_LINE) {
@@ -101,25 +101,27 @@ void popup_t::layout(int _x, int _y, int w, int h)
     }
 }
 
-
 void popup_t::calculate()
-{}
+{
+}
 
 void popup_t::applyTheme()
 {
     app_t* app = app_t::instance();
     theme_ptr theme = app->theme;
-    
+
     style_t style = theme->styles_for_scope("function");
     colorPrimary = pairForColor(style.foreground.index, true);
     colorIndicator = pairForColor(app->tabActiveBorder, true);
 }
-    
+
 bool popup_t::input(char ch, std::string keys)
 {
     if (!isVisible()) {
         return false;
     }
+
+    app_t::log("p!");
 
     operation_e cmd = operationFromKeys(keys);
 
@@ -191,7 +193,7 @@ bool popup_t::input(char ch, std::string keys)
             hide();
             return false;
         }
-        
+
         if (isprint(ch)) {
             text += s;
             onInput();
@@ -202,10 +204,10 @@ bool popup_t::input(char ch, std::string keys)
     return true;
 }
 
-
 void popup_t::hide()
 {
-    if (!isVisible()) return;
+    if (!isVisible())
+        return;
     view_t::setFocus(app_t::instance()->currentEditor.get());
     setVisible(false);
 }
@@ -285,10 +287,12 @@ void popup_t::commands()
 
 void popup_t::update(int delta)
 {
+    // todo thread this!
     // if (request > 0) {
-        // if ((request -= delta) <= 0) {
-            // showCompletion();
-        // }
+    // app_t::log(">%d" ,request);
+    // if ((request -= delta) <= 0) {
+    // showCompletion();
+    // }
     // }
 }
 
@@ -299,7 +303,7 @@ void popup_t::completion()
     if (editor->inputBuffer.length()) {
         return;
     }
-    // request = 10000;
+    request = 10000;
     showCompletion();
 }
 
@@ -314,15 +318,17 @@ void popup_t::showCompletion()
     struct app_t* app = app_t::instance();
     struct editor_t* editor = app->currentEditor.get();
     struct document_t* doc = &editor->document;
-    
+
     if (doc->cursors.size() > 1) {
         return;
     }
-    
+
     cursor = doc->cursor();
 
     struct block_t& block = *cursor.block();
 
+    if (cursor.position() < 3) return;
+    
     if (cursor.moveLeft(1)) {
         cursor.selectWord();
         prefix = cursor.selectedText();
@@ -331,11 +337,10 @@ void popup_t::showCompletion()
     }
 
     if (prefix.length() < 2) {
-        request = 0;
         hide();
         return;
     }
-    
+
     // text = prefix;
     type = POPUP_COMPLETION;
     placeholder = "";
@@ -346,14 +351,11 @@ void popup_t::showCompletion()
 
     app_t::log("prefix: %s", prefix.c_str());
     
-    std::vector<search_result_t> res = search_t::instance()->findCompletion(editor, prefix);
-    for (int j = 0; j < res.size(); j++) {
-        auto r = res[j];
-
-        if (prefix.length() + 1 == r.text.length()) continue;
-                                                
+    std::vector<std::string> res = editor->completer.findWords(prefix);
+    for(auto s : res) {
+        if (s.length() <= prefix.length()) continue;
         struct item_t item = {
-            .name = r.text,
+            .name = s,
             .description = "",
             .fullPath = "",
             .score = 0,
@@ -561,4 +563,3 @@ bool popup_t::isCompletion()
 {
     return type == POPUP_COMPLETION && isVisible();
 }
-    
