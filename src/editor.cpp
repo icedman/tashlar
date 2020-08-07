@@ -36,6 +36,8 @@ void editor_t::pushOp(operation_t op)
 
 void editor_t::runOp(operation_t op)
 {
+    app_t* app = app_t::instance();
+
     history.push_back(op);
 
     int intParam = 0;
@@ -74,6 +76,10 @@ void editor_t::runOp(operation_t op)
     cursor_list cursors = document.cursors;
     cursor_t mainCursor = document.cursor();
     cursor_util::sortCursors(cursors);
+
+    if (mainCursor.block()) {
+        app_t::log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
+    }
 
     switch (_op) {
     case CANCEL:
@@ -212,7 +218,6 @@ void editor_t::runOp(operation_t op)
                     line = std::stoi(strings[0]);
                     pos = std::stoi(strings[1]);
                     cur.setPosition(document.blockAtLine(line), pos, _op == MOVE_CURSOR_ANCHORED);
-                    app_t::log("> %d %d", line, pos);
                 } catch (std::exception e) {
                 }
             }
@@ -268,8 +273,16 @@ void editor_t::runOp(operation_t op)
             cur.movePreviousBlock(height, _op == MOVE_CURSOR_PREVIOUS_PAGE_ANCHORED);
             break;
 
-        case TAB:
+        case TAB: {
+            std::string tab = "";
+            for (int i = 0; i < app->tabSize; i++) {
+                tab += " ";
+            }
+            cur.insertText(tab);
+            cursor_util::advanceBlockCursors(cursors, cur, tab.length());
+            cur.moveRight(tab.length());
             break;
+        }
         case ENTER:
             cur.splitLine();
             cur.moveDown(1);
@@ -312,7 +325,7 @@ void editor_t::runOp(operation_t op)
 }
 
 void editor_t::update(int delta)
-{    
+{
     while (operations.size()) {
         operation_t op = operations.front();
         operations.erase(operations.begin());
@@ -555,9 +568,10 @@ void editor_t::toggleFold(size_t line)
 
 void editor_t::undo()
 {
-    // simplistic! add snapshots
-
     operation_list items = history;
+
+    if (items.size() == 0)
+        return;
     while (items.size() > 1) {
         auto lastOp = items.back();
         items.pop_back();
@@ -583,12 +597,15 @@ void editor_t::undo()
             break;
     }
 
-    document.close();
+    snapshot.restore(document.blocks);
+    document.clearCursors();
 
     for (auto op : items) {
 
         switch (op.op) {
+        case OPEN:
         case PASTE:
+        case UNDO:
             continue;
         default:
             break;
@@ -603,25 +620,7 @@ void editor_t::undo()
 
 void editor_t::createSnapshot()
 {
-    snapshot.clear();
-
-    for (auto block : document.blocks) {
-        block_ptr b = std::make_shared<block_t>();
-
-        // b->uid = blockId++;
-        b->document = block->document;
-        b->originalLineNumber = block->originalLineNumber;
-        b->file = block->file;
-        b->filePosition = block->filePosition;
-        b->lineNumber = block->lineNumber;
-        b->screenLine = block->screenLine;
-        b->lineCount = block->lineCount;
-        b->dirty = block->dirty;
-        b->content = block->content;
-        b->data = nullptr;
-
-        snapshot.push_back(b);
-    }
+    snapshot.save(document.blocks);
 }
 
 bool editor_t::input(char ch, std::string keySequence)
@@ -674,7 +673,7 @@ bool editor_t::input(char ch, std::string keySequence)
 
 void editor_t::applyTheme()
 {
-    for(auto b : document.blocks) {
+    for (auto b : document.blocks) {
         if (b->data) {
             b->data->dirty = true;
         }
@@ -682,4 +681,3 @@ void editor_t::applyTheme()
 
     highlighter.theme = app_t::instance()->theme;
 }
-    

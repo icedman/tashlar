@@ -1,6 +1,6 @@
 #include "app.h"
-#include "util.h"
 #include "search.h"
+#include "util.h"
 
 #include <cstdarg>
 #include <cstdio>

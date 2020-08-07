@@ -6,9 +6,9 @@ extern "C" {
 
 #include "app.h"
 #include "extension.h"
+#include "keybinding.h"
 #include "scripting.h"
 #include "theme.h"
-#include "keybinding.h"
 
 #include <cstring>
 #include <fstream>

@@ -8,8 +8,8 @@
 #include "app.h"
 #include "editor.h"
 #include "explorer.h"
-#include "search.h"
 #include "scripting.h"
+#include "search.h"
 
 #include "keyinput.h" // terminal input
 
@@ -33,17 +33,18 @@ int main(int argc, char** argv)
     app_t app;
     app.configure(argc, argv);
     app.setupColors();
+    app.applyTheme();
+
     // editor
     char* file = 0;
     if (argc > 1) {
         file = argv[argc - 1];
     } else {
-        file = "./tests/test.cpp";
+        file = "";
     }
     app.openEditor(file);
     app.explorer.setRootFromFile(file);
 
-    app.applyTheme();
     scripting.initialize();
 
     while (true) {

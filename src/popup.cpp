@@ -328,8 +328,9 @@ void popup_t::showCompletion()
 
     struct block_t& block = *cursor.block();
 
-    if (cursor.position() < 3) return;
-    
+    if (cursor.position() < 3)
+        return;
+
     if (cursor.moveLeft(1)) {
         cursor.selectWord();
         prefix = cursor.selectedText();
@@ -351,10 +352,11 @@ void popup_t::showCompletion()
     currentItem = -1;
 
     app_t::log("prefix: %s", prefix.c_str());
-    
+
     std::vector<std::string> res = editor->completer.findWords(prefix);
-    for(auto s : res) {
-        if (s.length() <= prefix.length()) continue;
+    for (auto s : res) {
+        if (s.length() <= prefix.length() + 1)
+            continue;
         struct item_t item = {
             .name = s,
             .description = "",

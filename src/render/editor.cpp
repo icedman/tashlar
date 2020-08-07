@@ -92,7 +92,7 @@ void editor_t::render()
         idx = 0;
     }
     it += idx;
-    
+
     int c = 0;
     while (it != document.blocks.end()) {
         block_ptr b = *it;
@@ -103,10 +103,10 @@ void editor_t::render()
     }
 
     // if (hlTarget == nullptr && it != document.blocks.end()) {
-        // hlTarget = *it;
-        // highlighter.run(this);
+    // hlTarget = *it;
+    // highlighter.run(this);
     // }
-    
+
     //---------------
 
     it = document.blocks.begin();

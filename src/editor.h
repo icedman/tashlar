@@ -5,6 +5,7 @@
 #include "document.h"
 #include "highlighter.h"
 #include "keybinding.h"
+#include "snapshot.h"
 #include "view.h"
 
 typedef std::vector<operation_t> operation_list;
@@ -40,7 +41,8 @@ struct editor_t : view_t {
     operation_list operations;
 
     void createSnapshot();
-    block_list snapshot;
+
+    snapshot_t snapshot;
     operation_list history;
 
     std::string inputBuffer;
@@ -50,7 +52,7 @@ struct editor_t : view_t {
     bracket_info_t cursorBracket2;
 
     block_ptr hlTarget;
-    
+
     completer_t completer;
 };
 

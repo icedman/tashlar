@@ -7,9 +7,9 @@
 #include "grammar.h"
 #include "theme.h"
 
+#include <pthread.h>
 #include <string>
 #include <vector>
-#include <pthread.h>
 
 struct editor_t;
 struct highlighter_t {

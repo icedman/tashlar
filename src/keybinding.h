@@ -95,5 +95,6 @@ typedef std::vector<operation_t> operation_list;
 
 operation_e operationFromName(std::string name);
 operation_e operationFromKeys(std::string keys);
+std::string nameFromOperation(operation_e op);
 
 #endif // KEYBINDING_H

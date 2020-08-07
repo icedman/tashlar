@@ -110,3 +110,13 @@ operation_e operationFromKeys(std::string keys)
     }
     return UNKNOWN;
 }
+
+std::string nameFromOperation(operation_e op)
+{
+    for (int i = 0; operation_names[i].name; i++) {
+        if (op == operation_names[i].op) {
+            return operation_names[i].name;
+        }
+    }
+    return "unknown";
+}
