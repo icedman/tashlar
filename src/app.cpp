@@ -72,6 +72,7 @@ static void initLog()
 
 app_t::app_t()
     : view_t("app")
+    , end(false)
 {
     appInstance = this;
     initLog();
@@ -427,6 +428,41 @@ bool app_t::input(char ch, std::string keys)
     operation_e cmd = operationFromKeys(keys);
 
     switch (cmd) {
+    case QUIT:
+        end = true;
+        return true;
+    case CLOSE: {
+        bool found = false;
+        view_list::iterator it = tabContent.views.begin();
+        while(it != tabContent.views.end()) {
+            gem_t *gem = (gem_t*)*it;
+            if (gem->editor == currentEditor) {
+                found = true;
+                tabContent.views.erase(it);
+                if (!tabContent.views.size()) {
+                    end = true;
+                    return true;
+                }
+                break;
+            }
+            it++;
+        }
+        gem_list::iterator it2 = editors.begin();
+        while(it2 != editors.end()) {
+            gem_ptr gem = *it2;
+            if (gem->editor == currentEditor) {
+                editors.erase(it2);
+                break;
+            }
+            it2++;
+        }
+        if (found) {
+            gem_t *gem = (gem_t*)(tabContent.views.front());
+            editor_ptr nextEditor = gem->editor;
+            app_t::instance()->openEditor(nextEditor->document.filePath);
+        }
+        return true;
+    }
     case CANCEL:
         popup.hide();
         return false;

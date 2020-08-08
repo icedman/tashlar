@@ -54,6 +54,10 @@ struct document_t {
 
     bool windowsLineEnd;
 
+    void addBufferDocument(const std::string& largeText);
+    void insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer);
+    std::vector<std::shared_ptr<document_t>> buffers;
+
     static void updateBlocks(block_list& blocks, size_t lineNumber = 0);
 };
 

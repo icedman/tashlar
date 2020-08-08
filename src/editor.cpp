@@ -38,8 +38,11 @@ void editor_t::runOp(operation_t op)
 {
     app_t* app = app_t::instance();
 
-    history.push_back(op);
-
+    if (snapshots.size()) {        
+        snapshot_t& snapshot = snapshots.back();
+        snapshot.history.push_back(op);
+    }
+    
     int intParam = 0;
     try {
         intParam = std::stoi(op.params);
@@ -85,7 +88,6 @@ void editor_t::runOp(operation_t op)
     case CANCEL:
         operations.clear();
         return;
-
     case OPEN:
         document.open(strParam);
         createSnapshot();
@@ -568,11 +570,13 @@ void editor_t::toggleFold(size_t line)
 
 void editor_t::undo()
 {
-    operation_list items = history;
+    snapshot_t& snapshot = snapshots.back();
+    operation_list items = snapshot.history;
 
     if (items.size() == 0)
         return;
-    while (items.size() > 1) {
+        
+    while (items.size() > 0) {
         auto lastOp = items.back();
         items.pop_back();
 
@@ -598,7 +602,7 @@ void editor_t::undo()
     }
 
     snapshot.restore(document.blocks);
-    document.clearCursors();
+    document.clearCursors(); 
 
     for (auto op : items) {
 
@@ -615,12 +619,14 @@ void editor_t::undo()
         update(0);
     }
 
-    history = items;
+    snapshot.history = items;
 }
 
 void editor_t::createSnapshot()
 {
+    snapshot_t snapshot;
     snapshot.save(document.blocks);
+    snapshots.emplace_back(snapshot);
 }
 
 bool editor_t::input(char ch, std::string keySequence)
@@ -633,7 +639,7 @@ bool editor_t::input(char ch, std::string keySequence)
 
     operation_e op = operationFromKeys(keySequence);
 
-    if (popup->isVisible()) {
+    if (popup->isVisible() && !inputBuffer.length()) {
         if (!popup->isCompletion()) {
             return false;
         }

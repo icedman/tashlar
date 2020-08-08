@@ -1,4 +1,4 @@
-// #include "document.h"
+#include "document.h"
 #include "app.h"
 #include "cursor.h"
 #include "search.h"
@@ -348,3 +348,48 @@ cursor_t document_t::findNextOccurence(cursor_t cur, std::string word)
     }
     return cursor_t();
 }
+
+void document_t::addBufferDocument(const std::string& largeText)
+{
+    std::string tmpPath = TMP_PASTE;
+    mkstemp((char*)tmpPath.c_str());
+
+    app_t::instance()->log(tmpPath.c_str());
+
+    std::ofstream tmp(tmpPath, std::ofstream::out);
+    tmp << largeText;
+    tmp.close();
+
+    std::shared_ptr<document_t> doc = std::make_shared<document_t>();
+    doc->open(tmpPath.c_str());
+    buffers.emplace_back(doc);
+
+    tmpPaths.push_back(tmpPath);
+}
+
+void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer)
+{
+    std::vector<block_ptr> bufferBlocks;
+    size_t ln = cursor.block()->lineNumber;
+    for (auto bb : buffer->blocks) {
+
+        block_ptr b = std::make_shared<block_t>();
+
+        b->document = buffer.get();
+        b->originalLineNumber = 0;
+        b->file = bb->file;
+        b->filePosition = bb->filePosition;
+        b->lineNumber = 0;
+        b->screenLine = 0;
+        b->lineCount = 1;
+        b->dirty = true;
+        b->content = "";
+        b->data = nullptr;
+ 
+        bufferBlocks.push_back(b);
+    }
+    blocks.insert(blocks.begin() + ln, make_move_iterator(bufferBlocks.begin()), make_move_iterator(bufferBlocks.end()));
+    updateBlocks(blocks, ln);
+}
+
+

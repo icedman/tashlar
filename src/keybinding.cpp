@@ -81,6 +81,7 @@ static const operation_name operation_names[] = {
     { "UNDO", UNDO, "ctrl+z" },
     { "REDO", REDO, "" },
     { "CLOSE", CLOSE, "alt+w" },
+    { "QUIT", QUIT, "ctrl+q" },
 
     { "POPUP_SEARCH", POPUP_SEARCH, "ctrl+f" },
     { "POPUP_SEARCH_LINE", POPUP_SEARCH_LINE, "ctrl+g" },

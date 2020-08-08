@@ -42,8 +42,7 @@ struct editor_t : view_t {
 
     void createSnapshot();
 
-    snapshot_t snapshot;
-    operation_list history;
+    snap_list snapshots;
 
     std::string inputBuffer;
 

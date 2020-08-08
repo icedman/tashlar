@@ -122,8 +122,6 @@ bool popup_t::input(char ch, std::string keys)
         return false;
     }
 
-    app_t::log("p!");
-
     operation_e cmd = operationFromKeys(keys);
 
     struct app_t* app = app_t::instance();
@@ -288,24 +286,20 @@ void popup_t::commands()
 
 void popup_t::update(int delta)
 {
-    // todo thread this!
-    // if (request > 0) {
-    // app_t::log(">%d" ,request);
-    // if ((request -= delta) <= 0) {
-    // showCompletion();
-    // }
-    // }
+    if (request > 0) {
+        // app_t::log(">%d" ,request);
+        if ((request -= delta) <= 0) {
+            showCompletion();
+        }
+    }
 }
 
 void popup_t::completion()
 {
     struct app_t* app = app_t::instance();
     struct editor_t* editor = app->currentEditor.get();
-    if (editor->inputBuffer.length()) {
-        return;
-    }
     request = 10000;
-    showCompletion();
+    // showCompletion();
 }
 
 void popup_t::showCompletion()

@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 
     scripting.initialize();
 
-    while (true) {
+    while (!app.end) {
 
         static struct winsize ws;
         ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
@@ -68,10 +68,6 @@ int main(int argc, char** argv)
             }
 
             app.update(100);
-        }
-
-        if (keySequence == "ctrl+q") {
-            break;
         }
 
         app_t::log("k: %d %s", ch, keySequence.c_str());

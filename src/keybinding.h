@@ -72,6 +72,7 @@ enum operation_e {
     UNDO,
     REDO,
     CLOSE,
+    QUIT,
 
     TAB,
     ENTER,

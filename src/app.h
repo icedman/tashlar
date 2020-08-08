@@ -86,6 +86,8 @@ struct app_t : view_t {
 
     editor_ptr openEditor(std::string path);
     editor_ptr currentEditor;
+
+    bool end;
 };
 
 int pairForColor(int colorIdx, bool selected);
