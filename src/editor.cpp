@@ -133,6 +133,7 @@ void editor_t::runOp(operation_t op)
             document.addBufferDocument(app_t::instance()->clipboard());
             document.insertFromBuffer(mainCursor, document.buffers.back());
             document.clearCursors();
+            createSnapshot();
         }
 
         break;
@@ -220,6 +221,7 @@ void editor_t::runOp(operation_t op)
             if (cur.hasSelection()) {
                 cursor_position_t pos = cur.selectionStart();
                 cursor_position_t end = cur.selectionEnd();
+                bool snap = (end.block->lineNumber - pos.block->lineNumber > 100);
                 cur.eraseSelection();
                 cur.setPosition(pos);
                 cur.clearSelection();
@@ -227,6 +229,9 @@ void editor_t::runOp(operation_t op)
                 if (count > 0 && end.block == pos.block) {
                     count++;
                     cursor_util::advanceBlockCursors(cursors, cur, -count);
+                }
+                if (snap) {
+                    createSnapshot();
                 }
             }
             break;
@@ -365,6 +370,8 @@ void editor_t::update(int delta)
     std::string str;
     operation_t op;
 
+    bool snap = inputBuffer.size() > 1000;
+
     while (inputBuffer.size()) {
         char c = inputBuffer[0];
 
@@ -403,6 +410,10 @@ void editor_t::update(int delta)
         op.params = str;
         runOp(op);
         str = "";
+    }
+
+    if (snap) {
+        createSnapshot();
     }
 }
 
@@ -677,6 +688,10 @@ void editor_t::undo()
     }
 
     snapshot.history = items;
+
+    if (snapshots.size() > 1 && items.size() == 0) {
+        snapshots.pop_back();
+    }
 }
 
 void editor_t::createSnapshot()
