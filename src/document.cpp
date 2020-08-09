@@ -375,21 +375,19 @@ void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<docum
 
         block_ptr b = std::make_shared<block_t>();
 
-        b->document = buffer.get();
+        b->document = this;
         b->originalLineNumber = 0;
         b->file = bb->file;
         b->filePosition = bb->filePosition;
         b->lineNumber = 0;
         b->screenLine = 0;
         b->lineCount = 1;
-        b->dirty = true;
+        b->dirty = false;
         b->content = "";
         b->data = nullptr;
- 
+
         bufferBlocks.push_back(b);
     }
     blocks.insert(blocks.begin() + ln, make_move_iterator(bufferBlocks.begin()), make_move_iterator(bufferBlocks.end()));
-    updateBlocks(blocks, ln);
+    updateBlocks(blocks, ln > 0 ? ln - 1 : ln);
 }
-
-

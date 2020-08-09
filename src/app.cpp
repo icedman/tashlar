@@ -434,8 +434,8 @@ bool app_t::input(char ch, std::string keys)
     case CLOSE: {
         bool found = false;
         view_list::iterator it = tabContent.views.begin();
-        while(it != tabContent.views.end()) {
-            gem_t *gem = (gem_t*)*it;
+        while (it != tabContent.views.end()) {
+            gem_t* gem = (gem_t*)*it;
             if (gem->editor == currentEditor) {
                 found = true;
                 tabContent.views.erase(it);
@@ -448,7 +448,7 @@ bool app_t::input(char ch, std::string keys)
             it++;
         }
         gem_list::iterator it2 = editors.begin();
-        while(it2 != editors.end()) {
+        while (it2 != editors.end()) {
             gem_ptr gem = *it2;
             if (gem->editor == currentEditor) {
                 editors.erase(it2);
@@ -457,7 +457,7 @@ bool app_t::input(char ch, std::string keys)
             it2++;
         }
         if (found) {
-            gem_t *gem = (gem_t*)(tabContent.views.front());
+            gem_t* gem = (gem_t*)(tabContent.views.front());
             editor_ptr nextEditor = gem->editor;
             app_t::instance()->openEditor(nextEditor->document.filePath);
         }

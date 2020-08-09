@@ -5,6 +5,10 @@
 #include <iostream>
 #include <sstream>
 
+// 20K
+// beyond this threshold, paste will use an additional file buffer
+#define SIMPLE_PASTE_THRESHOLD 20000
+
 editor_t::editor_t()
     : view_t("editor")
 {
@@ -38,11 +42,11 @@ void editor_t::runOp(operation_t op)
 {
     app_t* app = app_t::instance();
 
-    if (snapshots.size()) {        
+    if (snapshots.size()) {
         snapshot_t& snapshot = snapshots.back();
         snapshot.history.push_back(op);
     }
-    
+
     int intParam = 0;
     try {
         intParam = std::stoi(op.params);
@@ -117,8 +121,20 @@ void editor_t::runOp(operation_t op)
         return;
 
     case PASTE:
-        app_t::log("paste %s", app_t::instance()->clipboard().c_str());
-        inputBuffer = app_t::instance()->clipboard();
+        // app_t::log("paste %s", app_t::instance()->clipboard().c_str());
+        // inputBuffer = app_t::instance()->clipboard();
+        if (!app_t::instance()->clipboard().length()) {
+            return;
+        }
+
+        if (app_t::instance()->clipboard().length() < SIMPLE_PASTE_THRESHOLD) {
+            inputBuffer = app_t::instance()->clipboard();
+        } else {
+            document.addBufferDocument(app_t::instance()->clipboard());
+            document.insertFromBuffer(mainCursor, document.buffers.back());
+            document.clearCursors();
+        }
+
         break;
 
     case CUT:
@@ -345,19 +361,48 @@ void editor_t::update(int delta)
         runOp(op);
     }
 
+    // handle the inputBuffer
+    std::string str;
+    operation_t op;
+
     while (inputBuffer.size()) {
         char c = inputBuffer[0];
+
         inputBuffer.erase(inputBuffer.begin());
-        std::string t;
-        t += c;
-        operation_t op = { .op = INSERT, .params = t };
-        if (c == '\n') {
+
+        op.op = INSERT;
+        op.params = "";
+
+        switch (c) {
+        case '\n': {
+            if (str.length()) {
+                op.params = str;
+                runOp(op);
+                str = "";
+            }
             op.op = ENTER;
+            runOp(op);
+            break;
         }
-        if (c == '\t') {
+        case '\t': {
+            if (str.length()) {
+                op.params = str;
+                runOp(op);
+                str = "";
+            }
             op.op = TAB;
+            break;
         }
+        default:
+            str += c;
+            break;
+        }
+    }
+
+    if (str.length()) {
+        op.params = str;
         runOp(op);
+        str = "";
     }
 }
 
@@ -586,7 +631,7 @@ void editor_t::undo()
 
     if (items.size() == 0)
         return;
-        
+
     while (items.size() > 0) {
         auto lastOp = items.back();
         items.pop_back();
@@ -613,7 +658,7 @@ void editor_t::undo()
     }
 
     snapshot.restore(document.blocks);
-    document.clearCursors(); 
+    document.clearCursors();
 
     for (auto op : items) {
 

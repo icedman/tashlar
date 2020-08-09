@@ -574,13 +574,12 @@ void popup_t::onSubmit()
         hide();
     }
 
-    
     if (type == POPUP_PROMPT) {
         app_t::log("on prompt");
         doc->fileName = text;
         doc->filePath += text;
         editor->highlighter.lang = language_from_file(text, app_t::instance()->extensions);
-        for(auto b : doc->blocks) {
+        for (auto b : doc->blocks) {
             b->data = nullptr;
         }
         doc->save();

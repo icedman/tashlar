@@ -1,7 +1,7 @@
 #include "snapshot.h"
 #include "document.h"
 
-void snapshot_t::save(block_list &blocks)
+void snapshot_t::save(block_list& blocks)
 {
     snapshot.clear();
     for (auto block : blocks) {
@@ -24,7 +24,7 @@ void snapshot_t::save(block_list &blocks)
     // document_t::updateBlocks(snapshot, 0);
 }
 
-void snapshot_t::restore(block_list &blocks)
+void snapshot_t::restore(block_list& blocks)
 {
     while (blocks.size() > snapshot.size()) {
         blocks.pop_back();
