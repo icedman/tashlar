@@ -211,6 +211,21 @@ void popup_t::hide()
     setVisible(false);
 }
 
+void popup_t::prompt(std::string _placeholder)
+{
+    if (isFocused()) {
+        hide();
+    }
+
+    text = "";
+    type = POPUP_PROMPT;
+    placeholder = _placeholder;
+
+    items.clear();
+    view_t::setFocus(this);
+    setVisible(true);
+}
+
 void popup_t::search(std::string t)
 {
     if (isFocused()) {
@@ -455,6 +470,10 @@ void popup_t::onInput()
             sort(items.begin(), items.end(), compareFile);
         }
     }
+
+    if (type == POPUP_PROMPT) {
+        // hide();
+    }
 }
 
 void popup_t::onSubmit()
@@ -552,6 +571,18 @@ void popup_t::onSubmit()
                 scripting_t::instance()->runScript(item.script);
             }
         }
+        hide();
+    }
+
+    
+    if (type == POPUP_PROMPT) {
+        doc->fileName = text;
+        doc->filePath += text;
+        editor->highlighter.lang = language_from_file(text, app_t::instance()->extensions);
+        for(auto b : doc->blocks) {
+            b->data = nullptr;
+        }
+        doc->save();
         hide();
     }
 }

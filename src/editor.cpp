@@ -93,6 +93,11 @@ void editor_t::runOp(operation_t op)
         createSnapshot();
         return;
     case SAVE: {
+        if (document.fileName == "") {
+            popup_t::instance()->prompt("filename");
+            return;
+        }
+        app_t::log("saving %s", document.fileName.c_str());
         document.save();
         std::ostringstream ss;
         ss << "saved ";

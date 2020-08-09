@@ -21,7 +21,8 @@ struct popup_t : view_t {
         POPUP_SEARCH_LINE,
         POPUP_COMMANDS,
         POPUP_FILES,
-        POPUP_COMPLETION
+        POPUP_COMPLETION,
+        POPUP_PROMPT
     };
 
     popup_t();
@@ -41,6 +42,7 @@ struct popup_t : view_t {
     void commands();
     void completion();
     void showCompletion();
+    void prompt(std::string placeholder);
     void onInput();
     void onSubmit();
 
