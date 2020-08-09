@@ -576,6 +576,7 @@ void popup_t::onSubmit()
 
     
     if (type == POPUP_PROMPT) {
+        app_t::log("on prompt");
         doc->fileName = text;
         doc->filePath += text;
         editor->highlighter.lang = language_from_file(text, app_t::instance()->extensions);

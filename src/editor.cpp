@@ -203,9 +203,15 @@ void editor_t::runOp(operation_t op)
         case DELETE_SELECTION:
             if (cur.hasSelection()) {
                 cursor_position_t pos = cur.selectionStart();
+                cursor_position_t end = cur.selectionEnd();
                 cur.eraseSelection();
                 cur.setPosition(pos);
                 cur.clearSelection();
+                int count = end.position - pos.position;
+                if (count > 0 && end.block == pos.block) {
+                    count++;
+                    cursor_util::advanceBlockCursors(cursors, cur, -count);
+                }
             }
             break;
 
@@ -614,6 +620,7 @@ void editor_t::undo()
         switch (op.op) {
         case OPEN:
         case PASTE:
+        case SAVE:
         case UNDO:
             continue;
         default:
