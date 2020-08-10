@@ -64,6 +64,7 @@ enum operation_e {
     MOVE_FOCUS_DOWN,
 
     SPLIT_VIEW,
+    TOGGLE_FOLD,
 
     OPEN,
     SAVE,

@@ -140,6 +140,11 @@ void editor_t::render()
             continue;
         }
 
+        if (blockData->folded && !blockData->foldable) {
+             l--;
+             continue;
+        }
+
         // app_t::instance()->log("%s", line);
         int col = 0;
         for (int i = editor->scrollX;; i++) {

@@ -47,6 +47,8 @@ int main(int argc, char** argv)
 
     scripting.initialize();
 
+    std::string previousKeySequence;
+    std::string expandedSequence;
     while (!app.end) {
 
         static struct winsize ws;
@@ -63,11 +65,26 @@ int main(int argc, char** argv)
         std::string keySequence;
         while (true) {
             ch = readKey(keySequence);
+
+                if (previousKeySequence.length() && keySequence.length()) {
+                    expandedSequence = previousKeySequence + "+" + keySequence;
+                }
+
+
             if (ch != -1) {
                 break;
             }
 
             app.update(100);
+        }
+
+        previousKeySequence = keySequence;
+        if (expandedSequence.length()) {
+            if (operationFromKeys(expandedSequence) != UNKNOWN) {
+                keySequence = expandedSequence;
+                previousKeySequence = "";
+            }
+            expandedSequence = "";
         }
 
         app_t::log("k: %d %s", ch, keySequence.c_str());

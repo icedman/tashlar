@@ -59,6 +59,7 @@ struct blockdata_t {
     bool foldable;
     size_t foldedBy;
     int indent;
+    bool ifElseHack;
 };
 
 struct block_t {

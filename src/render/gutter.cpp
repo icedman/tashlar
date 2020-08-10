@@ -35,6 +35,16 @@ void gutter_t::render()
 
         std::string lineNo = std::to_string(1 + b->lineNumber);
 
+        if (b->data && b->data->folded && !b->data->foldable) {
+            continue;
+        }
+
+        if (b->data && b->data->foldable) {
+            lineNo += "-";
+        } else {
+            lineNo += " ";
+        }
+
         int pair = colorPrimary;
         if (b == currentBlock) {
             attron(A_BOLD);

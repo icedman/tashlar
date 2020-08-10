@@ -183,6 +183,10 @@ void editor_t::runOp(operation_t op)
         document.setCursor(mainCursor);
         return;
 
+    case TOGGLE_FOLD:
+        toggleFold(mainCursor.block()->lineNumber);
+        return;
+        
     default:
         break;
     }
@@ -426,11 +430,6 @@ void editor_t::matchBracketsUnderCursor()
         if (cursorBracket1.bracket != -1) {
             cursor_t matchCursor = findBracketMatchCursor(cursorBracket1, cursor);
             cursorBracket2 = bracketAtCursor(matchCursor);
-            // cursorBracket1.absolutePosition = cursor.position();
-            // cursorBracket2.absolutePosition = matchCursor.position();
-            // cursorBracket1.line = cursor.block()->lineNumber;
-            // cursorBracket2.line = matchCursor.block()->lineNumber;
-            // app_t::instance()->log("brackets %d %d", cursorBracket1.absolutePosition, cursorBracket2.absolutePosition);
         }
     }
 }
@@ -591,10 +590,11 @@ cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, cursor_
 void editor_t::toggleFold(size_t line)
 {
     document_t* doc = &document;
-    block_ptr folder = doc->blockAtLine(line);
+    block_ptr folder = doc->blockAtLine(line+1);
 
     cursor_t openBracket = findLastOpenBracketCursor(folder);
     if (openBracket.isNull()) {
+        app_t::log("> %d", folder->lineNumber);
         return;
     }
 

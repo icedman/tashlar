@@ -5,6 +5,38 @@
 
 #include <algorithm>
 
+static void cursorAtPreviousUnfoldedBlock(cursor_t& cursor, bool keepAnchor) {
+    block_ptr prev = cursor.block()->previous(); 
+    while (prev) {
+            cursor.setPosition(prev, cursor.cursor.position, keepAnchor);
+
+            if (prev->data && prev->data->folded && !prev->data->foldable) {
+                if (prev->previous()) {
+                    prev = prev->previous();
+                    continue;
+                }
+            }
+
+            break;
+        }
+}
+
+static void cursorAtNextUnfoldedBlock(cursor_t& cursor, bool keepAnchor) {
+    block_ptr next = cursor.block()->next(); 
+    while (next) {
+            cursor.setPosition(next, cursor.cursor.position, keepAnchor);
+
+            if (next->data && next->data->folded && !next->data->foldable) {
+                if (next->next()) {
+                    next = next->next();
+                    continue;
+                }
+            }
+
+            break;
+        }
+}
+
 bool compareCursor(cursor_t a, cursor_t b)
 {
     size_t aline = a.block()->lineNumber;
@@ -127,7 +159,7 @@ std::string cursor_t::selectedText()
         if (block == end.block) {
             if (block == start.block) {
                 // std::cout << start.position << " - " << end.position << std::endl;
-                t = t.substr(0, end.position - start.position);
+                t = t.substr(0, end.position - start.position + 1);
             } else {
                 t = t.substr(0, end.position + 1);
             }
@@ -184,9 +216,9 @@ bool cursor_t::moveLeft(int count, bool keepAnchor)
     if (cursor.position > 0) {
         cursor.position--;
     } else {
-        block_ptr prev = block()->previous();
-        if (prev) {
-            setPosition(prev, prev->length() - 1, keepAnchor);
+        if (block()->previous()) {
+            cursorAtPreviousUnfoldedBlock(*this, keepAnchor);
+            cursor.position = block()->length() - 1;
         } else {
             return false;
         }
@@ -210,9 +242,9 @@ bool cursor_t::moveRight(int count, bool keepAnchor)
     if (cursor.position + 1 < block()->length()) {
         cursor.position++;
     } else {
-        block_ptr next = block()->next();
-        if (next) {
-            setPosition(next, 0, keepAnchor);
+        if (block()->next()) {
+            cursorAtNextUnfoldedBlock(*this, keepAnchor);
+            cursor.position = 0;
         } else {
             return false;
         }
@@ -233,10 +265,8 @@ bool cursor_t::moveRight(int count, bool keepAnchor)
 bool cursor_t::moveUp(int count, bool keepAnchor)
 {
     --count;
-
-    block_ptr prev = block()->previous();
-    if (prev) {
-        setPosition(prev, cursor.position, keepAnchor);
+    if (block()->previous()) {
+        cursorAtPreviousUnfoldedBlock(*this, keepAnchor);
     } else {
         return false;
     }
@@ -256,9 +286,9 @@ bool cursor_t::moveUp(int count, bool keepAnchor)
 bool cursor_t::moveDown(int count, bool keepAnchor)
 {
     --count;
-    block_ptr next = block()->next();
-    if (next) {
-        setPosition(next, cursor.position, keepAnchor);
+    
+    if (block()->next()) {
+        cursorAtNextUnfoldedBlock(*this, keepAnchor);
     } else {
         return false;
     }
@@ -277,10 +307,8 @@ bool cursor_t::moveDown(int count, bool keepAnchor)
 bool cursor_t::movePreviousBlock(int count, bool keepAnchor)
 {
     --count;
-
-    block_ptr prev = block()->previous();
-    if (prev) {
-        setPosition(prev, cursor.position);
+    if (block()->previous()) {
+        cursorAtPreviousUnfoldedBlock(*this, keepAnchor);
     } else {
         return false;
     }
@@ -299,9 +327,8 @@ bool cursor_t::movePreviousBlock(int count, bool keepAnchor)
 bool cursor_t::moveNextBlock(int count, bool keepAnchor)
 {
     --count;
-    block_ptr next = block()->next();
-    if (next) {
-        setPosition(next, cursor.position);
+    if (block()->next()) {
+        cursorAtNextUnfoldedBlock(*this, keepAnchor);
     } else {
         return false;
     }

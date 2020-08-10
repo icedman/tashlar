@@ -23,7 +23,7 @@ void gutter_t::calculate()
         return;
     block_ptr block = editor->document.lastBlock();
     std::string lineNo = std::to_string(1 + block->lineNumber);
-    preferredWidth = (lineNo.length() + 1);
+    preferredWidth = (lineNo.length() + 2);
 }
 
 void gutter_t::applyTheme()

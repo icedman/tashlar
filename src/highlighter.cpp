@@ -210,6 +210,7 @@ void highlighter_t::highlightBlock(block_ptr block)
     blockData->brackets.clear();
     blockData->foldable = false;
     blockData->foldingBrackets.clear();
+    blockData->ifElseHack = false;
     gatherBrackets(block, (char*)first, (char*)last);
 
     blockData->parser_state = parser_state;
@@ -325,6 +326,7 @@ void highlighter_t::gatherBrackets(block_ptr block, char* first, char* last)
         if (blockData->foldingBrackets.size() == 2) {
             if (blockData->foldingBrackets[0].open != blockData->foldingBrackets[1].open && blockData->foldingBrackets[0].bracket == blockData->foldingBrackets[1].bracket) {
                 blockData->foldingBrackets.clear();
+                blockData->ifElseHack = true;
             }
         }
 

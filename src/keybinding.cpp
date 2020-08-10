@@ -25,7 +25,7 @@ static const operation_name operation_names[] = {
     { "UNINDENT", UNINDENT, "" },
 
     { "SELECT_ALL", SELECT_ALL, "ctrl+a" },
-    { "SELECT_LINE", SELECT_LINE, "ctrl+l" },
+    { "SELECT_LINE", SELECT_LINE, "ctrl+l+ctrl+l" },
     { "DUPLICATE_LINE", DUPLICATE_LINE, "ctrl+l+ctrl+v" },
     { "DELETE_LINE", DELETE_LINE, "ctrl+l+ctrl+x" },
     { "MOVE_LINE_UP", MOVE_LINE_UP, "" },
@@ -73,6 +73,7 @@ static const operation_name operation_names[] = {
     { "MOVE_FOCUS_DOWN", MOVE_FOCUS_DOWN, "ctrl+alt+down" },
 
     { "SPLIT_VIEW", SPLIT_VIEW, "ctrl+k" },
+    { "TOGGLE_FOLD", TOGGLE_FOLD, "ctrl+l+ctrl+b" },
 
     { "OPEN", OPEN, "" },
     { "SAVE", SAVE, "ctrl+s" },
