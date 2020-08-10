@@ -55,6 +55,9 @@ struct cursor_t {
     bool splitLine();
     bool mergeNextLine();
 
+    int indent();
+    int unindent();
+
     block_ptr block();
     size_t position();
     block_ptr anchorBlock();

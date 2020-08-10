@@ -80,7 +80,9 @@ void editor_t::render()
         std::string text = b->text() + " ";
         
         // todo.. find a proper place for this
-        editor->completer.addLine(text);
+        if (b != mainCursor.block()) {
+            editor->completer.addLine(text);
+        }
 
         char* line = (char*)text.c_str();
         for (int sl = 0; sl < b->lineCount; sl++) {

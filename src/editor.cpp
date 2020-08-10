@@ -85,9 +85,9 @@ void editor_t::runOp(operation_t op)
     cursor_t mainCursor = document.cursor();
     cursor_util::sortCursors(cursors);
 
-    // if (mainCursor.block()) {
-    // app_t::log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
-    // }
+    if (mainCursor.block()) {
+        app_t::log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
+    }
 
     switch (_op) {
     case CANCEL:
@@ -159,7 +159,7 @@ void editor_t::runOp(operation_t op)
         _op = MOVE_CURSOR_DOWN;
         break;
     case ADD_CURSOR_FOR_SELECTED_WORD:
-        if (mainCursor.hasSelection()) {
+        if (mainCursor.hasSelection() && mainCursor.selectedText().length()) {
             cursor_t res = document.findNextOccurence(mainCursor, mainCursor.selectedText());
             if (!res.isNull()) {
                 document.addCursor(mainCursor);
@@ -199,11 +199,19 @@ void editor_t::runOp(operation_t op)
             cur.selectWord();
             break;
 
-        case INDENT:
+        case INDENT: {
+            int count = cur.indent();
+            cur.moveRight(count, false);
+            // cursor_util::advanceBlockCursors(cursors, cur, count);
+        }
             break;
-        case UNINDENT:
+        case UNINDENT: {
+            int count = cur.unindent();
+            if (count) {
+                cur.moveLeft(count, false);
+            }
+        }
             break;
-
         case SELECT_LINE:
             cur.moveStartOfLine();
             cur.moveEndOfLine(true);
@@ -595,7 +603,7 @@ void editor_t::toggleFold(size_t line)
 
     cursor_t openBracket = findLastOpenBracketCursor(folder);
     if (openBracket.isNull()) {
-        app_t::log("> %d", folder->lineNumber);
+        // app_t::log("> %d", folder->lineNumber);
         return;
     }
 
@@ -678,6 +686,7 @@ void editor_t::undo()
 
         switch (op.op) {
         case OPEN:
+        case COPY:
         case PASTE:
         case SAVE:
         case UNDO:

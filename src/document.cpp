@@ -342,19 +342,18 @@ void document_t::clearSelections()
 
 cursor_t document_t::findNextOccurence(cursor_t cur, std::string word)
 {
-    // app_t::log("finding %s", word.c_str());
+    app_t::log("finding %s<<", word.c_str());
     block_ptr block = cur.block();
     while (block) {
         std::vector<search_result_t> search_results = search_t::instance()->find(block->text(), word);
         for (auto& i : search_results) {
-            if (block == cur.block() && (i.end <= cur.cursor.position || i.end <= cur.anchor.position))
+            if (block == cur.block() && (i.end - 1 <= cur.cursor.position || i.end - 1 <= cur.anchor.position))
                 continue;
             cursor_t res;
-            res.setPosition(block, i.end);
+            res.setPosition(block, i.end - 1);
             res.setAnchor(block, i.begin);
-            // app_t::log("found! %s", block->text().c_str());
+            // app_t::log("found! %s %d %d %d ", block->text().c_str(), i.begin, i.end, cur.cursor.position);
             return res;
-            ;
         }
         block = block->next();
     }

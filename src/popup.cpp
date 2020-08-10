@@ -85,7 +85,7 @@ void popup_t::layout(int _x, int _y, int w, int h)
         struct editor_t* editor = app_t::instance()->currentEditor.get();
         x = editor->x + cursor.position();
         y = editor->y + cursor.block()->screenLine + 1;
-
+        y -= editor->scrollY;
         bool reverse = false;
         if (y > (editor->height * 2 / 3)) {
             y -= height;
@@ -128,6 +128,10 @@ bool popup_t::input(char ch, std::string keys)
 
     std::string s;
     s += (char)ch;
+
+    if (currentItem < 0) {
+        currentItem = 0;
+    }
 
     switch (cmd) {
     case PASTE:
@@ -358,7 +362,7 @@ void popup_t::showCompletion()
 
     int prevSize = items.size();
     items.clear();
-    currentItem = -1;
+    currentItem = 0;
 
     app_t::log("prefix: %s", prefix.c_str());
 
@@ -441,7 +445,7 @@ void popup_t::onInput()
                 items.push_back(item);
             }
 
-            currentItem = -1;
+            currentItem = 0;
             sort(items.begin(), items.end(), compareFile);
         }
     }
@@ -466,7 +470,7 @@ void popup_t::onInput()
                 items.push_back(item);
             }
 
-            currentItem = -1;
+            currentItem = 0;
             sort(items.begin(), items.end(), compareFile);
         }
     }

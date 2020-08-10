@@ -21,8 +21,8 @@ static const operation_name operation_names[] = {
     { "PASTE", PASTE, "ctrl+v" },
     { "SELECT_WORD", SELECT_WORD, "" },
 
-    { "INDENT", INDENT, "" },
-    { "UNINDENT", UNINDENT, "" },
+    { "INDENT", INDENT, "ctrl+l+ctrl+k" },
+    { "UNINDENT", UNINDENT, "ctrl+l+ctrl+j" },
 
     { "SELECT_ALL", SELECT_ALL, "ctrl+a" },
     { "SELECT_LINE", SELECT_LINE, "ctrl+l+ctrl+l" },
