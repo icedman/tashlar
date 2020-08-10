@@ -102,7 +102,7 @@ void popup_t::layout(int _x, int _y, int w, int h)
     }
 }
 
-void popup_t::calculate()
+void popup_t::preLayout()
 {
 }
 
@@ -411,7 +411,7 @@ void popup_t::onInput()
                 cursor.setPosition(b, 0);
                 cursor.clearSelection();
                 doc->setCursor(cursor);
-                editor->calculate();
+                editor->preLayout();
             }
         }
     }

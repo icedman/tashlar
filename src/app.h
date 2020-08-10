@@ -31,12 +31,6 @@ struct app_t : view_t {
     void setupColors();
 
     // view
-    /*
-    void update(int delta) override;
-    void render() override;
-    void calculate() override;
-    */
-
     void layout(int x, int y, int width, int height) override;
     bool input(char ch, std::string keys) override;
 

@@ -5,36 +5,38 @@
 
 #include <algorithm>
 
-static void cursorAtPreviousUnfoldedBlock(cursor_t& cursor, bool keepAnchor) {
-    block_ptr prev = cursor.block()->previous(); 
+static void cursorAtPreviousUnfoldedBlock(cursor_t& cursor, bool keepAnchor)
+{
+    block_ptr prev = cursor.block()->previous();
     while (prev) {
-            cursor.setPosition(prev, cursor.cursor.position, keepAnchor);
+        cursor.setPosition(prev, cursor.cursor.position, keepAnchor);
 
-            if (prev->data && prev->data->folded && !prev->data->foldable) {
-                if (prev->previous()) {
-                    prev = prev->previous();
-                    continue;
-                }
+        if (prev->data && prev->data->folded && !prev->data->foldable) {
+            if (prev->previous()) {
+                prev = prev->previous();
+                continue;
             }
-
-            break;
         }
+
+        break;
+    }
 }
 
-static void cursorAtNextUnfoldedBlock(cursor_t& cursor, bool keepAnchor) {
-    block_ptr next = cursor.block()->next(); 
+static void cursorAtNextUnfoldedBlock(cursor_t& cursor, bool keepAnchor)
+{
+    block_ptr next = cursor.block()->next();
     while (next) {
-            cursor.setPosition(next, cursor.cursor.position, keepAnchor);
+        cursor.setPosition(next, cursor.cursor.position, keepAnchor);
 
-            if (next->data && next->data->folded && !next->data->foldable) {
-                if (next->next()) {
-                    next = next->next();
-                    continue;
-                }
+        if (next->data && next->data->folded && !next->data->foldable) {
+            if (next->next()) {
+                next = next->next();
+                continue;
             }
-
-            break;
         }
+
+        break;
+    }
 }
 
 bool compareCursor(cursor_t a, cursor_t b)
@@ -159,7 +161,7 @@ std::string cursor_t::selectedText()
         if (block == end.block) {
             if (block == start.block) {
                 // std::cout << start.position << " - " << end.position << std::endl;
-                t = t.substr(0, end.position - start.position + 1);
+                t = t.substr(0, end.position - start.position);
             } else {
                 t = t.substr(0, end.position + 1);
             }
@@ -261,14 +263,30 @@ bool cursor_t::moveRight(int count, bool keepAnchor)
     return true;
 }
 
-// TODO .. wrapped text
 bool cursor_t::moveUp(int count, bool keepAnchor)
 {
     --count;
+
+    document_t *doc = block()->document;
+    bool navigateWrappedLine = false;
+    if (block()->lineCount > 1 && app_t::instance()->lineWrap && doc->columns) {
+        int line = 1 + (cursor.position / doc->columns);
+        if (line > 1) {
+            if (cursor.position > doc->columns) {
+                cursor.position -= doc->columns;
+            } else {
+                cursor.position = 0;
+            }
+            navigateWrappedLine = true;
+        }
+    } 
+
+    if (!navigateWrappedLine) {
     if (block()->previous()) {
         cursorAtPreviousUnfoldedBlock(*this, keepAnchor);
     } else {
         return false;
+    }
     }
 
     if (count > 0) {
@@ -282,15 +300,29 @@ bool cursor_t::moveUp(int count, bool keepAnchor)
     return true;
 }
 
-// TODO .. wrapped text
 bool cursor_t::moveDown(int count, bool keepAnchor)
 {
     --count;
-    
-    if (block()->next()) {
-        cursorAtNextUnfoldedBlock(*this, keepAnchor);
-    } else {
-        return false;
+
+    document_t *doc = block()->document;
+    bool navigateWrappedLine = false;
+    if (block()->lineCount > 1 && app_t::instance()->lineWrap && doc->columns) {
+        int line = 1 + (cursor.position / doc->columns);
+        if (line < block()->lineCount) {
+            cursor.position += doc->columns;
+            if (cursor.position >= block()->length()) {
+                cursor.position = block()->length() - 1;
+            }
+            navigateWrappedLine = true;
+        }
+    } 
+
+    if (!navigateWrappedLine) {
+        if (block()->next()) {
+            cursorAtNextUnfoldedBlock(*this, keepAnchor);
+        } else {
+            return false;
+        }
     }
 
     if (count > 0) {

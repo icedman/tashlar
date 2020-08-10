@@ -18,7 +18,7 @@ struct gutter_t : view_t {
 
     void applyTheme() override;
     void render() override;
-    void calculate() override;
+    void preLayout() override;
 
     editor_ptr editor;
 };

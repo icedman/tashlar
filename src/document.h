@@ -7,10 +7,12 @@
 #include "block.h"
 #include "cursor.h"
 
+struct editor_t;
 struct document_t {
     document_t();
     ~document_t();
 
+    editor_t* editor;
     block_list blocks;
     std::ifstream file;
 
@@ -58,7 +60,8 @@ struct document_t {
     void insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<document_t> buffer);
     std::vector<std::shared_ptr<document_t>> buffers;
 
-    static void updateBlocks(block_list& blocks, size_t lineNumber = 0);
+    void updateBlocks(block_list& blocks, size_t lineNumber = 0, size_t count = 0);
+    void setColumns(int cols);
 };
 
 #endif // DOCUMENT_H

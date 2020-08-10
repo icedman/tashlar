@@ -23,7 +23,8 @@ struct view_t {
     virtual void layout(int x, int y, int w, int h);
     virtual void update(int delta);
     virtual void render();
-    virtual void calculate();
+    virtual void preLayout();
+    virtual void preRender();
     virtual bool input(char ch, std::string keys);
     virtual void applyTheme();
 

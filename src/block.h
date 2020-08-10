@@ -71,7 +71,8 @@ struct block_t {
     struct document_t* document;
     size_t lineNumber;
     size_t originalLineNumber;
-
+    
+    int cachedLength;
     int lineCount;
     size_t screenLine;
 

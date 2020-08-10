@@ -1,5 +1,6 @@
 #include "block.h"
 #include "document.h"
+#include "editor.h"
 
 static size_t blocksCreated = 0;
 
@@ -30,6 +31,7 @@ block_t::block_t()
     , screenLine(0)
     , data(0)
     , dirty(false)
+    , cachedLength(0)
 {
     blocksCreated++;
 }
@@ -64,12 +66,20 @@ void block_t::setText(std::string t)
     content = t;
     if (data) {
         data->dirty = true;
+
+        if (data->folded && data->foldable) {
+            document->editor->toggleFold(lineNumber);
+        }
     }
+    cachedLength = 0;
 }
 
 size_t block_t::length()
 {
-    return text().length() + 1;
+    if (cachedLength == 0) {
+        cachedLength = text().length() + 1;
+    }
+    return cachedLength;
 }
 
 block_ptr block_t::next()

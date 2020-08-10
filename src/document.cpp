@@ -33,7 +33,7 @@ document_t::~document_t()
     close();
 }
 
-void document_t::updateBlocks(block_list& blocks, size_t lineNumber)
+void document_t::updateBlocks(block_list& blocks, size_t lineNumber, size_t count)
 {
     if (lineNumber > 0) {
         lineNumber--;
@@ -42,14 +42,21 @@ void document_t::updateBlocks(block_list& blocks, size_t lineNumber)
     it += lineNumber;
 
     size_t screenLine = (*it)->screenLine;
-
     while (it != blocks.end()) {
         block_ptr block = *it;
         block->lineNumber = lineNumber++;
         block->lineCount = 1;
+        if (app_t::instance()->lineWrap && columns > 0) {
+            block->lineCount = 1 + ((block->length() - 1) / columns);
+        }
         block->screenLine = screenLine;
         screenLine += block->lineCount;
         it++;
+
+        if (count > 0) {
+            if (count-- == 0)
+                break;
+        }
     }
 }
 
@@ -113,6 +120,7 @@ bool document_t::open(std::string path)
     file = std::ifstream(path, std::ifstream::in);
     std::ofstream tmp(tmpPath, std::ofstream::out);
 
+    size_t screenLine = 0;
     std::string line;
     size_t offset = 0;
     size_t pos = file.tellg();
@@ -129,8 +137,12 @@ bool document_t::open(std::string path)
 
         //--------------------------
         b->lineNumber = b->originalLineNumber;
-        b->screenLine = b->lineNumber;
+        b->screenLine = screenLine;
         b->lineCount = 1;
+        if (columns) {
+            b->lineCount = line.length() / columns;
+        }
+        screenLine += b->lineCount;
         if (line.length() && line[line.length() - 1] == '\r') {
             line.pop_back();
             offset++;
@@ -390,4 +402,13 @@ void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<docum
     }
     blocks.insert(blocks.begin() + ln, make_move_iterator(bufferBlocks.begin()), make_move_iterator(bufferBlocks.end()));
     updateBlocks(blocks, ln > 0 ? ln - 1 : ln);
+}
+
+void document_t::setColumns(int c)
+{
+    bool update = columns != c;
+    columns = c;
+    if (update) {
+        updateBlocks(blocks, 0);
+    }
 }

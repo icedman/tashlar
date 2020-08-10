@@ -15,8 +15,6 @@ static std::map<int, int> colorMap;
 
 #define SELECTED_OFFSET 500
 
-void renderEditor(struct editor_t& editor);
-
 int pairForColor(int colorIdx, bool selected)
 {
     if (selected && colorIdx == color_pair_e::NORMAL) {

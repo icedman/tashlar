@@ -34,6 +34,7 @@ void gutter_t::render()
             break;
 
         std::string lineNo = std::to_string(1 + b->lineNumber);
+        // std::string lineNo = std::to_string(1 + b->screenLine);
 
         if (b->data && b->data->folded && !b->data->foldable) {
             continue;
@@ -49,13 +50,17 @@ void gutter_t::render()
         if (b == currentBlock) {
             attron(A_BOLD);
         }
-        move(y + l, x);
-        _clrtoeol(width);
+        for (int sl = 0; sl < b->lineCount; sl++) {
+            move(y + l + sl, x);
+            _clrtoeol(width);
+        }
         attron(COLOR_PAIR(pair));
-        move(y + l++, x + width - lineNo.length() - 1);
+        move(y + l, x + width - lineNo.length() - 1);
         addstr(lineNo.c_str());
         attroff(COLOR_PAIR(pair));
         attroff(A_BOLD);
+
+        l += b->lineCount;
     }
 
     while (l < height) {

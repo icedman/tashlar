@@ -189,10 +189,17 @@ void view_t::render()
     }
 }
 
-void view_t::calculate()
+void view_t::preLayout()
 {
     for (auto view : views) {
-        view->calculate();
+        view->preLayout();
+    }
+}
+
+void view_t::preRender()
+{
+    for (auto view : views) {
+        view->preRender();
     }
 }
 

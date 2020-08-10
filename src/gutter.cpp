@@ -17,7 +17,7 @@ gutter_t::~gutter_t()
 {
 }
 
-void gutter_t::calculate()
+void gutter_t::preLayout()
 {
     if (!isVisible())
         return;

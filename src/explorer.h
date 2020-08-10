@@ -37,9 +37,7 @@ struct explorer_t : view_t {
 
     // view
     void update(int delta) override;
-    // void layout(int x, int y, int width, int height) override;
     void render() override;
-    // void calculate() override;
     void applyTheme() override;
     bool input(char ch, std::string keys) override;
 

@@ -25,7 +25,6 @@ struct gem_t : view_t {
     /*
     void layout(int x, int y, int width, int height) override;
     void render() override;
-    void calculate() override;
     */
 };
 

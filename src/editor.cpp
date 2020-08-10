@@ -13,6 +13,7 @@ editor_t::editor_t()
     : view_t("editor")
 {
     canFocus = true;
+    document.editor = this;
 }
 
 editor_t::~editor_t()
@@ -84,9 +85,9 @@ void editor_t::runOp(operation_t op)
     cursor_t mainCursor = document.cursor();
     cursor_util::sortCursors(cursors);
 
-    if (mainCursor.block()) {
-        app_t::log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
-    }
+    // if (mainCursor.block()) {
+    // app_t::log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
+    // }
 
     switch (_op) {
     case CANCEL:
@@ -186,7 +187,7 @@ void editor_t::runOp(operation_t op)
     case TOGGLE_FOLD:
         toggleFold(mainCursor.block()->lineNumber);
         return;
-        
+
     default:
         break;
     }
@@ -590,7 +591,7 @@ cursor_t editor_t::findBracketMatchCursor(struct bracket_info_t bracket, cursor_
 void editor_t::toggleFold(size_t line)
 {
     document_t* doc = &document;
-    block_ptr folder = doc->blockAtLine(line+1);
+    block_ptr folder = doc->blockAtLine(line + 1);
 
     cursor_t openBracket = findLastOpenBracketCursor(folder);
     if (openBracket.isNull()) {
@@ -760,4 +761,61 @@ void editor_t::applyTheme()
     }
 
     highlighter.theme = app_t::instance()->theme;
+}
+
+void editor_t::layout(int _x, int _y, int w, int h)
+{
+    if (!document.blocks.size()) {
+        return;
+    }
+
+    x = _x;
+    y = _y;
+    width = w;
+    height = h;
+
+    maxScrollX = 0;
+    maxScrollY = document.lastBlock()->screenLine + (h / 3);
+}
+
+void editor_t::preLayout()
+{
+    if (width == 0 || height == 0 || !isVisible())
+        return;
+
+    cursor_t mainCursor = document.cursor();
+
+    // update scroll
+    block_ptr cursorBlock = mainCursor.block();
+
+    int screenX = mainCursor.position();
+    int screenY = cursorBlock->screenLine;
+
+    int lookAheadX = (width / 3);
+    int lookAheadY = 0; // (height/5);
+    if (screenY - scrollY < lookAheadY) {
+        scrollY = screenY - lookAheadY;
+        if (scrollY < 0)
+            scrollY = 0;
+    }
+    if (screenY - scrollY + 1 > height) {
+        scrollY = -(height - screenY) + 1;
+    }
+    if (screenX - scrollX < lookAheadX) {
+        scrollX = screenX - lookAheadX;
+        if (scrollX < 0)
+            scrollX = 0;
+    }
+    if (screenX - scrollX + 2 > width) {
+        scrollX = -(width - screenX) + 2;
+    }
+
+    if (app_t::instance()->lineWrap) scrollX = 0;
+
+    // app_t::log("b:%d screenY:%d scrollY:%d", cursorBlock->lineNumber, cursorBlock->screenLine, scrollY);
+}
+
+void editor_t::preRender()
+{
+    document.setColumns(width);
 }

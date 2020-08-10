@@ -42,11 +42,11 @@ int main(int argc, char** argv)
     } else {
         file = "";
     }
+
     app.openEditor(file);
     app.explorer.setRootFromFile(file);
 
     scripting.initialize();
-
     std::string previousKeySequence;
     std::string expandedSequence;
     while (!app.end) {
@@ -55,8 +55,9 @@ int main(int argc, char** argv)
         ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
 
         app.update(100);
-        app.calculate();
+        app.preLayout();
         app.layout(0, 0, ws.ws_col, ws.ws_row);
+        app.preRender();
         app.render();
 
         refresh();
@@ -66,10 +67,9 @@ int main(int argc, char** argv)
         while (true) {
             ch = readKey(keySequence);
 
-                if (previousKeySequence.length() && keySequence.length()) {
-                    expandedSequence = previousKeySequence + "+" + keySequence;
-                }
-
+            if (previousKeySequence.length() && keySequence.length()) {
+                expandedSequence = previousKeySequence + "+" + keySequence;
+            }
 
             if (ch != -1) {
                 break;
@@ -87,7 +87,7 @@ int main(int argc, char** argv)
             expandedSequence = "";
         }
 
-        app_t::log("k: %d %s", ch, keySequence.c_str());
+        // app_t::log("k: %d %s", ch, keySequence.c_str());
         statusbar_t::instance()->setStatus(keySequence);
         app.input(ch, keySequence);
     }
