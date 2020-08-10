@@ -419,16 +419,17 @@ void editor_t::update(int delta)
 
 void editor_t::matchBracketsUnderCursor()
 {
+
     cursor_t cursor = document.cursor();
-    if (cursor.position() != cursorBracket1.absolutePosition) {
+    if (cursor.position() != cursorBracket1.position || cursor.block()->lineNumber != cursorBracket1.line) {
         cursorBracket1 = bracketAtCursor(cursor);
         if (cursorBracket1.bracket != -1) {
             cursor_t matchCursor = findBracketMatchCursor(cursorBracket1, cursor);
             cursorBracket2 = bracketAtCursor(matchCursor);
-            cursorBracket1.absolutePosition = cursor.position();
-            cursorBracket2.absolutePosition = matchCursor.position();
-            cursorBracket1.line = 0;
-            cursorBracket2.line = 0;
+            // cursorBracket1.absolutePosition = cursor.position();
+            // cursorBracket2.absolutePosition = matchCursor.position();
+            // cursorBracket1.line = cursor.block()->lineNumber;
+            // cursorBracket2.line = matchCursor.block()->lineNumber;
             // app_t::instance()->log("brackets %d %d", cursorBracket1.absolutePosition, cursorBracket2.absolutePosition);
         }
     }
@@ -450,8 +451,9 @@ struct bracket_info_t editor_t::bracketAtCursor(struct cursor_t& cursor)
     }
 
     size_t p = cursor.position();
+    size_t l = cursor.block()->lineNumber;
     for (auto bracket : blockData->brackets) {
-        if (bracket.position == p) {
+        if (bracket.position == p && bracket.line == l) {
             return bracket;
         }
     }

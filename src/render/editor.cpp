@@ -121,6 +121,8 @@ void editor_t::render()
 
         int colorPair = color_pair_e::NORMAL;
         int colorPairSelected = color_pair_e::SELECTED;
+        
+        size_t lineNo = b->lineNumber;
 
         // editor->highlighter.highlightBlock(b);
         struct blockdata_t* blockData = b->data.get();
@@ -141,6 +143,7 @@ void editor_t::render()
         // app_t::instance()->log("%s", line);
         int col = 0;
         for (int i = editor->scrollX;; i++) {
+            size_t pos = i;
             if (col++ >= cols) {
                 break;
             }
@@ -163,7 +166,16 @@ void editor_t::render()
                     colorPairSelected = pairForColor(span.colorIndex, true);
                 }
             }
+        
+            // bracket
+            if (cursorBracket1.bracket != -1 && cursorBracket2.bracket != -1) {
+                if ((pos == cursorBracket1.position && lineNo == cursorBracket1.line) ||
+                    (pos == cursorBracket2.position && lineNo == cursorBracket2.line)) {
+                    attron(A_UNDERLINE);
+                }
+            }
 
+            // cursors
             for (auto& c : cursors) {
                 if (i == c.position() && b == c.block()) {
                     hl = true;
