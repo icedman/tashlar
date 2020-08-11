@@ -201,14 +201,17 @@ void editor_t::runOp(operation_t op)
 
         case INDENT: {
             int count = cur.indent();
-            cur.moveRight(count, false);
-            // cursor_util::advanceBlockCursors(cursors, cur, count);
+            cursor_util::advanceBlockCursors(cursors, cur, count);
+            cur.moveRight(count, cur.hasSelection());
+            cur.anchor.position += count;
         }
             break;
         case UNINDENT: {
-            int count = cur.unindent();
-            if (count) {
-                cur.moveLeft(count, false);
+            int count = cur.unindent() - 1;
+            if (count > 0) {
+                cursor_util::advanceBlockCursors(cursors, cur, -count);
+                cur.moveLeft(count, cur.hasSelection());
+                cur.anchor.position -= count;
             }
         }
             break;
@@ -747,11 +750,15 @@ bool editor_t::input(char ch, std::string keySequence)
         return true;
     }
 
-    if (ch == K_ESC || keySequence != "") {
+    if (ch == K_ESC) {
         cursor_t mainCursor = editor->document.cursor();
         mainCursor.clearSelection();
         editor->document.clearCursors();
         editor->document.setCursor(mainCursor, true);
+        return true;
+    }
+
+    if (keySequence != "") {
         return true;
     }
 

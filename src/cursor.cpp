@@ -212,8 +212,13 @@ block_list cursor_t::selectedBlocks()
 {
     block_list list;
     cursor_position_t start = selectionStart();
+    cursor_position_t end = selectionEnd();
     block_ptr block = start.block;
     while (block) {
+        list.push_back(block);
+        if (block == end.block) {
+            break;
+        }
         block = block->next();
     }
     return list;
@@ -669,39 +674,43 @@ static int _cursorIndent(cursor_t* cursor)
 
     cur.cursor.position = 0;
     cur.insertText(tab);
-    // cursorInsertText(&cur, tab);
-    // cursor->_position.position += inserted;
-    // cursor->_anchor.position += inserted;
+    // cursor->cursor.position += inserted;
+    // cursor->anchor.position += inserted;
     return inserted;
 }
 
 int cursor_t::indent()
 {
     block_list blocks = selectedBlocks();
+
     if (blocks.size() > 1) {
 
         cursor_position_t posCur = selectionStart();
         cursor_position_t anchorCur = selectionEnd();
 
+        int count = 0;
+        int idx = 0;
         for (auto b : blocks) {
             cursor_t cur = *this;
             cur.setPosition(b, 0);
 
+            // app_t::log(">%d %d", idx++, b->lineNumber);
+
             bool updatePos = b == posCur.block;
             bool updateAnchor = b == anchorCur.block;
-            int count = _cursorIndent(&cur);
+            count = _cursorIndent(&cur);
 
-            if (updatePos) {
-                app_t::instance()->log("indent update pos %d", position());
-                // cursor->_position.position += count;
-            }
-            if (updateAnchor) {
-                app_t::instance()->log("indent update anchor %d", anchorPosition());
-                // cursor->_anchor.position += count;
-            }
+            // if (updatePos) {
+                // app_t::instance()->log("indent update pos %d", position());
+                // cursor.position += count;
+            // }
+            // if (updateAnchor) {
+                // app_t::instance()->log("indent update anchor %d", anchorPosition());
+                // anchor.position += count;
+            // }
         }
 
-        return 1;
+        return count;
     }
 
     int count = _cursorIndent(this);
