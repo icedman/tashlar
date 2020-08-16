@@ -17,7 +17,7 @@
 #define POPUP_HEIGHT 1
 #define POPUP_MAX_HEIGHT 12
 
-static bool compareFile(struct item_t& f1, struct item_t& f2)
+static bool compareItem(struct item_t& f1, struct item_t& f2)
 {
     if (f1.score == f2.score) {
         return f1.name < f2.name;
@@ -370,20 +370,23 @@ void popup_t::showCompletion()
     for (auto s : res) {
         if (s.length() <= prefix.length() + 1)
             continue;
+
+        int score = levenshtein_distance((char*)prefix.c_str(), (char*)(s.c_str()));
         struct item_t item = {
             .name = s,
             .description = "",
             .fullPath = "",
-            .score = 0,
+            .score = score,
             .depth = 0,
             .script = ""
         };
 
-        // item.name += std::to_string(item.score);
+        item.name += std::to_string(item.score);
         items.push_back(item);
     }
 
     if (items.size()) {
+        sort(items.begin(), items.end(), compareItem);
         setVisible(true);
     }
 }
@@ -446,7 +449,7 @@ void popup_t::onInput()
             }
 
             currentItem = 0;
-            sort(items.begin(), items.end(), compareFile);
+            sort(items.begin(), items.end(), compareItem);
         }
     }
 
@@ -471,7 +474,7 @@ void popup_t::onInput()
             }
 
             currentItem = 0;
-            sort(items.begin(), items.end(), compareFile);
+            sort(items.begin(), items.end(), compareItem);
         }
     }
 
