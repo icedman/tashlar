@@ -1,5 +1,5 @@
 #ifndef SNAPSHOT_H
-#define SNAPSHPT_H
+#define SNAPSHOT_H
 
 #include "block.h"
 #include "keybinding.h"

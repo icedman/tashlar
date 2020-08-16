@@ -1,10 +1,10 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
-#include "pattern.h"
-
 #include <string>
 #include <vector>
+
+#include "pattern.h"
 
 struct cursor_t;
 struct editor_t;
