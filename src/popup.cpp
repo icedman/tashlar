@@ -381,7 +381,7 @@ void popup_t::showCompletion()
             .script = ""
         };
 
-        item.name += std::to_string(item.score);
+        // item.name += std::to_string(item.score);
         items.push_back(item);
     }
 

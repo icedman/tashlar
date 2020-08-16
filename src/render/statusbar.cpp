@@ -1,21 +1,18 @@
+#include "render.h"
 #include "statusbar.h"
 #include "app.h"
 #include "document.h"
 
-#include <curses.h>
-
 #define STATUS_ITEMS 6
-
-void _clrtoeol(int w);
 
 static void renderLine(const char* line, int offsetY, int offsetX, int size, int width)
 {
     // app_t::instance()->log("%s %d", line, size);
-    move(offsetY, offsetX);
+    _move(offsetY, offsetX);
     char c;
     int idx = 0;
     while ((c = line[idx++])) {
-        addch(c);
+        _addch(c);
         if (size != 0 && idx >= size) {
             return;
         }
@@ -27,7 +24,7 @@ static void renderLine(const char* line, int offsetY, int offsetX, int size, int
 
 void statusbar_t::render()
 {
-    if (!app_t::instance()->showStatusBar || !isVisible()) {
+    if (!isVisible()) {
         return;
     }
 
@@ -38,7 +35,7 @@ void statusbar_t::render()
     cursor_t cursor = doc->cursor();
     block_ptr block = cursor.block();
 
-    move(y, x);
+    _move(y, x);
 
     static char tmp[512];
     // sprintf(tmp, "History %d/%d", (int)doc->snapShots.size(), (int)doc->snapShots.back().edits.size());
@@ -61,11 +58,11 @@ void statusbar_t::render()
     // render the bar
     //-----------------
 
-    attron(COLOR_PAIR(colorPrimary));
+    _attron(_color_pair(colorPrimary));
 
-    move(y, x);
+    _move(y, x);
     _clrtoeol(width);
-    move(y, x);
+    _move(y, x);
 
     int offset = 2;
     if (status.length()) {
@@ -86,6 +83,6 @@ void statusbar_t::render()
         renderLine(s.c_str(), y, x + width - offset, sizes[idx], width);
         offset += 2;
     }
-    attroff(COLOR_PAIR(colorPrimary));
-    attroff(A_REVERSE);
+    _attroff(_color_pair(colorPrimary));
+    _reverse(false);
 }

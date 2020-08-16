@@ -1,7 +1,6 @@
 #include "view.h"
 #include "app.h"
-
-#include <curses.h>
+#include "render.h"
 
 static view_t* focused = 0;
 
@@ -184,8 +183,11 @@ void view_t::render()
 {
     if (!isVisible())
         return;
+
     for (auto view : views) {
+        _begin(view);
         view->render();
+        _end();
     }
 }
 

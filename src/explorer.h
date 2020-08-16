@@ -40,6 +40,7 @@ struct explorer_t : view_t {
     void render() override;
     void applyTheme() override;
     bool input(char ch, std::string keys) override;
+    bool isVisible() override;
 
     void setRootFromFile(std::string path);
 

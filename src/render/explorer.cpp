@@ -1,18 +1,15 @@
+#include "render.h"
 #include "explorer.h"
 #include "app.h"
 #include "document.h"
 #include "editor.h"
-
-#include <curses.h>
-
-void _clrtoeol(int w);
 
 static void renderLine(const char* line, int& x, int width)
 {
     char c;
     int idx = 0;
     while ((c = line[idx++])) {
-        addch(c);
+        _addch(c);
         if (++x >= width - 1) {
             break;
         }
@@ -21,7 +18,7 @@ static void renderLine(const char* line, int& x, int width)
 
 void explorer_t::render()
 {
-    if (!app_t::instance()->showSidebar || !isVisible()) {
+    if (!isVisible()) {
         return;
     }
 
@@ -32,7 +29,7 @@ void explorer_t::render()
     cursor_t cursor = doc->cursor();
     block_t& block = *cursor.block();
 
-    move(y, x);
+    _move(y, x);
 
     if (renderList.size() == 0) {
         buildFileList(renderList, &files, 0);
@@ -70,65 +67,62 @@ void explorer_t::render()
         }
 
         int pair = colorPrimary;
-        move(y, x);
+        _move(y, x);
 
         if (hasFocus && currentItem == idx) {
             if (hasFocus) {
                 pair = colorPrimary;
-                attron(A_REVERSE);
+                _bold(true);
             } else {
-                attron(A_BOLD);
+                _bold(true);
             }
             for (int i = 0; i < width; i++) {
-                addch(' ');
+                _addch(' ');
             }
         }
 
         int x = 0;
-        move(y++, x);
-        attron(COLOR_PAIR(pair));
+        _move(y++, x);
+        _attron(_color_pair(pair));
         int indent = file->depth;
         for (int i = 0; i < indent; i++) {
-            addch(' ');
+            _addch(' ');
             x++;
         }
         if (file->isDirectory) {
-            attron(COLOR_PAIR(colorIndicator));
+            _attron(_color_pair(colorIndicator));
 
 #ifdef ENABLE_UTF8
-            addwstr(file->expanded ? L"\u2191" : L"\u2192");
+            _addwstr(file->expanded ? L"\u2191" : L"\u2192");
 #else
-            addch(file->expanded ? '-' : '+');
+            _addch(file->expanded ? '-' : '+');
 #endif
 
-            attroff(COLOR_PAIR(colorIndicator));
-            attron(COLOR_PAIR(pair));
+            _attroff(_color_pair(colorIndicator));
+            _attron(_color_pair(pair));
         } else {
-            addch(' ');
+            _addch(' ');
         }
-        addch(' ');
+        _addch(' ');
         x += 2;
 
         renderLine(file->name.c_str(), x, width);
-        //for (int i = 0; i < width - x; i++) {
-        //    waddch(win, ' ');
-        //}
 
         if (hasFocus && currentItem == idx) {
             if (hasFocus) {
                 pair = colorPrimary;
-                attron(A_REVERSE);
+                _bold(true);
             } else {
-                attron(A_BOLD);
+                _bold(true);
             }
         }
         for (int i = 0; i < width - x; i++) {
-            addch(' ');
+            _addch(' ');
         }
 
-        attroff(COLOR_PAIR(pair));
-        attroff(A_REVERSE);
-        attroff(A_BOLD);
+        _attroff(_color_pair(pair));
+        _bold(false);
+        _bold(false);
 
         if (y >= height) {
             break;
@@ -138,7 +132,7 @@ void explorer_t::render()
     }
 
     while (y < height) {
-        move(y++, x);
+        _move(y++, x);
         _clrtoeol(width);
     }
 }

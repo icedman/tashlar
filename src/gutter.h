@@ -10,15 +10,10 @@ struct gutter_t : view_t {
     ~gutter_t();
 
     // view
-    /*
-    void update(int delta) override;
-    void layout(int x, int y, int width, int height) override;
-    bool input(char ch, std::string keys) override;
-    */
-
     void applyTheme() override;
     void render() override;
     void preLayout() override;
+    bool isVisible() override;
 
     editor_ptr editor;
 };

@@ -68,7 +68,7 @@ void buildUpDotsForBlock(block_ptr block, float textCompress, int bufferWidth)
 
 void minimap_t::update(int delta)
 {
-    if (!app_t::instance()->showMinimap) {
+    if (!isVisible()) {
         return;
     }
 
@@ -99,4 +99,9 @@ void minimap_t::applyTheme()
 
     colorPrimary = pairForColor(comment.foreground.index, false);
     colorIndicator = pairForColor(app->tabActiveBorder, false);
+}
+
+bool minimap_t::isVisible()
+{
+    return visible == app_t::instance()->showMinimap;   
 }

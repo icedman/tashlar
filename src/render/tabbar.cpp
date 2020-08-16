@@ -1,10 +1,8 @@
+#include "render.h"
 #include "tabbar.h"
 #include "app.h"
 
 #include <algorithm>
-#include <curses.h>
-
-void _clrtoeol(int w);
 
 static bool compareFile(struct tabitem_t& f1, struct tabitem_t& f2)
 {
@@ -20,7 +18,7 @@ static void renderLine(const char* line, int& offsetX, int& x, int width)
             continue;
         }
         // waddch(win, c);
-        addch(c);
+        _addch(c);
         if (x++ >= width) {
             return;
         }
@@ -34,7 +32,7 @@ void tabbar_t::render()
     }
 
     app_t* app = app_t::instance();
-    move(y, x);
+    _move(y, x);
 
     bool hasFocus = isFocused();
 
@@ -84,9 +82,9 @@ void tabbar_t::render()
     int offsetX = scrollX;
     int x = 0;
 
-    move(y, _x);
+    _move(y, _x);
     _clrtoeol(width);
-    move(y, _x);
+    _move(y, _x);
 
     int tabNo = 1;
     for (auto t : tabs) {
@@ -94,36 +92,36 @@ void tabbar_t::render()
         if (t.editor == app->currentEditor) {
 
             if (hasFocus) {
-                attron(A_REVERSE);
+                _bold(true);
                 // pair = colorSecondary;
             }
 
-            attron(COLOR_PAIR(colorIndicator));
-            attron(A_BOLD);
+            _attron(_color_pair(colorIndicator));
+            _bold(true);
             renderLine("[", offsetX, x, width);
-            attroff(COLOR_PAIR(colorIndicator));
-            attroff(A_BOLD);
+            _attroff(_color_pair(colorIndicator));
+            _bold(false);
         } else {
             renderLine(" ", offsetX, x, width);
         }
 
-        attron(COLOR_PAIR(pair));
+        _attron(_color_pair(pair));
         renderLine(t.name.c_str(), offsetX, x, width);
-        attroff(COLOR_PAIR(pair));
+        _attroff(_color_pair(pair));
 
         if (t.editor == app->currentEditor) {
 
-            attron(COLOR_PAIR(colorIndicator));
-            attron(A_BOLD);
+            _attron(_color_pair(colorIndicator));
+            _bold(true);
             renderLine("]", offsetX, x, width);
-            attroff(COLOR_PAIR(colorIndicator));
-            attroff(A_BOLD);
+            _attroff(_color_pair(colorIndicator));
+            _bold(false);
 
         } else {
             renderLine(" ", offsetX, x, width);
         }
 
-        attroff(A_REVERSE);
+        _bold(false);
 
         tabNo++;
     }

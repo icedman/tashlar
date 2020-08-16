@@ -322,3 +322,8 @@ bool explorer_t::input(char ch, std::string keys)
 
     return false;
 }
+
+bool explorer_t::isVisible()
+{
+    return visible && app_t::instance()->showSidebar;   
+}

@@ -28,6 +28,7 @@ struct scripting_t* scripting_t::instance()
 }
 
 scripting_t::scripting_t()
+    : editor(0)
 {
 }
 

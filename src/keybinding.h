@@ -30,6 +30,17 @@ enum operation_e {
     ADD_CURSOR_FOR_SELECTED_WORD,
     CLEAR_CURSORS,
 
+    NEW_TAB,
+    TAB_1,
+    TAB_2,
+    TAB_3,
+    TAB_4,
+    TAB_5,
+    TAB_6,
+    TAB_7,
+    TAB_8,
+    TAB_9,
+
     MOVE_CURSOR,
     MOVE_CURSOR_LEFT,
     MOVE_CURSOR_RIGHT,

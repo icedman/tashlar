@@ -30,9 +30,7 @@ bool tabbar_t::input(char ch, std::string keys)
 
     operation_e cmd = operationFromKeys(keys);
 
-    /*
     switch (cmd) {
-    case TAB_0:
     case TAB_1:
     case TAB_2:
     case TAB_3:
@@ -42,16 +40,18 @@ bool tabbar_t::input(char ch, std::string keys)
     case TAB_7:
     case TAB_8:
     case TAB_9: {
-        app->openEditor(tabs[cmd - TAB_0 - 1].editor->document.fullPath);
+        int idx = cmd - TAB_1;
+        if (idx < tabs.size()) {
+            app->openEditor(tabs[idx].editor->document.fullPath);
+        }
         return true;
     }
     case NEW_TAB:
-        app->openEditor("./untitled");
+        app->openEditor("./");
         return true;
     default:
         break;
     }
-    */
 
     // proceed only if got focus
     if (!isFocused()) {
@@ -97,4 +97,9 @@ bool tabbar_t::input(char ch, std::string keys)
     }
 
     return false;
+}
+
+bool tabbar_t::isVisible()
+{
+    return visible && app_t::instance()->showTabbar;   
 }

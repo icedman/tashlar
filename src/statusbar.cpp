@@ -53,3 +53,8 @@ void statusbar_t::applyTheme()
     colorPrimary = pairForColor(comment.foreground.index, false);
     colorIndicator = pairForColor(app->tabActiveBorder, false);
 }
+
+bool statusbar_t::isVisible()
+{
+    return visible && app_t::instance()->showStatusBar;   
+}

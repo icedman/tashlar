@@ -23,6 +23,7 @@ struct tabbar_t : view_t {
     void render() override;
     void applyTheme() override;
     bool input(char ch, std::string keys) override;
+    bool isVisible() override;
 
     std::vector<struct tabitem_t> tabs;
 };

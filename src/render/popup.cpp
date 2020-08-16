@@ -1,9 +1,6 @@
+#include "render.h"
 #include "popup.h"
 #include "app.h"
-
-#include <curses.h>
-
-void _clrtoeol(int w);
 
 static void renderLine(const char* line, int offsetX, int& x, int width)
 {
@@ -13,7 +10,7 @@ static void renderLine(const char* line, int offsetX, int& x, int width)
         if (offsetX-- > 0) {
             continue;
         }
-        addch(c);
+        _addch(c);
         if (++x >= width - 1) {
             break;
         }
@@ -22,7 +19,7 @@ static void renderLine(const char* line, int offsetX, int& x, int width)
 
 void popup_t::render()
 {
-    if (!app_t::instance()->showGutter || !isVisible()) {
+    if (!isVisible()) {
         return;
     }
 
@@ -31,26 +28,26 @@ void popup_t::render()
     int _y = this->y;
     int _x = this->x;
 
-    attron(COLOR_PAIR(colorPrimary));
+    _attron(_color_pair(colorPrimary));
 
     for (int i = 0; i < height - 1 || i == 0; i++) {
-        move(_y + i, _x + 1);
+        _move(_y + i, _x + 1);
         _clrtoeol(width - 2);
     }
 
-    move(_y, _x);
+    _move(_y, _x);
 
-    // wattron(win, COLOR_PAIR(colorPair));
+    // w_attron(win, _color_pair(colorPair));
     // box(win, ACS_VLINE, ACS_HLINE);
-    // wattroff(win, COLOR_PAIR(colorPair));
+    // wattroff(win, _color_pair(colorPair));
     // box(win, ' ', ' ');
 
     if (!text.length()) {
-        move(_y, _x + 2);
-        addstr(placeholder.c_str());
+        _move(_y, _x + 2);
+        _addstr(placeholder.c_str());
     }
 
-    move(_y, _x + 1);
+    _move(_y, _x + 1);
     int offsetX = 0;
     int x = 1;
 
@@ -66,10 +63,10 @@ void popup_t::render()
     };
     renderLine(str, offsetX, x, width);
 
-    attron(COLOR_PAIR(colorIndicator));
-    addch('|');
-    attroff(COLOR_PAIR(colorIndicator));
-    attron(COLOR_PAIR(colorPrimary));
+    _attron(_color_pair(colorIndicator));
+    _addch('|');
+    _attroff(_color_pair(colorIndicator));
+    _attron(_color_pair(colorPrimary));
 
     int inputOffset = 2;
     if (type == POPUP_COMPLETION) {
@@ -109,28 +106,28 @@ void popup_t::render()
         if (skip-- > 0) {
             continue;
         }
-        move(_y + y++, _x + 1);
+        _move(_y + y++, _x + 1);
         x = 1;
         if (idx - 1 == currentItem) {
-            attron(A_REVERSE);
+            _bold(true);
             if (type == POPUP_FILES) {
                 // app_t::instance()->statusbar->setStatus(item.fullPath, 8000);
             }
         }
-        attron(COLOR_PAIR(colorPrimary));
+        _attron(_color_pair(colorPrimary));
         renderLine(item.name.c_str(), offsetX, x, width);
 
         for (int i = x; i < width - 1; i++) {
-            addch(' ');
+            _addch(' ');
         }
 
-        attroff(COLOR_PAIR(colorPrimary));
-        attroff(A_REVERSE);
+        _attroff(_color_pair(colorPrimary));
+        _bold(false);
         if (y >= height - 1) {
             break;
         }
     }
 
-    attroff(COLOR_PAIR(colorIndicator));
-    attroff(COLOR_PAIR(colorPrimary));
+    _attroff(_color_pair(colorIndicator));
+    _attroff(_color_pair(colorPrimary));
 }

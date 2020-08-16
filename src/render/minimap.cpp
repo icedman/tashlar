@@ -1,16 +1,13 @@
+#include "render.h"
 #include "minimap.h"
 #include "app.h"
 #include "dots.h"
 
-#include <curses.h>
-
 #define MINIMAP_TEXT_COMPRESS 5
-
-void _clrtoeol(int w);
 
 void minimap_t::render()
 {
-    if (!app_t::instance()->showMinimap || !isVisible()) {
+    if (!isVisible()) {
         return;
     }
 
@@ -22,29 +19,29 @@ void minimap_t::render()
 
     int _y = this->y;
     int _x = this->x;
-    move(_y, _x);
+    _move(_y, _x);
 
     int y = 0;
     for (int idx = editor->scrollY; idx < doc->blocks.size(); idx += 4) {
         auto& b = doc->blocks[idx];
 
         int pair = colorPrimary;
-        move(_y + y, _x);
+        _move(_y + y, _x);
         _clrtoeol(width);
-        move(_y + y++, _x);
+        _move(_y + y++, _x);
 
         if (currentLine >= b->lineNumber && currentLine < b->lineNumber + 4) {
-            attron(A_BOLD);
-            attron(COLOR_PAIR(colorIndicator));
+            _bold(true);
+            _attron(_color_pair(colorIndicator));
 
 #ifdef ENABLE_UTF8
-            addwstr(L"\u2192");
+            _addwstr(L"\u2192");
 #else
-            addch('>');
+            _addch('>');
 #endif
-            attroff(COLOR_PAIR(colorIndicator));
+            _attroff(_color_pair(colorIndicator));
         } else {
-            addch(' ');
+            _addch(' ');
         }
 
         buildUpDotsForBlock(b, MINIMAP_TEXT_COMPRESS, 25);
@@ -57,26 +54,26 @@ void minimap_t::render()
             // }
             // }
 
-            attron(COLOR_PAIR(pair));
+            _attron(_color_pair(pair));
 #ifdef ENABLE_UTF8
-            addwstr(wcharFromDots(b->data->dots[x]));
+            _addwstr(wcharFromDots(b->data->dots[x]));
 #endif
-            attroff(COLOR_PAIR(pair));
+            _attroff(_color_pair(pair));
 
             if (x >= width - 2) {
                 break;
             }
         }
 
-        attroff(COLOR_PAIR(pair));
-        attroff(A_BOLD);
+        _attroff(_color_pair(pair));
+        _bold(false);
 
         if (y >= height) {
             break;
         }
     }
     while (y < height) {
-        move(_y + y++, _x);
+        _move(_y + y++, _x);
         _clrtoeol(width);
     }
 }

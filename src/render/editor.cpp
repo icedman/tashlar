@@ -1,15 +1,8 @@
+#include "render.h"
 #include "editor.h"
 #include "app.h"
 
-#include <curses.h>
-
 struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos);
-
-void _clrtoeol(int w)
-{
-    while (w-- > 0)
-        addch(' ');
-}
 
 void editor_t::render()
 {
@@ -86,9 +79,9 @@ void editor_t::render()
 
         char* line = (char*)text.c_str();
         for (int sl = 0; sl < b->lineCount; sl++) {
-            move(y + l, x);
+            _move(y + l, x);
             _clrtoeol(width);
-            move(y + l++, x);
+            _move(y + l++, x);
 
             if (text.length() < editor->scrollX) {
                 continue;
@@ -129,7 +122,7 @@ void editor_t::render()
                 // bracket
                 if (cursorBracket1.bracket != -1 && cursorBracket2.bracket != -1) {
                     if ((pos == cursorBracket1.position && lineNo == cursorBracket1.line) || (pos == cursorBracket2.position && lineNo == cursorBracket2.line)) {
-                        attron(A_UNDERLINE);
+                        _underline(true);
                     }
                 }
 
@@ -158,23 +151,23 @@ void editor_t::render()
                     colorPair = colorPairSelected;
                 }
                 if (ul) {
-                    attron(A_BOLD);
-                    attron(A_UNDERLINE);
+                    _bold(true);
+                    _underline(true);
                 }
 
-                attron(COLOR_PAIR(colorPair));
-                addch(ch);
-                attroff(COLOR_PAIR(colorPair));
-                attroff(A_BOLD);
-                attroff(A_UNDERLINE);
+                _attron(_color_pair(colorPair));
+                _addch(ch);
+                _attroff(_color_pair(colorPair));
+                _bold(false);
+                _underline(false);
             }
         }
     }
 
     while (l < rows) {
-        move(y + l, x);
+        _move(y + l, x);
         _clrtoeol(width);
-        move(y + l++, x);
+        _move(y + l++, x);
         // addch('~');
     }
 }

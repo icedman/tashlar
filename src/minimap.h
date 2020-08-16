@@ -14,15 +14,10 @@ struct minimap_t : view_t {
     ~minimap_t();
 
     // view
-    /*
-    void layout(int x, int y, int width, int height) override;
-    bool input(char ch, std::string keys) override;
-    void calculate() override;
-    */
-
     void update(int delta) override;
     void render() override;
     void applyTheme() override;
+    bool isVisible() override;
 
     editor_ptr editor;
     int currentLine;

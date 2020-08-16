@@ -1,13 +1,10 @@
+#include "render.h"
 #include "gutter.h"
 #include "app.h"
 
-#include <curses.h>
-
-void _clrtoeol(int w);
-
 void gutter_t::render()
 {
-    if (!app_t::instance()->showGutter || !isVisible()) {
+    if (!isVisible()) {
         return;
     }
 
@@ -20,7 +17,7 @@ void gutter_t::render()
     cursor_t cursor = doc->cursor();
     block_t& block = *cursor.block();
 
-    move(y, x);
+    _move(y, x);
 
     int l = 0;
     block_list::iterator it = editor->document.blocks.begin();
@@ -48,24 +45,24 @@ void gutter_t::render()
 
         int pair = colorPrimary;
         if (b == currentBlock) {
-            attron(A_BOLD);
+            _bold(true);
         }
         for (int sl = 0; sl < b->lineCount; sl++) {
-            move(y + l + sl, x);
+            _move(y + l + sl, x);
             _clrtoeol(width);
         }
-        attron(COLOR_PAIR(pair));
-        move(y + l, x + width - lineNo.length() - 1);
-        addstr(lineNo.c_str());
-        attroff(COLOR_PAIR(pair));
-        attroff(A_BOLD);
+        _attron(_color_pair(pair));
+        _move(y + l, x + width - lineNo.length() - 1);
+        _addstr(lineNo.c_str());
+        _attroff(_color_pair(pair));
+        _bold(false);
 
         l += b->lineCount;
     }
 
     while (l < height) {
-        move(y + l, x);
+        _move(y + l, x);
         _clrtoeol(width);
-        move(y + l++, x);
+        _move(y + l++, x);
     }
 }

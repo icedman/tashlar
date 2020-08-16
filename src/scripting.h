@@ -3,6 +3,7 @@
 
 #include <string>
 
+struct editor_t;
 struct scripting_t {
 
     scripting_t();
@@ -14,6 +15,8 @@ struct scripting_t {
     int runScript(std::string script);
     int runFile(std::string path);
     void update(int frames);
+
+   editor_t *editor;
 };
 
 #endif // SCRIPTING_H

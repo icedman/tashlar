@@ -40,7 +40,8 @@ tashlar_files = [
     'src/render/minimap.cpp',
     'src/render/popup.cpp',
     'src/render/tabbar.cpp',
-    'src/render/statusbar.cpp'
+    'src/render/statusbar.cpp',
+    'src/render/render.cpp'
 ]
 
 curses_dep = dependency('ncursesw', required: true, disabler: true)
@@ -75,7 +76,7 @@ subdir('libs/tm-parser/textmate')
     
 executable('tashlar',
     tashlar_files,
-    include_directories: [ './src', parser_inc, scopes_inc, theme_inc ],
+    include_directories: [ './src', './src/render', parser_inc, scopes_inc, theme_inc ],
     dependencies: [ qjs_dep, dl_dep, pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
     install : true
 )
