@@ -272,7 +272,7 @@ void rencache_end_frame(void)
         }
 
         if (show_debug) {
-            RenColor color = { rand(), rand(), rand(), 50 };
+            RenColor color = { (uint8_t)rand(), (uint8_t)rand(), (uint8_t)rand(), 50 };
             ren_draw_rect(r, color);
         }
     }

@@ -40,12 +40,23 @@ tashlar_files = [
     'src/render/popup.cpp',
     'src/render/tabbar.cpp',
     'src/render/statusbar.cpp',
+]
+
+tashlar_sdl_files = [
     'src/render/render_sdl.cpp',
     'src/render/keyinput_sdl.cpp',
     'libs/lite/rencache.cpp',
     'libs/lite/renderer.cpp',
-    'libs/lite/stb_truetype.cpp',
+    'libs/lite/stb_truetype.cpp'
 ]
+
+tashlar_curses_files = [
+    'src/render/render.cpp',
+    'src/render/keyinput.cpp'
+]
+
+# tashlar_render_files = tashlar_sdl_files
+tashlar_render_files = tashlar_curses_files
 
 curses_dep = dependency('ncursesw', required: true, disabler: true)
 if not curses_dep.found()
@@ -88,6 +99,7 @@ subdir('libs/tm-parser/textmate')
     
 executable('tashlar',
     tashlar_files,
+    tashlar_render_files,
     include_directories: [ './src', './src/render', './libs/lite', parser_inc, scopes_inc, theme_inc ],
     dependencies: [ qjs_dep, dl_dep, pthread_dep, sdl2_dep, curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
     install : true
