@@ -55,8 +55,8 @@ tashlar_curses_files = [
     'src/render/keyinput.cpp'
 ]
 
-# tashlar_render_files = tashlar_sdl_files
-tashlar_render_files = tashlar_curses_files
+tashlar_render_files = tashlar_sdl_files
+# tashlar_render_files = tashlar_curses_files
 
 curses_dep = dependency('ncursesw', required: true, disabler: true)
 if not curses_dep.found()
@@ -99,7 +99,15 @@ subdir('libs/tm-parser/textmate')
     
 executable('tashlar',
     tashlar_files,
-    tashlar_render_files,
+    tashlar_curses_files,
+    include_directories: [ './src', './src/render', parser_inc, scopes_inc, theme_inc ],
+    dependencies: [ qjs_dep, dl_dep, pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
+    install : true
+)
+
+executable('ashlar',
+    tashlar_files,
+    tashlar_sdl_files,
     include_directories: [ './src', './src/render', './libs/lite', parser_inc, scopes_inc, theme_inc ],
     dependencies: [ qjs_dep, dl_dep, pthread_dep, sdl2_dep, curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
     install : true
