@@ -6,6 +6,7 @@
 
 static view_list contextStack;
 
+static int deferDraw = 0;
 SDL_Window* window;
 
 void pushKey(char c, std::string keySequence);
@@ -102,9 +103,11 @@ void render_t::initialize()
     SDL_GetCurrentDisplayMode(0, &dm);
 
     // app_t::log("%d %d", dm.w, dm.h);
+    width = dm.w * 0.75;
+    height = dm.h * 0.75;
 
     window = SDL_CreateWindow(
-        "", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, dm.w * 0.75, dm.h * 0.75,
+        "", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,
         SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN);
 
     ren_init(window);
@@ -133,6 +136,11 @@ static int poll_event()
 
     case SDL_WINDOWEVENT:
         if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
+            if (e.window.data1 && e.window.data2) {
+                render_t::instance()->width = e.window.data1;
+                render_t::instance()->height = e.window.data2;
+                deferDraw = 1;
+            }
             return 3;
         } else if (e.window.event == SDL_WINDOWEVENT_EXPOSED) {
             return 1;
@@ -172,6 +180,7 @@ static int poll_event()
         return 4;
 
     case SDL_MOUSEMOTION:
+        deferDraw = 0;
         return 5;
 
     case SDL_MOUSEWHEEL:
@@ -187,21 +196,57 @@ static int poll_event()
 void render_t::update(int delta)
 {
     // app_t::log("event!");
-
     // SDL_WaitEventTimeout(NULL, 1 * 1000);
-
     poll_event();
 }
 
+static void renderView(view_t* view)
+{
+    if (!view->isVisible()) return;
+
+    if (!view->views.size()) {
+
+        int margin = view->height > 1 ? 4 : 0;
+        RenRect rect = {
+            .x = view->x + margin,
+            .y = view->y + margin,
+            .width = view->width - (margin * 2),
+            .height = view->height - (margin * 2),
+        };
+        RenColor color = {
+            .b = 255,
+            .g = 0,
+            .r = 255,
+            .a = 100
+        };
+
+        if (deferDraw > 0) {
+            // 
+        } else {
+            ren_set_clip_rect(rect);
+            ren_draw_rect(rect, color);
+        }
+        
+        // app_t::log(">%s x:%d y:%d w:%d h:%d", view->name.c_str(), view->x, view->y, view->width, view->height);
+    }
+
+    for(auto child : view->views) {
+        renderView(child);
+    }
+}
+    
 void render_t::render()
 {
     // app_t::log("render!");
 
     RenRect rects[] = {
-        { .x = 0, .y = 0, .width = 200, .height = 200 }
+        { .x = 0, .y = 0, .width = width, .height = height }
     };
 
     ren_update_rects(rects, 1);
+    
+    app_t *app = app_t::instance();
+    renderView(app);
 }
 
 void render_t::updateColors()
