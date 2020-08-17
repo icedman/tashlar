@@ -42,11 +42,11 @@ void explorer_t::render()
 
     // scroll to cursor
     // TODO: use math not loops
-    while (true) {
+    while (true && height > 0) {
         int blockVirtualLine = currentItem;
         int blockScreenLine = blockVirtualLine - scrollY;
 
-        // app_t::instance()->log(">%d %d scroll:%d items:%d h:%d", blockScreenLine, currentItem, scrollY, renderList.size(), height);
+        app_t::instance()->log(">%d %d scroll:%d items:%d h:%d", blockScreenLine, currentItem, scrollY, renderList.size(), height);
 
         if (blockScreenLine + 1 >= height) {
             scrollY++;

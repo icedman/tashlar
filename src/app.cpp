@@ -212,7 +212,7 @@ void app_t::configure(int argc, char** argv)
     if (tabSize < 2) {
         tabSize = 2;
     }
-
+    
     //---------------
 
     Json::Value file_exclude_patterns = settings["file_exclude_patterns"];
