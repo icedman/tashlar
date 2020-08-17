@@ -43,14 +43,14 @@ int main(int argc, char** argv)
         app.layout(0, 0, renderer.width, renderer.height);
         app.preRender();
         app.render();
-        
+
         renderer.render();
 
         int ch = -1;
         std::string keySequence;
         while (true) {
             ch = readKey(keySequence);
-            
+
             if (previousKeySequence.length() && keySequence.length()) {
                 expandedSequence = previousKeySequence + "+" + keySequence;
             }

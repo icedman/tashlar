@@ -1,6 +1,6 @@
+#include "app.h"
 #include "render.h"
 #include "renderer.h"
-#include "app.h"
 
 #include <SDL2/SDL.h>
 
@@ -102,7 +102,7 @@ void render_t::initialize()
     SDL_GetCurrentDisplayMode(0, &dm);
 
     // app_t::log("%d %d", dm.w, dm.h);
-    
+
     window = SDL_CreateWindow(
         "", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, dm.w * 0.75, dm.h * 0.75,
         SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN);
@@ -118,70 +118,72 @@ void render_t::shutdown()
 static int poll_event()
 {
 
-  char buf[16];
-  int mx, my, wx, wy;
-  SDL_Event e;
-  
-  if ( !SDL_PollEvent(&e) ) {
-    return 0;
-  }
+    char buf[16];
+    int mx, my, wx, wy;
+    SDL_Event e;
 
-  switch (e.type) {
+    if (!SDL_PollEvent(&e)) {
+        return 0;
+    }
+
+    switch (e.type) {
     case SDL_QUIT:
-      pushKey(0, "ctrl+q");
-      return 1;
+        pushKey(0, "ctrl+q");
+        return 1;
 
     case SDL_WINDOWEVENT:
-      if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
-        return 3;
-      } else if (e.window.event == SDL_WINDOWEVENT_EXPOSED) {
-        return 1;
-      }
-      /* on some systems, when alt-tabbing to the window SDL will queue up
+        if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
+            return 3;
+        } else if (e.window.event == SDL_WINDOWEVENT_EXPOSED) {
+            return 1;
+        }
+        /* on some systems, when alt-tabbing to the window SDL will queue up
       ** several KEYDOWN events for the `tab` key; we flush all keydown
       ** events on focus so these are discarded */
-      if (e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
-        SDL_FlushEvent(SDL_KEYDOWN);
-      }
-      return 0;
+        if (e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+            SDL_FlushEvent(SDL_KEYDOWN);
+        }
+        return 0;
 
     case SDL_DROPFILE:
-      SDL_GetGlobalMouseState(&mx, &my);
-      SDL_GetWindowPosition(window, &wx, &wy);
-      SDL_free(e.drop.file);
-      return 4;
+        SDL_GetGlobalMouseState(&mx, &my);
+        SDL_GetWindowPosition(window, &wx, &wy);
+        SDL_free(e.drop.file);
+        return 4;
 
     case SDL_KEYDOWN:
-      app_t::log("key down");
-      pushKey(0, "ctrl+q");
-      return 2;
+        app_t::log("key down");
+        pushKey(0, "ctrl+q");
+        return 2;
 
     case SDL_KEYUP:
-      return 2;
+        return 2;
 
     case SDL_TEXTINPUT:
-      return 2;
+        return 2;
 
     case SDL_MOUSEBUTTONDOWN:
-      if (e.button.button == 1) { SDL_CaptureMouse((SDL_bool)1); }
-      return 5;
+        if (e.button.button == 1) {
+            SDL_CaptureMouse((SDL_bool)1);
+        }
+        return 5;
 
     case SDL_MOUSEBUTTONUP:
-      return 4;
+        return 4;
 
     case SDL_MOUSEMOTION:
-      return 5;
+        return 5;
 
     case SDL_MOUSEWHEEL:
-      return 2;
+        return 2;
 
     default:
-      return 0;
-  }
+        return 0;
+    }
 
-  return 0;
+    return 0;
 }
-    
+
 void render_t::update(int delta)
 {
     // app_t::log("event!");
@@ -194,11 +196,11 @@ void render_t::update(int delta)
 void render_t::render()
 {
     // app_t::log("render!");
-    
+
     RenRect rects[] = {
         { .x = 0, .y = 0, .width = 200, .height = 200 }
     };
-    
+
     ren_update_rects(rects, 1);
 }
 

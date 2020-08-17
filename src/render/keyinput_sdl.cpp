@@ -1,6 +1,5 @@
 #include "keyinput.h"
 
-
 static bool lastConsumed = true;
 static char lastKey = '?';
 static std::string lastKeySequence;
