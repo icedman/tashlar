@@ -38,5 +38,5 @@ void gutter_t::applyTheme()
 
 bool gutter_t::isVisible()
 {
-    return visible && app_t::instance()->showGutter;   
+    return visible && app_t::instance()->showGutter;
 }

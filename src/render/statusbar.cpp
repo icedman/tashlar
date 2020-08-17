@@ -1,7 +1,7 @@
-#include "render.h"
 #include "statusbar.h"
 #include "app.h"
 #include "document.h"
+#include "render.h"
 
 #define STATUS_ITEMS 6
 
@@ -59,6 +59,7 @@ void statusbar_t::render()
     //-----------------
 
     _attron(_color_pair(colorPrimary));
+    _reverse(true);
 
     _move(y, x);
     _clrtoeol(width);

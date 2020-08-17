@@ -1,6 +1,6 @@
-#include "render.h"
 #include "gutter.h"
 #include "app.h"
+#include "render.h"
 
 void gutter_t::render()
 {

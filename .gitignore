@@ -25,6 +25,7 @@ dist
 
 tm-parser
 libs
+libs/*.a
 out.cpp
 
 tests/results/*

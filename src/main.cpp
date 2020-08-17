@@ -1,13 +1,7 @@
-#include <curses.h>
-#include <locale.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-
 #include "app.h"
 #include "editor.h"
 #include "explorer.h"
+#include "render.h"
 #include "scripting.h"
 #include "search.h"
 
@@ -15,22 +9,12 @@
 
 int main(int argc, char** argv)
 {
-    setlocale(LC_ALL, "");
-
-    initscr();
-    raw();
-    noecho();
-    nodelay(stdscr, true);
-
-    use_default_colors();
-    start_color();
-
-    curs_set(0);
-    clear();
-
+    render_t renderer;
     scripting_t scripting;
     search_t search;
     app_t app;
+
+    renderer.initialize();
     app.configure(argc, argv);
     app.setupColors();
     app.applyTheme();
@@ -51,16 +35,16 @@ int main(int argc, char** argv)
     std::string expandedSequence;
     while (!app.end) {
 
-        static struct winsize ws;
-        ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+        int delta = 100;
+        renderer.update(delta);
 
-        app.update(100);
+        app.update(delta);
         app.preLayout();
-        app.layout(0, 0, ws.ws_col, ws.ws_row);
+        app.layout(0, 0, renderer.width, renderer.height);
         app.preRender();
         app.render();
 
-        refresh();
+        renderer.render();
 
         int ch = -1;
         std::string keySequence;
@@ -92,6 +76,6 @@ int main(int argc, char** argv)
         app.input(ch, keySequence);
     }
 
-    endwin();
+    renderer.shutdown();
     return 0;
 }

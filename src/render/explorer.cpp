@@ -1,8 +1,8 @@
-#include "render.h"
 #include "explorer.h"
 #include "app.h"
 #include "document.h"
 #include "editor.h"
+#include "render.h"
 
 static void renderLine(const char* line, int& x, int width)
 {
@@ -72,7 +72,7 @@ void explorer_t::render()
         if (hasFocus && currentItem == idx) {
             if (hasFocus) {
                 pair = colorPrimary;
-                _bold(true);
+                _reverse(true);
             } else {
                 _bold(true);
             }
@@ -122,7 +122,7 @@ void explorer_t::render()
 
         _attroff(_color_pair(pair));
         _bold(false);
-        _bold(false);
+        _reverse(false);
 
         if (y >= height) {
             break;

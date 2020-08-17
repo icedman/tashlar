@@ -16,7 +16,7 @@ struct scripting_t {
     int runFile(std::string path);
     void update(int frames);
 
-   editor_t *editor;
+    editor_t* editor;
 };
 
 #endif // SCRIPTING_H

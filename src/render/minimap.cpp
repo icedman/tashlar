@@ -1,7 +1,7 @@
-#include "render.h"
 #include "minimap.h"
 #include "app.h"
 #include "dots.h"
+#include "render.h"
 
 #define MINIMAP_TEXT_COMPRESS 5
 

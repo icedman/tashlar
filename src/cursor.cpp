@@ -303,7 +303,7 @@ bool cursor_t::moveUp(int count, bool keepAnchor)
 {
     --count;
 
-    document_t *doc = block()->document;
+    document_t* doc = block()->document;
     bool navigateWrappedLine = false;
     if (block()->lineCount > 1 && app_t::instance()->lineWrap && doc->columns) {
         int line = 1 + (cursor.position / doc->columns);
@@ -315,14 +315,14 @@ bool cursor_t::moveUp(int count, bool keepAnchor)
             }
             navigateWrappedLine = true;
         }
-    } 
+    }
 
     if (!navigateWrappedLine) {
-    if (block()->previous()) {
-        cursorAtPreviousUnfoldedBlock(*this, keepAnchor);
-    } else {
-        return false;
-    }
+        if (block()->previous()) {
+            cursorAtPreviousUnfoldedBlock(*this, keepAnchor);
+        } else {
+            return false;
+        }
     }
 
     if (count > 0) {
@@ -340,7 +340,7 @@ bool cursor_t::moveDown(int count, bool keepAnchor)
 {
     --count;
 
-    document_t *doc = block()->document;
+    document_t* doc = block()->document;
     bool navigateWrappedLine = false;
     if (block()->lineCount > 1 && app_t::instance()->lineWrap && doc->columns) {
         int line = 1 + (cursor.position / doc->columns);
@@ -351,7 +351,7 @@ bool cursor_t::moveDown(int count, bool keepAnchor)
             }
             navigateWrappedLine = true;
         }
-    } 
+    }
 
     if (!navigateWrappedLine) {
         if (block()->next()) {
@@ -693,21 +693,7 @@ int cursor_t::indent()
         for (auto b : blocks) {
             cursor_t cur = *this;
             cur.setPosition(b, 0);
-
-            // app_t::log(">%d %d", idx++, b->lineNumber);
-
-            bool updatePos = b == posCur.block;
-            bool updateAnchor = b == anchorCur.block;
             count = _cursorIndent(&cur);
-
-            // if (updatePos) {
-                // app_t::instance()->log("indent update pos %d", position());
-                // cursor.position += count;
-            // }
-            // if (updateAnchor) {
-                // app_t::instance()->log("indent update anchor %d", anchorPosition());
-                // anchor.position += count;
-            // }
         }
 
         return count;
@@ -733,20 +719,6 @@ static int _cursorUnindent(cursor_t* cursor)
     if (deleted > 0) {
         cur.cursor.position = 0;
         cur.eraseText(deleted);
-        // cursorEraseText(&cur, deleted);
-        /*
-        if (cursor->_position.position - deleted < 0) {
-            cursor->_position.position = 0;
-        } else {
-            cursor->_position.position -= deleted;
-        }
-
-        if (cursor->_anchor.position - deleted < 0) {
-            cursor->_anchor.position = 0;
-        } else {
-            cursor->_anchor.position -= deleted;
-        }
-        */
     }
 
     return deleted;
@@ -792,4 +764,3 @@ int cursor_t::unindent()
     int count = _cursorUnindent(this);
     return count;
 }
-

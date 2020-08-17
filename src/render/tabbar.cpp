@@ -1,6 +1,6 @@
-#include "render.h"
 #include "tabbar.h"
 #include "app.h"
+#include "render.h"
 
 #include <algorithm>
 
@@ -87,8 +87,10 @@ void tabbar_t::render()
     _move(y, _x);
 
     int tabNo = 1;
+
     for (auto t : tabs) {
         int pair = colorPrimary;
+        _attron(_color_pair(pair));
         if (t.editor == app->currentEditor) {
 
             if (hasFocus) {
@@ -98,31 +100,35 @@ void tabbar_t::render()
 
             _attron(_color_pair(colorIndicator));
             _bold(true);
-            renderLine("[", offsetX, x, width);
-            _attroff(_color_pair(colorIndicator));
+            _reverse(true);
+            renderLine(" ", offsetX, x, width);
+            // _attroff(_color_pair(colorIndicator));
             _bold(false);
         } else {
+            _attron(_color_pair(pair));
             renderLine(" ", offsetX, x, width);
         }
 
-        _attron(_color_pair(pair));
         renderLine(t.name.c_str(), offsetX, x, width);
-        _attroff(_color_pair(pair));
 
         if (t.editor == app->currentEditor) {
 
             _attron(_color_pair(colorIndicator));
             _bold(true);
-            renderLine("]", offsetX, x, width);
+            renderLine(" ", offsetX, x, width);
             _attroff(_color_pair(colorIndicator));
             _bold(false);
+            _reverse(false);
 
         } else {
             renderLine(" ", offsetX, x, width);
         }
 
         _bold(false);
+        _attroff(_color_pair(pair));
 
         tabNo++;
     }
+
+    _reverse(false);
 }

@@ -1,6 +1,6 @@
-#include "render.h"
 #include "editor.h"
 #include "app.h"
+#include "render.h"
 
 struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos);
 
@@ -71,7 +71,7 @@ void editor_t::render()
         struct blockdata_t* blockData = b->data.get();
 
         std::string text = b->text() + " ";
-        
+
         // todo.. find a proper place for this
         if (b != mainCursor.block()) {
             editor->completer.addLine(text);

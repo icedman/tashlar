@@ -10,7 +10,7 @@ static const operation_name operation_names[] = {
     { "UNKNOWN", UNKNOWN, "" },
     { "CANCEL", CANCEL, "escape" },
 
-    { "NEW_TAB ", NEW_TAB , "alt+t" },
+    { "NEW_TAB ", NEW_TAB, "alt+t" },
     { "TAB_1", TAB_1, "alt+1" },
     { "TAB_2", TAB_2, "alt+2" },
     { "TAB_3", TAB_3, "alt+3" },
@@ -21,6 +21,7 @@ static const operation_name operation_names[] = {
     { "TAB_8", TAB_8, "alt+8" },
     { "TAB_9", TAB_9, "alt+9" },
 
+    { "TAB", TAB, "tab" },
     { "ENTER", ENTER, "enter" },
     { "DELETE", DELETE, "delete" },
     { "BACKSPACE", BACKSPACE, "backspace" },

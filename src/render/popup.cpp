@@ -1,6 +1,6 @@
-#include "render.h"
 #include "popup.h"
 #include "app.h"
+#include "render.h"
 
 static void renderLine(const char* line, int offsetX, int& x, int width)
 {

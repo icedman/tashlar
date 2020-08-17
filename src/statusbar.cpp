@@ -56,5 +56,5 @@ void statusbar_t::applyTheme()
 
 bool statusbar_t::isVisible()
 {
-    return visible && app_t::instance()->showStatusBar;   
+    return visible && app_t::instance()->showStatusBar;
 }

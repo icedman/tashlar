@@ -101,5 +101,5 @@ bool tabbar_t::input(char ch, std::string keys)
 
 bool tabbar_t::isVisible()
 {
-    return visible && app_t::instance()->showTabbar;   
+    return visible && app_t::instance()->showTabbar;
 }

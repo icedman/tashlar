@@ -103,5 +103,5 @@ void minimap_t::applyTheme()
 
 bool minimap_t::isVisible()
 {
-    return visible == app_t::instance()->showMinimap;   
+    return visible == app_t::instance()->showMinimap;
 }

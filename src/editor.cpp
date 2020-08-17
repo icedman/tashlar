@@ -204,8 +204,7 @@ void editor_t::runOp(operation_t op)
             cursor_util::advanceBlockCursors(cursors, cur, count);
             cur.moveRight(count, cur.hasSelection());
             cur.anchor.position += count;
-        }
-            break;
+        } break;
         case UNINDENT: {
             int count = cur.unindent() - 1;
             if (count > 0) {
@@ -213,8 +212,7 @@ void editor_t::runOp(operation_t op)
                 cur.moveLeft(count, cur.hasSelection());
                 cur.anchor.position -= count;
             }
-        }
-            break;
+        } break;
         case SELECT_LINE:
             cur.moveStartOfLine();
             cur.moveEndOfLine(true);
@@ -826,7 +824,8 @@ void editor_t::preLayout()
         scrollX = -(width - screenX) + 2;
     }
 
-    if (app_t::instance()->lineWrap) scrollX = 0;
+    if (app_t::instance()->lineWrap)
+        scrollX = 0;
 
     // app_t::log("b:%d screenY:%d scrollY:%d", cursorBlock->lineNumber, cursorBlock->screenLine, scrollY);
 }

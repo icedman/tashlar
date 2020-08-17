@@ -1,27 +1,15 @@
 #include "app.h"
+#include "render.h"
 #include "search.h"
 #include "util.h"
 
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
-#include <curses.h>
 
 #define LOG_FILE "/tmp/ashlar.log"
 
 static struct app_t* appInstance = 0;
-
-static std::map<int, int> colorMap;
-
-#define SELECTED_OFFSET 500
-
-int pairForColor(int colorIdx, bool selected)
-{
-    if (selected && colorIdx == color_pair_e::NORMAL) {
-        return color_pair_e::SELECTED;
-    }
-    return colorMap[colorIdx + (selected ? SELECTED_OFFSET : 0)];
-}
 
 static color_info_t color(int r, int g, int b)
 {
@@ -246,8 +234,6 @@ void app_t::configure(int argc, char** argv)
 
 void app_t::setupColors()
 {
-    colorMap.clear();
-
     style_t s = theme->styles_for_scope("default");
     // std::cout << theme->colorIndices.size() << " colors used" << std::endl;
 
@@ -338,31 +324,7 @@ void app_t::setupColors()
     // theme->theme_color("statusBar.foreground", clr);
 
     app_t::instance()->log("%d registered colors", theme->colorIndices.size());
-
-    int idx = 32;
-
-    //---------------
-    // build the color pairs
-    //---------------
-    init_pair(color_pair_e::NORMAL, fg, bg);
-    init_pair(color_pair_e::SELECTED, selFg, selBg);
-
-    auto it = theme->colorIndices.begin();
-    while (it != theme->colorIndices.end()) {
-        colorMap[it->first] = idx;
-        init_pair(idx++, it->first, bg);
-        it++;
-    }
-
-    it = theme->colorIndices.begin();
-    while (it != theme->colorIndices.end()) {
-        colorMap[it->first + SELECTED_OFFSET] = idx;
-        init_pair(idx++, it->first, selBg);
-        if (it->first == selBg) {
-            colorMap[it->first + SELECTED_OFFSET] = idx + 1;
-        }
-        it++;
-    }
+    render_t::instance()->updateColors();
 
     applyTheme();
 }
