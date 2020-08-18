@@ -45,7 +45,7 @@ int main(int argc, char** argv)
         app.render();
 
         renderer.render();
-
+        
         int ch = -1;
         std::string keySequence;
         while (true) {

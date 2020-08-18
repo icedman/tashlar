@@ -27,6 +27,18 @@ int nearest_color(int r, int g, int b)
     return idx;
 }
 
+color_info_t color_info_t::term_color(int idx)
+{
+    const color_t clr = termColors[idx];
+    color_info_t c = {
+        .red = clr.r,
+        .green = clr.g,
+        .blue = clr.b,
+        .alpha = 255
+    };
+    return c;
+}
+
 int color_info_t::nearest_color_index(int red, int green, int blue)
 {
     return nearest_color(red * 255, green * 255, blue * 255);
