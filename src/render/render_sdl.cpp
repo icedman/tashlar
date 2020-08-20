@@ -1,4 +1,5 @@
 #include "app.h"
+#include "dots.h"
 #include "rencache.h"
 #include "render.h"
 #include "renderer.h"
@@ -108,6 +109,42 @@ void _addch(char c)
     }
 
     drawX++;
+}
+
+bool _drawdots(int dots)
+{
+    static const int offs[] = {
+        0, 0, 0, 1,
+        1, 0, 1, 1,
+        2, 0, 2, 1,
+        3, 0, 3, 1
+    };
+
+    int* dm = dotMap();
+    int fw = render_t::instance()->fw;
+    int fh = render_t::instance()->fh;
+    int dw = 2;
+    RenColor fg = drawColor;
+
+    float ffw = fw / 2;
+    float ffh = fh / 4;
+
+    for (int i = 0; i < 8; i++) {
+        if (dots & dm[i]) {
+            int ofx = offs[i * 2 + 1] * ffw;
+            int ofy = offs[i * 2] * ffh;
+            RenRect rect = {
+                .x = ofx + drawBaseX + drawX * fw,
+                .y = ofy + drawBaseY + drawY * fh,
+                .width = dw,
+                .height = dw
+            };
+            _draw_rect(rect, fg);
+        }
+    }
+
+    drawX++;
+    return true;
 }
 
 void _addstr(const char* str)

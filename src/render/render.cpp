@@ -63,6 +63,11 @@ void _attroff(int attr)
     attroff(attr);
 }
 
+bool _drawdots(int dots)
+{
+    return false;
+}
+
 int _color_pair(int pair)
 {
     return COLOR_PAIR(pair);

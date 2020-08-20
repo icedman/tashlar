@@ -42,8 +42,6 @@ void explorer_t::render()
         currentItem = 0;
     }
 
-    // ensureVisibleCursor();
-
     int idx = 0;
     int skip = scrollY;
     int y = 0;

@@ -18,6 +18,7 @@ void _addstr(const char* str);
 void _addwstr(const wchar_t* str);
 void _attron(int attr);
 void _attroff(int attr);
+bool _drawdots(int dots);
 
 void _begin(view_t* view);
 void _end();

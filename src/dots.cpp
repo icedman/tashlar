@@ -13,6 +13,11 @@ static int dots[] = {
     1 << 7, 1 << 8
 };
 
+int* dotMap()
+{
+    return dots;
+}
+
 typedef struct {
     const wchar_t* chars;
     const char* dotCode;
@@ -301,7 +306,6 @@ const wchar_t* wcharFromDots(int idx)
     }
 
     if (cache[idx] != 0) {
-        // std::cout << "cached:" << dots_map[cache[idx]].dotCode << std::endl;
         return dots_map[cache[idx]].chars;
     }
 
@@ -312,11 +316,9 @@ const wchar_t* wcharFromDots(int idx)
         }
     }
 
-    // std::cout << str << std::endl;
     for (int i = 0; i < 256; i++) {
         if (str == dots_map[i].dotCode) {
             cache[idx] = i;
-            // std::cout << dots_map[cache[idx]].dotCode << std::endl;
             return dots_map[cache[idx]].chars;
         }
     }

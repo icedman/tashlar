@@ -3,6 +3,7 @@
 
 #include <cstring>
 
+int* dotMap();
 int buildUpDots(int c, int row, int left, int right);
 const wchar_t* wcharFromDots(int c);
 

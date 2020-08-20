@@ -799,7 +799,7 @@ void editor_t::layout(int _x, int _y, int w, int h)
     cols = width / render_t::instance()->fw;
 
     maxScrollX = 0;
-    maxScrollY = document.lastBlock()->lineNumber - (rows / 3);
+    maxScrollY = document.lastBlock()->lineNumber - (rows / 2);
     // app_t::log(">max %d", maxScrollY);
 }
 
