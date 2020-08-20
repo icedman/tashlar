@@ -28,6 +28,8 @@ struct view_t {
     virtual bool input(char ch, std::string keys);
     virtual void applyTheme();
     virtual void scroll(int s);
+    virtual void mouseDown(int x, int y, int button);
+    virtual void mouseUp(int x, int y, int button);
 
     void vlayout(int x, int y, int w, int h);
     void hlayout(int x, int y, int w, int h);
@@ -56,6 +58,11 @@ struct view_t {
     static void setFocus(view_t* view);
     static view_t* currentFocus();
     static view_t* shiftFocus(int x, int y);
+
+    static void setHovered(view_t* view);
+    static view_t* currentHovered();
+
+    view_t* viewFromPointer(int x, int y);
 
     bool isFocused();
 

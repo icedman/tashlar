@@ -12,6 +12,7 @@ struct tabitem_t {
 
     int itemNumber;
     int width;
+    int x;
 
     editor_ptr editor;
 };
@@ -25,6 +26,7 @@ struct tabbar_t : view_t {
     bool input(char ch, std::string keys) override;
     bool isVisible() override;
     void preLayout() override;
+    void mouseDown(int x, int y, int button) override;
 
     std::vector<struct tabitem_t> tabs;
 };

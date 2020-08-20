@@ -225,6 +225,7 @@ void explorer_t::preLayout()
         return;
 
     preferredWidth = EXPLORER_WIDTH * render_t::instance()->fw;
+    maxScrollY = renderList.size() - rows;
 }
 
 void explorer_t::applyTheme()
@@ -325,7 +326,6 @@ bool explorer_t::input(char ch, std::string keys)
         currentItem = renderList.size() - 1;
     }
 
-    maxScrollY = renderList.size() - rows;
     if (_scrollToCursor) {
         ensureVisibleCursor();
     }
@@ -337,6 +337,22 @@ bool explorer_t::input(char ch, std::string keys)
     }
 
     return false;
+}
+
+void explorer_t::mouseDown(int x, int y, int button)
+{
+    int prev = currentItem;
+    int fh = render_t::instance()->fh;
+    currentItem = ((y - this->y) / fh) + scrollY;
+    if (currentItem >= renderList.size()) {
+        currentItem = renderList.size() - 1;
+    }
+    view_t::setFocus(this);
+    // app_t::log(">row %d", row);
+
+    if (prev == currentItem) {
+        input(0, "enter");
+    }
 }
 
 bool explorer_t::isVisible()

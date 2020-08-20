@@ -419,17 +419,23 @@ static int poll_event()
         if (e.button.button == 1) {
             SDL_CaptureMouse((SDL_bool)1);
         }
+        pushKey(0, "mousedown");
+        view_t::currentHovered()->mouseDown(e.button.x, e.button.y, e.button.button);
         return 0;
 
     case SDL_MOUSEBUTTONUP:
+        pushKey(0, "mouseup");
+        view_t::currentHovered()->mouseUp(e.button.x, e.button.y, e.button.button);
         return 0;
 
-    case SDL_MOUSEMOTION:
+    case SDL_MOUSEMOTION: {
+        view_t::setHovered(app_t::instance()->viewFromPointer(e.motion.x, e.motion.y));
         return 0;
+    }
 
     case SDL_MOUSEWHEEL:
         pushKey(0, "wheel");
-        view_t::currentFocus()->scroll(e.wheel.y);
+        view_t::currentHovered()->scroll(e.wheel.y);
         return 0;
 
     default:

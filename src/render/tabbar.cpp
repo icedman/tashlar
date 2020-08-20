@@ -88,7 +88,8 @@ void tabbar_t::render()
 
     int tabNo = 1;
 
-    for (auto t : tabs) {
+    for (auto& t : tabs) {
+        t.x = x - scrollX;
         int pair = colorPrimary;
         _attron(_color_pair(pair));
         if (t.editor == app->currentEditor) {

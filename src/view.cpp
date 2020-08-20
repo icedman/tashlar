@@ -3,6 +3,7 @@
 #include "render.h"
 
 static view_t* focused = 0;
+static view_t* hovered = 0;
 
 view_t::view_t(std::string name)
     : name(name)
@@ -38,6 +39,19 @@ view_t* view_t::currentFocus()
     return focused;
 }
 
+void view_t::setHovered(view_t* view)
+{
+    hovered = view;
+}
+
+view_t* view_t::currentHovered()
+{
+    if (!hovered) {
+        return focused;
+    }
+    return hovered;
+}
+
 bool view_t::isFocused()
 {
     return this == focused;
@@ -58,6 +72,14 @@ void view_t::update(int delta)
     for (auto view : views) {
         view->update(delta);
     }
+}
+
+void view_t::mouseDown(int x, int y, int button)
+{
+}
+
+void view_t::mouseUp(int x, int y, int button)
+{
 }
 
 void view_t::layout(int x, int y, int width, int height)
@@ -293,4 +315,22 @@ void view_t::scroll(int s)
         scrollY = 0;
     if (scrollY >= maxScrollY)
         scrollY = maxScrollY - 1;
+}
+
+view_t* view_t::viewFromPointer(int x, int y)
+{
+    if (!isVisible())
+        return NULL;
+    view_t* view = this;
+    view_t* res = NULL;
+    if (x >= view->x && x < view->x + view->width && y >= view->y && y < view->y + view->height) {
+        res = view;
+        for (auto v : views) {
+            view_t* cres = v->viewFromPointer(x, y);
+            if (cres) {
+                res = cres;
+            }
+        }
+    }
+    return res;
 }

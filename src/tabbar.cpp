@@ -100,6 +100,19 @@ bool tabbar_t::input(char ch, std::string keys)
     return false;
 }
 
+void tabbar_t::mouseDown(int x, int y, int button)
+{
+    int fw = render_t::instance()->fw;
+    int col = (x - this->x) / fw;
+    for (auto& t : tabs) {
+        if (col >= t.x && col < t.x + t.width) {
+            // app_t::log("tab %s", t.name.c_str());
+            app_t::instance()->openEditor(t.editor->document.fullPath);
+            return;
+        }
+    }
+}
+
 bool tabbar_t::isVisible()
 {
     return visible && app_t::instance()->showTabbar;

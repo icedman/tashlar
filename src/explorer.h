@@ -18,7 +18,6 @@ struct fileitem_t {
     std::vector<std::shared_ptr<struct fileitem_t>> files;
 
     bool expanded;
-
     bool isDirectory;
     bool canLoadMore;
 
@@ -42,6 +41,7 @@ struct explorer_t : view_t {
     bool input(char ch, std::string keys) override;
     bool isVisible() override;
     void preLayout() override;
+    void mouseDown(int x, int y, int button) override;
 
     void ensureVisibleCursor();
 
