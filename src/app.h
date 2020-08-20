@@ -33,6 +33,7 @@ struct app_t : view_t {
     // view
     void layout(int x, int y, int width, int height) override;
     bool input(char ch, std::string keys) override;
+    void preLayout() override;
 
     extension_list extensions;
     theme_ptr theme;
@@ -52,6 +53,7 @@ struct app_t : view_t {
     std::string themeName;
     int fg;
     int bg;
+    int bgApp;
     int selFg;
     int selBg;
     int treeFg;

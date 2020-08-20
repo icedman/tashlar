@@ -2,6 +2,7 @@
 #include "app.h"
 #include "editor.h"
 #include "keybinding.h"
+#include "render.h"
 
 #include <algorithm>
 
@@ -102,4 +103,9 @@ bool tabbar_t::input(char ch, std::string keys)
 bool tabbar_t::isVisible()
 {
     return visible && app_t::instance()->showTabbar;
+}
+
+void tabbar_t::preLayout()
+{
+    preferredHeight = render_t::instance()->fh;
 }

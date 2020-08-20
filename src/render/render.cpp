@@ -9,6 +9,8 @@
 #include <unistd.h>
 
 static std::map<int, int> colorMap;
+static int drawBaseX = 0;
+static int drawBaseY = 0;
 
 int pairForColor(int colorIdx, bool selected)
 {
@@ -33,7 +35,7 @@ void _clrtoeol(int w)
 
 void _move(int y, int x)
 {
-    move(y, x);
+    move(drawBaseY + y, drawBaseX + x);
 }
 
 void _addch(char c)
@@ -93,6 +95,9 @@ void _reverse(bool b)
 void _begin(view_t* view)
 {
     contextStack.push_back(view);
+
+    drawBaseX = view->x;
+    drawBaseY = view->y;
 }
 
 void _end()
@@ -143,11 +148,19 @@ void render_t::update(int delta)
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
     width = ws.ws_col;
     height = ws.ws_row;
+    cols = width;
+    rows = height;
+    fw = 1;
+    fh = 1;
 }
 
 void render_t::render()
 {
     refresh();
+}
+
+void render_t::input()
+{
 }
 
 void render_t::updateColors()

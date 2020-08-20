@@ -31,8 +31,10 @@ void tabbar_t::render()
         return;
     }
 
+    // app_t::log("tabbar h:%d %d", height, preferredHeight);
+
     app_t* app = app_t::instance();
-    _move(y, x);
+    _move(0, 0);
 
     bool hasFocus = isFocused();
 
@@ -70,21 +72,19 @@ void tabbar_t::render()
         tabX += t.width;
     }
 
-    while (currentTabX + currentTabWidth + 1 - scrollX > width) {
+    while (currentTabX + currentTabWidth + 1 - scrollX > cols) {
         scrollX++;
     }
     while (scrollX > 0 && currentTabX - scrollX <= 0) {
         scrollX--;
     }
 
-    int _x = this->x;
-
     int offsetX = scrollX;
     int x = 0;
 
-    _move(y, _x);
-    _clrtoeol(width);
-    _move(y, _x);
+    _move(0, 0);
+    _clrtoeol(cols);
+    _move(0, 0);
 
     int tabNo = 1;
 
@@ -101,27 +101,27 @@ void tabbar_t::render()
             _attron(_color_pair(colorIndicator));
             _bold(true);
             _reverse(true);
-            renderLine(" ", offsetX, x, width);
+            renderLine(" ", offsetX, x, cols);
             // _attroff(_color_pair(colorIndicator));
             _bold(false);
         } else {
             _attron(_color_pair(pair));
-            renderLine(" ", offsetX, x, width);
+            renderLine(" ", offsetX, x, cols);
         }
 
-        renderLine(t.name.c_str(), offsetX, x, width);
+        renderLine(t.name.c_str(), offsetX, x, cols);
 
         if (t.editor == app->currentEditor) {
 
             _attron(_color_pair(colorIndicator));
             _bold(true);
-            renderLine(" ", offsetX, x, width);
+            renderLine(" ", offsetX, x, cols);
             _attroff(_color_pair(colorIndicator));
             _bold(false);
             _reverse(false);
 
         } else {
-            renderLine(" ", offsetX, x, width);
+            renderLine(" ", offsetX, x, cols);
         }
 
         _bold(false);

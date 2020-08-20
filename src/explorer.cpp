@@ -10,7 +10,7 @@
 #include "app.h"
 #include "editor.h"
 #include "explorer.h"
-// #include "statusbar.h"
+#include "render.h"
 #include "util.h"
 
 #define PRELOAD_LOOP 8
@@ -219,6 +219,14 @@ void explorer_t::update(int delta)
     */
 }
 
+void explorer_t::preLayout()
+{
+    if (width == 0 || height == 0 || !isVisible())
+        return;
+
+    preferredWidth = EXPLORER_WIDTH * render_t::instance()->fw;
+}
+
 void explorer_t::applyTheme()
 {
     app_t* app = app_t::instance();
@@ -326,4 +334,22 @@ bool explorer_t::input(char ch, std::string keys)
 bool explorer_t::isVisible()
 {
     return visible && app_t::instance()->showSidebar;
+}
+
+void explorer_t::ensureVisibleCursor()
+{
+    // scroll to cursor
+    // TODO: use math not loops
+    if (rows > 0) {
+        int blockVirtualLine = currentItem;
+        int blockScreenLine = blockVirtualLine - scrollY;
+
+        // app_t::instance()->log(">%d %d scroll:%d items:%d h:%d", blockScreenLine, currentItem, scrollY, renderList.size(), rows);
+
+        if (blockScreenLine + 1 >= rows) {
+            scrollY++;
+        } else if (blockScreenLine < 0) {
+            scrollY--;
+        }
+    }
 }

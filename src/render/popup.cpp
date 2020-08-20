@@ -25,29 +25,21 @@ void popup_t::render()
 
     app_t* app = app_t::instance();
 
-    int _y = this->y;
-    int _x = this->x;
-
     _attron(_color_pair(colorPrimary));
 
     for (int i = 0; i < height - 1 || i == 0; i++) {
-        _move(_y + i, _x + 1);
-        _clrtoeol(width - 2);
+        _move(0 + i, 0 + 1);
+        _clrtoeol(cols - 2);
     }
 
-    _move(_y, _x);
-
-    // w_attron(win, _color_pair(colorPair));
-    // box(win, ACS_VLINE, ACS_HLINE);
-    // wattroff(win, _color_pair(colorPair));
-    // box(win, ' ', ' ');
+    _move(0, 0);
 
     if (!text.length()) {
-        _move(_y, _x + 2);
+        _move(0, 0 + 2);
         _addstr(placeholder.c_str());
     }
 
-    _move(_y, _x + 1);
+    _move(0, 0 + 1);
     int offsetX = 0;
     int x = 1;
 
@@ -58,10 +50,10 @@ void popup_t::render()
         currentItem = items.size() - 1;
     }
     char* str = (char*)text.c_str();
-    if (text.length() > width - 3) {
-        offsetX = text.length() - (width - 3);
+    if (text.length() > cols - 3) {
+        offsetX = text.length() - (cols - 3);
     };
-    renderLine(str, offsetX, x, width);
+    renderLine(str, offsetX, x, cols);
 
     _attron(_color_pair(colorIndicator));
     _addch('|');
@@ -106,23 +98,23 @@ void popup_t::render()
         if (skip-- > 0) {
             continue;
         }
-        _move(_y + y++, _x + 1);
+        _move(y++, 1);
         x = 1;
         if (idx - 1 == currentItem) {
-            _bold(true);
+            _reverse(true);
             if (type == POPUP_FILES) {
                 // app_t::instance()->statusbar->setStatus(item.fullPath, 8000);
             }
         }
         _attron(_color_pair(colorPrimary));
-        renderLine(item.name.c_str(), offsetX, x, width);
+        renderLine(item.name.c_str(), offsetX, x, cols);
 
-        for (int i = x; i < width - 1; i++) {
+        for (int i = x; i < cols - 1; i++) {
             _addch(' ');
         }
 
         _attroff(_color_pair(colorPrimary));
-        _bold(false);
+        _reverse(false);
         if (y >= height - 1) {
             break;
         }

@@ -1,8 +1,8 @@
 #include "keyinput.h"
 
-static bool lastConsumed = true;
-static char lastKey = '?';
-static std::string lastKeySequence;
+static bool lastConsumed = false;
+static char lastKey = ' ';
+static std::string lastKeySequence = "resize";
 
 void pushKey(char c, std::string keySequence)
 {
@@ -11,16 +11,11 @@ void pushKey(char c, std::string keySequence)
     lastKeySequence = keySequence;
 }
 
-int kbhit(int timeout)
-{
-    return 0;
-}
-
 int readKey(std::string& keySequence)
 {
     if (lastConsumed) {
         keySequence = "";
-        return -2;
+        return -1;
     }
 
     keySequence = lastKeySequence;

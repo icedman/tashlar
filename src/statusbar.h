@@ -24,6 +24,7 @@ struct statusbar_t : public view_t {
     void render() override;
     void applyTheme() override;
     bool isVisible() override;
+    void preLayout() override;
 
     int frames; // x mseconds from last kbhit (corresponds to kbhit timeout)
     std::string prevStatus;

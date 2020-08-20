@@ -10,8 +10,6 @@ void editor_t::render()
         return;
 
     editor_t* editor = this;
-    int cols = editor->width;
-    int rows = editor->height;
 
     struct cursor_t mainCursor = editor->document.cursor();
     cursor_list cursors = editor->document.cursors;
@@ -41,7 +39,7 @@ void editor_t::render()
         block_ptr b = *it;
         highlighter.highlightBlock(b);
         it++;
-        if (c++ > height + preceedingBlocks)
+        if (c++ > rows + preceedingBlocks)
             break;
     }
 
@@ -56,6 +54,8 @@ void editor_t::render()
     if (editor->scrollY > 0) {
         it += editor->scrollY;
     }
+
+    bool firstLine = true;
     while (it != editor->document.blocks.end()) {
         auto& b = *it++;
 
@@ -79,9 +79,9 @@ void editor_t::render()
 
         char* line = (char*)text.c_str();
         for (int sl = 0; sl < b->lineCount; sl++) {
-            _move(y + l, x);
-            _clrtoeol(width);
-            _move(y + l++, x);
+            _move(l, 0);
+            _clrtoeol(cols);
+            _move(l++, 0);
 
             if (text.length() < editor->scrollX) {
                 continue;
@@ -165,9 +165,9 @@ void editor_t::render()
     }
 
     while (l < rows) {
-        _move(y + l, x);
-        _clrtoeol(width);
-        _move(y + l++, x);
+        _move(l, 0);
+        _clrtoeol(cols);
+        _move(l++, 0);
         // addch('~');
     }
 }

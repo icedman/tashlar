@@ -27,6 +27,7 @@ struct view_t {
     virtual void preRender();
     virtual bool input(char ch, std::string keys);
     virtual void applyTheme();
+    virtual void scroll(int s);
 
     void vlayout(int x, int y, int w, int h);
     void hlayout(int x, int y, int w, int h);
@@ -35,6 +36,8 @@ struct view_t {
     int height;
     int x;
     int y;
+    int rows;
+    int cols;
 
     int flex;
     int preferredWidth;

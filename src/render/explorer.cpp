@@ -22,6 +22,8 @@ void explorer_t::render()
         return;
     }
 
+    // app_t::log("explorer h:%d", height);
+
     app_t* app = app_t::instance();
 
     editor_ptr editor = app_t::instance()->currentEditor;
@@ -29,7 +31,7 @@ void explorer_t::render()
     cursor_t cursor = doc->cursor();
     block_t& block = *cursor.block();
 
-    _move(y, x);
+    _move(0, 0);
 
     if (renderList.size() == 0) {
         buildFileList(renderList, &files, 0);
@@ -40,22 +42,7 @@ void explorer_t::render()
         currentItem = 0;
     }
 
-    // scroll to cursor
-    // TODO: use math not loops
-    while (true && height > 0) {
-        int blockVirtualLine = currentItem;
-        int blockScreenLine = blockVirtualLine - scrollY;
-
-        // app_t::instance()->log(">%d %d scroll:%d items:%d h:%d", blockScreenLine, currentItem, scrollY, renderList.size(), height);
-
-        if (blockScreenLine + 1 >= height) {
-            scrollY++;
-        } else if (blockScreenLine < 0) {
-            scrollY--;
-        } else {
-            break;
-        }
-    }
+    ensureVisibleCursor();
 
     int idx = 0;
     int skip = scrollY;
@@ -67,7 +54,7 @@ void explorer_t::render()
         }
 
         int pair = colorPrimary;
-        _move(y, x);
+        _move(y, 0);
 
         if (hasFocus && currentItem == idx) {
             if (hasFocus) {
@@ -76,7 +63,7 @@ void explorer_t::render()
             } else {
                 _bold(true);
             }
-            for (int i = 0; i < width; i++) {
+            for (int i = 0; i < cols; i++) {
                 _addch(' ');
             }
         }
@@ -106,7 +93,7 @@ void explorer_t::render()
         _addch(' ');
         x += 2;
 
-        renderLine(file->name.c_str(), x, width);
+        renderLine(file->name.c_str(), x, cols);
 
         if (hasFocus && currentItem == idx) {
             if (hasFocus) {
@@ -116,7 +103,7 @@ void explorer_t::render()
                 _bold(true);
             }
         }
-        for (int i = 0; i < width - x; i++) {
+        for (int i = 0; i < cols - x; i++) {
             _addch(' ');
         }
 
@@ -124,15 +111,15 @@ void explorer_t::render()
         _bold(false);
         _reverse(false);
 
-        if (y >= height) {
+        if (y >= rows) {
             break;
         }
 
         idx++;
     }
 
-    while (y < height) {
+    while (y < rows) {
         _move(y++, x);
-        _clrtoeol(width);
+        _clrtoeol(cols);
     }
 }

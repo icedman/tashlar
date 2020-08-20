@@ -2,6 +2,8 @@
 #include "app.h"
 #include "keyinput.h"
 
+#include "render.h" // rows & cols
+
 #include <iostream>
 #include <sstream>
 
@@ -12,8 +14,11 @@
 editor_t::editor_t()
     : view_t("editor")
 {
+    cols = 0;
+    rows = 0;
     canFocus = true;
     document.editor = this;
+    _scrollToCursor = true;
 }
 
 editor_t::~editor_t()
@@ -314,11 +319,11 @@ void editor_t::runOp(operation_t op)
             break;
         case MOVE_CURSOR_NEXT_PAGE:
         case MOVE_CURSOR_NEXT_PAGE_ANCHORED:
-            cur.moveNextBlock(height, _op == MOVE_CURSOR_NEXT_PAGE_ANCHORED);
+            cur.moveNextBlock(rows, _op == MOVE_CURSOR_NEXT_PAGE_ANCHORED);
             break;
         case MOVE_CURSOR_PREVIOUS_PAGE:
         case MOVE_CURSOR_PREVIOUS_PAGE_ANCHORED:
-            cur.movePreviousBlock(height, _op == MOVE_CURSOR_PREVIOUS_PAGE_ANCHORED);
+            cur.movePreviousBlock(rows, _op == MOVE_CURSOR_PREVIOUS_PAGE_ANCHORED);
             break;
 
         case TAB: {
@@ -370,6 +375,8 @@ void editor_t::runOp(operation_t op)
 
         document.updateCursors(cursors);
     }
+
+    _scrollToCursor = true;
 }
 
 void editor_t::update(int delta)
@@ -788,11 +795,15 @@ void editor_t::layout(int _x, int _y, int w, int h)
     width = w;
     height = h;
 
+    rows = height / render_t::instance()->fh;
+    cols = width / render_t::instance()->fw;
+
     maxScrollX = 0;
-    maxScrollY = document.lastBlock()->screenLine + (h / 3);
+    maxScrollY = document.lastBlock()->lineNumber - (rows / 3);
+    // app_t::log(">max %d", maxScrollY);
 }
 
-void editor_t::preLayout()
+void editor_t::ensureVisibleCursor()
 {
     if (width == 0 || height == 0 || !isVisible())
         return;
@@ -802,35 +813,65 @@ void editor_t::preLayout()
     // update scroll
     block_ptr cursorBlock = mainCursor.block();
 
-    int screenX = mainCursor.position();
-    int screenY = cursorBlock->screenLine;
+    int lookAheadX = (cols / 3);
 
-    int lookAheadX = (width / 3);
-    int lookAheadY = 0; // (height/5);
+    // app_t::log(">>line:%d scroll:%d screen:%d rows:%d", cursorBlock->lineNumber, scrollY, _cursorScreenY, rows);
+    int adjust = 0;
+    if (app_t::instance()->lineWrap) {
+        block_list::iterator it = document.blocks.begin();
+        if (scrollY > 0) {
+            it += scrollY;
+        }
+        int l = 0;
+        while (it != document.blocks.end()) {
+            block_ptr b = *it++;
+            if (b == cursorBlock)
+                break;
+            if (l > rows)
+                break;
+
+            if (b->lineCount > 1) {
+                adjust += (b->lineCount - 1);
+            }
+        }
+    }
+
+    // scrollY
+    int lookAheadY = 0; // (cols/5);
+    int screenY = cursorBlock->lineNumber;
     if (screenY - scrollY < lookAheadY) {
         scrollY = screenY - lookAheadY;
         if (scrollY < 0)
             scrollY = 0;
+    } else if (screenY - scrollY + 1 + adjust > rows) {
+        scrollY = -(rows - screenY) + 1 + adjust;
     }
-    if (screenY - scrollY + 1 > height) {
-        scrollY = -(height - screenY) + 1;
-    }
+
+    if (scrollY < 0)
+        scrollY = 0;
+
+    // scrollX
+    int screenX = mainCursor.position();
     if (screenX - scrollX < lookAheadX) {
         scrollX = screenX - lookAheadX;
         if (scrollX < 0)
             scrollX = 0;
     }
-    if (screenX - scrollX + 2 > width) {
-        scrollX = -(width - screenX) + 2;
+    if (screenX - scrollX + 2 > cols) {
+        scrollX = -(cols - screenX) + 2;
     }
 
-    if (app_t::instance()->lineWrap)
+    if (app_t::instance()->lineWrap) {
         scrollX = 0;
+    }
 
-    // app_t::log("b:%d screenY:%d scrollY:%d", cursorBlock->lineNumber, cursorBlock->screenLine, scrollY);
+    document.setColumns(cols);
 }
 
 void editor_t::preRender()
 {
-    document.setColumns(width);
+    if (_scrollToCursor) {
+        ensureVisibleCursor();
+        _scrollToCursor = false;
+    }
 }

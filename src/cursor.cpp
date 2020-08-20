@@ -57,8 +57,7 @@ static void cursorAtNextUnfoldedBlock(cursor_t& cursor, bool keepAnchor)
 {
     block_ptr next = cursor.block()->next();
     while (next) {
-        cursor.setPosition(next, cursor.cursor.position, keepAnchor);
-
+        cursor.setPosition(next, cursor.cursor.position % next->document->columns, keepAnchor);
         if (next->data && next->data->folded && !next->data->foldable) {
             if (next->next()) {
                 next = next->next();

@@ -17,6 +17,7 @@ void snapshot_t::save(block_list& blocks)
         b->dirty = block->dirty;
         b->content = block->content;
         b->data = nullptr;
+        b->cachedLength = 0;
 
         snapshot.push_back(b);
     }
@@ -48,6 +49,7 @@ void snapshot_t::restore(block_list& blocks)
         b->dirty = block->dirty;
         b->content = block->content;
         b->data = nullptr;
+        b->cachedLength = 0;
     }
 
     // document_t::updateBlocks(snapshot, 0);

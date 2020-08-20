@@ -38,6 +38,8 @@ int main(int argc, char** argv)
         int delta = 100;
         renderer.update(delta);
 
+        // app_t::log("h:%d", renderer.height);
+
         app.update(delta);
         app.preLayout();
         app.layout(0, 0, renderer.width, renderer.height);
@@ -45,10 +47,11 @@ int main(int argc, char** argv)
         app.render();
 
         renderer.render();
-        
+
         int ch = -1;
         std::string keySequence;
         while (true) {
+            renderer.input();
             ch = readKey(keySequence);
 
             if (previousKeySequence.length() && keySequence.length()) {

@@ -32,11 +32,16 @@ struct render_t {
     void update(int delta);
     void render();
     void updateColors();
+    void input();
 
     static render_t* instance();
 
     int width;
     int height;
+    int rows;
+    int cols;
+    int fw;
+    int fh;
 };
 
 #endif // RENDER_H

@@ -10,14 +10,11 @@ void gutter_t::render()
 
     app_t* app = app_t::instance();
 
-    int cols = editor->width;
-    int rows = editor->height;
-
     document_t* doc = &editor->document;
     cursor_t cursor = doc->cursor();
     block_t& block = *cursor.block();
 
-    _move(y, x);
+    _move(0, 0);
 
     int l = 0;
     block_list::iterator it = editor->document.blocks.begin();
@@ -48,11 +45,11 @@ void gutter_t::render()
             _bold(true);
         }
         for (int sl = 0; sl < b->lineCount; sl++) {
-            _move(y + l + sl, x);
-            _clrtoeol(width);
+            _move(l + sl, 0);
+            _clrtoeol(cols);
         }
         _attron(_color_pair(pair));
-        _move(y + l, x + width - lineNo.length() - 1);
+        _move(l, cols - lineNo.length());
         _addstr(lineNo.c_str());
         _attroff(_color_pair(pair));
         _bold(false);
@@ -61,8 +58,8 @@ void gutter_t::render()
     }
 
     while (l < height) {
-        _move(y + l, x);
-        _clrtoeol(width);
-        _move(y + l++, x);
+        _move(l, 0);
+        _clrtoeol(cols);
+        _move(l++, 0);
     }
 }

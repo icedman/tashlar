@@ -1,25 +1,32 @@
 #include "app.h"
+#include "rencache.h"
 #include "render.h"
 #include "renderer.h"
 
 #include <SDL2/SDL.h>
 
 static view_list contextStack;
-static int deferDraw = 0;
+
+#define _draw_rect rencache_draw_rect
+#define _draw_text rencache_draw_text
 
 SDL_Window* window;
 RenFont* font;
 
+static int drawBaseX = 0;
+static int drawBaseY = 0;
 static int drawX = 0;
 static int drawY = 0;
-static int fw = 1;
-static int fh = 1;
 static int drawColorPair = 0;
 static RenColor drawColor;
 static RenColor drawBg;
+static bool drawBold = false;
+static bool drawReverse = false;
+static bool drawUnderline = false;
 
 static std::map<int, int> colorMap;
 
+RenColor bgColor;
 struct BgFg {
     color_info_t bg;
     color_info_t fg;
@@ -37,7 +44,6 @@ int pairForColor(int colorIdx, bool selected)
     return colorMap[colorIdx + (selected ? SELECTED_OFFSET : 0)];
 }
 
-
 static view_t* context()
 {
     return contextStack.back();
@@ -45,6 +51,25 @@ static view_t* context()
 
 void _clrtoeol(int w)
 {
+    /*
+    int fw = render_t::instance()->fw;
+    int fh = render_t::instance()->fh;
+
+    RenRect rect = {
+        .x = drawX + drawBaseX,
+        .y = drawY + drawBaseY,
+        .width = fw * w,
+        .height = fh
+    };
+    RenColor bg = {
+        .b = 0,
+        .g = 0,
+        .r = 0,
+        .a = 255
+    };
+
+    _draw_rect(rect, bg);
+    */
 }
 
 void _move(int y, int x)
@@ -55,27 +80,48 @@ void _move(int y, int x)
 
 void _addch(char c)
 {
-    char txt[] = { c, 0 };
-    int cw = ren_get_font_width(font, txt);
+    int fw = render_t::instance()->fw;
+    int fh = render_t::instance()->fh;
+
+    int txt[] = { c, 0 };
+    int cw = ren_get_font_width(font, (char*)txt);
+
+    RenColor bg = drawBg;
+    RenColor fg = drawColor;
+
+    if (drawReverse) {
+        fg = drawBg;
+        bg = drawColor;
+    }
 
     // background
-    RenRect rect = { .x = drawX * fw, .y = drawY * fh, .width = fw, .height = fh };
-    ren_draw_rect(rect, drawBg);
-    
-    ren_draw_text(font, txt, drawX * fw + (fw/2 - cw/2), drawY * fh, drawColor);
-    drawX ++;
+    RenRect rect = { .x = drawBaseX + drawX * fw, .y = drawBaseY + drawY * fh, .width = fw, .height = fh };
+    if (bg.r != bgColor.r || bg.b != bgColor.b || !bg.g != bgColor.g) {
+        _draw_rect(rect, bg);
+    }
+    _draw_text(font, (char*)txt, drawBaseX + (drawX * fw) + (fw / 2 - cw / 2), drawBaseY + (drawY * fh), fg);
+
+    if (drawUnderline) {
+        rect.y += (rect.height - 2);
+        rect.height = 1;
+        _draw_rect(rect, fg);
+    }
+
+    drawX++;
 }
 
 void _addstr(const char* str)
 {
     int l = strlen(str);
-    for(int i=0; i<l; i++) {
+    for (int i = 0; i < l; i++) {
         _addch(str[i]);
     }
 }
 
 void _addwstr(const wchar_t* str)
 {
+    // unsupported
+    drawX++;
 }
 
 void _attron(int attr)
@@ -113,19 +159,30 @@ int _color_pair(int pair)
 
 void _underline(bool b)
 {
+    drawUnderline = b;
 }
 
 void _bold(bool b)
 {
+    drawBold = b;
 }
 
 void _reverse(bool b)
 {
+    drawReverse = b;
 }
 
 void _begin(view_t* view)
 {
     contextStack.push_back(view);
+    RenRect rect = {
+        .x = view->x,
+        .y = view->y,
+        .width = view->width,
+        .height = view->height,
+    };
+    drawBaseX = view->x;
+    drawBaseY = view->y;
 }
 
 void _end()
@@ -153,15 +210,14 @@ void render_t::initialize()
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
     SDL_EnableScreenSaver();
-    SDL_EventState(SDL_DROPFILE, SDL_ENABLE);    
-    SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "1" );
-    
+    SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+
     atexit(SDL_Quit);
 
     SDL_DisplayMode dm;
     SDL_GetCurrentDisplayMode(0, &dm);
 
-    app_t::log("%d %d", dm.w, dm.h);
     width = dm.w * 0.75;
     height = dm.h * 0.75;
 
@@ -170,12 +226,14 @@ void render_t::initialize()
         SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN);
 
     ren_init(window);
-    
-    font = ren_load_font("./fonts/font.ttf", 16);
-    font = ren_load_font("./fonts/monospace.ttf", 16);
+    // rencache_show_debug(true);
+
+    // font = ren_load_font("./fonts/font.ttf", 16);
+    font = ren_load_font("./fonts/FiraCode-Regular.ttf", 16);
+    // font = ren_load_font("./fonts/monospace.ttf", 16);
     if (font) {
         app_t::log("font loaded");
-        fw = ren_get_font_width(font, "AaBbCcDdEeFfGg") / 14;
+        fw = ren_get_font_width(font, "1234567890AaBbCcDdEeFfGg") / 24;
         fh = ren_get_font_height(font);
     }
 }
@@ -190,7 +248,6 @@ void render_t::shutdown()
 
 static int poll_event()
 {
-
     char buf[16];
     int mx, my, wx, wy;
     SDL_Event e;
@@ -207,9 +264,13 @@ static int poll_event()
     case SDL_WINDOWEVENT:
         if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
             if (e.window.data1 && e.window.data2) {
-                render_t::instance()->width = e.window.data1;
-                render_t::instance()->height = e.window.data2;
-                deferDraw = 1;
+                // SDL_SetWindowSize(window, e.window.data1, e.window.data2);
+
+                SDL_GetWindowSize(window, &render_t::instance()->width, &render_t::instance()->height);
+                ren_init(window);
+                pushKey(0, "resize");
+                // render_t::instance()->width = e.window.data1;
+                // render_t::instance()->height = e.window.data2;
             }
             return 0;
         } else if (e.window.event == SDL_WINDOWEVENT_EXPOSED) {
@@ -230,12 +291,28 @@ static int poll_event()
         return 0;
 
     case SDL_KEYDOWN: {
-        app_t::log("key down");
-
         std::string keySequence;
         std::string mod;
-        
+
         switch (e.key.keysym.sym) {
+        case SDLK_ESCAPE:
+            pushKey(27, "");
+            return 0;
+        case SDLK_TAB:
+            keySequence = "tab";
+            break;
+        case SDLK_HOME:
+            keySequence = "home";
+            break;
+        case SDLK_END:
+            keySequence = "end";
+            break;
+        case SDLK_PAGEUP:
+            keySequence = "pageup";
+            break;
+        case SDLK_PAGEDOWN:
+            keySequence = "pagedown";
+            break;
         case SDLK_RETURN:
             keySequence = "enter";
             break;
@@ -260,11 +337,9 @@ static int poll_event()
         default:
             if (e.key.keysym.sym >= SDLK_a && e.key.keysym.sym <= SDLK_z) {
                 keySequence += (char)(e.key.keysym.sym - SDLK_a) + 'a';
-            } else
-            if (e.key.keysym.sym >= SDLK_1 && e.key.keysym.sym <= SDLK_9) {
+            } else if (e.key.keysym.sym >= SDLK_1 && e.key.keysym.sym <= SDLK_9) {
                 keySequence += (char)(e.key.keysym.sym - SDLK_1) + '1';
-            } else
-            if (e.key.keysym.sym == SDLK_0) {
+            } else if (e.key.keysym.sym == SDLK_0) {
                 keySequence += (char)'0';
             }
             break;
@@ -272,15 +347,17 @@ static int poll_event()
 
         if (keySequence.length()) {
             if (e.key.keysym.mod & KMOD_CTRL) {
-                mod = "ctrl"; 
-            }
-            if (e.key.keysym.mod & KMOD_ALT) {
-                if (mod.length()) mod += "+";
-                mod += "alt"; 
+                mod = "ctrl";
             }
             if (e.key.keysym.mod & KMOD_SHIFT) {
-                if (mod.length()) mod += "+";
-                mod += "shift"; 
+                if (mod.length())
+                    mod += "+";
+                mod += "shift";
+            }
+            if (e.key.keysym.mod & KMOD_ALT) {
+                if (mod.length())
+                    mod += "+";
+                mod += "alt";
             }
             if (mod.length()) {
                 keySequence = mod + "+" + keySequence;
@@ -289,10 +366,10 @@ static int poll_event()
             app_t::log("keydown %s", keySequence.c_str());
             pushKey(0, keySequence);
         }
-        
+
         return 0;
     }
-    
+
     case SDL_KEYUP:
         return 0;
 
@@ -311,10 +388,11 @@ static int poll_event()
         return 0;
 
     case SDL_MOUSEMOTION:
-        deferDraw = 0;
         return 0;
 
     case SDL_MOUSEWHEEL:
+        pushKey(0, "wheel");
+        view_t::currentFocus()->scroll(e.wheel.y);
         return 0;
 
     default:
@@ -326,89 +404,78 @@ static int poll_event()
 
 void render_t::update(int delta)
 {
-    RenRect rect = { .x = 0, .y = 0, .width = width, .height = height };
-    
-    RenColor bg = {
-        .b = 0,
-        .g = 0,
-        .r = 0,
-        .a = 150
-    };
-    ren_draw_rect(rect, bg);
 
+    RenRect rect = { .x = 0, .y = 0, .width = width, .height = height };
+    BgFg bgFg = colorPairs[color_pair_e::NORMAL];
+    bgColor = {
+        .b = bgFg.bg.blue,
+        .g = bgFg.bg.green,
+        .r = bgFg.bg.red,
+        .a = bgFg.bg.alpha
+    };
+    _draw_rect(rect, bgColor);
+
+    if (fh > 0) {
+        rows = height / fh;
+    }
+    if (fw > 0) {
+        cols = width / fw;
+    }
+
+    rencache_begin_frame();
+}
+
+void render_t::input()
+{
     // app_t::log("event!");
-    // SDL_WaitEventTimeout(NULL, 1 * 1000);
+    SDL_WaitEventTimeout(NULL, 50);
     poll_event();
 }
 
 static void renderView(view_t* view)
 {
-    if (!view->isVisible()) return;
-
     if (!view->views.size()) {
-
-        int margin = view->height > 1 ? 4 : 0;
+        int m = 1;
         RenRect rect = {
-            .x = view->x + margin,
-            .y = view->y + margin,
-            .width = view->width - (margin * 2),
-            .height = view->height - (margin * 2),
+            .x = view->x + m,
+            .y = view->y + m,
+            .width = view->width - (m * 2),
+            .height = view->height - (m * 2),
         };
+
         RenColor color = {
             .b = 255,
             .g = 0,
             .r = 255,
-            .a = 255
-        };
-        RenColor textColor = {
-            .b = 255,
-            .g = 255,
-            .r = 255,
-            .a = 255
+            .a = 50
         };
 
-        if (deferDraw > 0) {
-            // 
-        } else {
-            // ren_set_clip_rect(rect);
-            // ren_draw_rect(rect, color);
-            // ren_draw_text(font, view->name.c_str(), view->x, view->y, textColor);
-        }
-        
-        // app_t::log(">%s x:%d y:%d w:%d h:%d", view->name.c_str(), view->x, view->y, view->width, view->height);
+        _draw_rect(rect, color);
     }
 
-    for(auto child : view->views) {
-        renderView(child);
+    for (auto v : view->views) {
+        renderView(v);
     }
 }
-    
+
 void render_t::render()
 {
-    // app_t::log("render!");
-
-    RenRect rects[] = {
-        { .x = 0, .y = 0, .width = width, .height = height }
-    };
-    
-    ren_update_rects(rects, 1);
-    
-    // app_t *app = app_t::instance();
-    // renderView(app);
+    // renderView(app_t::instance());
+    rencache_end_frame();
 }
 
 static void addColorPair(int idx, int fg, int bg)
 {
     app_t* app = app_t::instance();
-    
+
     BgFg pair = {
-        .bg = color_info_t::term_color(bg),
-        .fg = color_info_t::term_color(fg)
+        .bg = color_info_t::true_color(bg),
+        .fg = color_info_t::true_color(fg)
     };
-    
+
     colorPairs[idx] = pair;
 }
-    
+
 void render_t::updateColors()
 {
     app_t* app = app_t::instance();
@@ -417,18 +484,18 @@ void render_t::updateColors()
     //---------------
     // build the color pairs
     //---------------
-    addColorPair(color_pair_e::NORMAL, app->fg, app->bg);
+    addColorPair(color_pair_e::NORMAL, app->fg, app->bgApp);
     addColorPair(color_pair_e::SELECTED, app->selFg, app->selBg);
 
     colorMap[color_pair_e::NORMAL] = color_pair_e::NORMAL;
     colorMap[color_pair_e::SELECTED] = color_pair_e::SELECTED;
-    
+
     int idx = 32;
 
     auto it = theme->colorIndices.begin();
     while (it != theme->colorIndices.end()) {
         colorMap[it->first] = idx;
-        addColorPair(idx++, it->first, app->bg);
+        addColorPair(idx++, it->first, app->bgApp);
         it++;
     }
 

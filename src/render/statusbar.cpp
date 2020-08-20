@@ -7,8 +7,11 @@
 
 static void renderLine(const char* line, int offsetY, int offsetX, int size, int width)
 {
+    int row = offsetY / render_t::instance()->fh;
+
     // app_t::instance()->log("%s %d", line, size);
-    _move(offsetY, offsetX);
+    _move(0, offsetX);
+
     char c;
     int idx = 0;
     while ((c = line[idx++])) {
@@ -28,6 +31,8 @@ void statusbar_t::render()
         return;
     }
 
+    // app_t::log("statusbar h:%d %d", height, preferredHeight);
+
     app_t* app = app_t::instance();
 
     editor_ptr editor = app->currentEditor;
@@ -35,7 +40,11 @@ void statusbar_t::render()
     cursor_t cursor = doc->cursor();
     block_ptr block = cursor.block();
 
-    _move(y, x);
+    int cols = width / render_t::instance()->fw;
+    int row = y / render_t::instance()->fh;
+    int col = x / render_t::instance()->fw;
+
+    _move(0, col);
 
     static char tmp[512];
     // sprintf(tmp, "History %d/%d", (int)doc->snapShots.size(), (int)doc->snapShots.back().edits.size());
@@ -59,19 +68,19 @@ void statusbar_t::render()
     //-----------------
 
     _attron(_color_pair(colorPrimary));
-    _reverse(true);
+    // _reverse(true);
 
-    _move(y, x);
-    _clrtoeol(width);
-    _move(y, x);
+    _move(0, col);
+    _clrtoeol(cols);
+    _move(0, col);
 
     int offset = 2;
     if (status.length()) {
-        renderLine(status.c_str(), y, x + offset, sizes[0], width);
+        renderLine(status.c_str(), y, x + offset, sizes[0], cols);
     } else {
         for (int i = 0; i < STATUS_ITEMS; i++) {
             std::string s = text[i];
-            renderLine(s.c_str(), y, x + offset, sizes[i], width);
+            renderLine(s.c_str(), y, x + offset, sizes[i], cols);
             offset += s.length() + 2;
         }
     }
@@ -81,7 +90,7 @@ void statusbar_t::render()
         int idx = -1 + (i * -1);
         std::string s = text[idx];
         offset += s.length();
-        renderLine(s.c_str(), y, x + width - offset, sizes[idx], width);
+        renderLine(s.c_str(), 0, x + cols - offset, sizes[idx], cols);
         offset += 2;
     }
     _attroff(_color_pair(colorPrimary));

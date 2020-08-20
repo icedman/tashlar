@@ -18,6 +18,7 @@ struct minimap_t : view_t {
     void render() override;
     void applyTheme() override;
     bool isVisible() override;
+    void preLayout() override;
 
     editor_ptr editor;
     int currentLine;

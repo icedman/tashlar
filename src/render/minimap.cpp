@@ -17,18 +17,16 @@ void minimap_t::render()
     cursor_t cursor = doc->cursor();
     block_t& block = *cursor.block();
 
-    int _y = this->y;
-    int _x = this->x;
-    _move(_y, _x);
+    _move(0, 0);
 
     int y = 0;
     for (int idx = editor->scrollY; idx < doc->blocks.size(); idx += 4) {
         auto& b = doc->blocks[idx];
 
         int pair = colorPrimary;
-        _move(_y + y, _x);
-        _clrtoeol(width);
-        _move(_y + y++, _x);
+        _move(y, 0);
+        _clrtoeol(cols);
+        _move(y++, 0);
 
         if (currentLine >= b->lineNumber && currentLine < b->lineNumber + 4) {
             _bold(true);
@@ -60,7 +58,7 @@ void minimap_t::render()
 #endif
             _attroff(_color_pair(pair));
 
-            if (x >= width - 2) {
+            if (x >= cols - 2) {
                 break;
             }
         }
@@ -73,7 +71,7 @@ void minimap_t::render()
         }
     }
     while (y < height) {
-        _move(_y + y++, _x);
-        _clrtoeol(width);
+        _move(y++, 0);
+        _clrtoeol(cols);
     }
 }

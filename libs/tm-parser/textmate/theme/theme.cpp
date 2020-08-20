@@ -6,6 +6,7 @@
 #include <iostream>
 
 static theme_t *current_parsed_theme = 0;
+static std::map<int, color_info_t> trueColors;
 
 int nearest_color(int r, int g, int b)
 {
@@ -24,7 +25,19 @@ int nearest_color(int r, int g, int b)
         } 
     }
     
+    color_info_t c = {
+        .red = r,
+        .green = g,
+        .blue = b,
+        .alpha = 255
+    };
+    trueColors[idx] = c;
     return idx;
+}
+
+color_info_t color_info_t::true_color(int idx)
+{
+    return trueColors[idx];
 }
 
 color_info_t color_info_t::term_color(int idx)

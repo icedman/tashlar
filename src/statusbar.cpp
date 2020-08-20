@@ -1,6 +1,7 @@
 #include "statusbar.h"
 #include "app.h"
 #include "editor.h"
+#include "render.h"
 
 static struct statusbar_t* statusbarInstance = 0;
 
@@ -8,6 +9,7 @@ statusbar_t::statusbar_t()
     : view_t("statusbar")
     , frames(0)
 {
+    preferredHeight = 1;
     statusbarInstance = this;
 }
 
@@ -57,4 +59,9 @@ void statusbar_t::applyTheme()
 bool statusbar_t::isVisible()
 {
     return visible && app_t::instance()->showStatusBar;
+}
+
+void statusbar_t::preLayout()
+{
+    preferredHeight = render_t::instance()->fh;
 }

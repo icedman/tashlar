@@ -41,6 +41,9 @@ struct explorer_t : view_t {
     void applyTheme() override;
     bool input(char ch, std::string keys) override;
     bool isVisible() override;
+    void preLayout() override;
+
+    void ensureVisibleCursor();
 
     void setRootFromFile(std::string path);
 

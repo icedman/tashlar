@@ -8,6 +8,7 @@
 #include "app.h"
 #include "editor.h"
 #include "minimap.h"
+#include "render.h"
 
 #include "dots.h"
 
@@ -16,7 +17,6 @@
 minimap_t::minimap_t()
     : view_t("minimap")
 {
-    preferredWidth = MINIMAP_WIDTH;
 }
 
 minimap_t::~minimap_t()
@@ -104,4 +104,9 @@ void minimap_t::applyTheme()
 bool minimap_t::isVisible()
 {
     return visible == app_t::instance()->showMinimap;
+}
+
+void minimap_t::preLayout()
+{
+    preferredWidth = MINIMAP_WIDTH * render_t::instance()->fw;
 }

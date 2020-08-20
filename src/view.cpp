@@ -67,6 +67,9 @@ void view_t::layout(int x, int y, int width, int height)
     this->width = width;
     this->height = height;
 
+    rows = height / render_t::instance()->fh;
+    cols = width / render_t::instance()->fw;
+
     switch (viewLayout) {
     case LAYOUT_HORIZONTAL:
         hlayout(x, y, width, height);
@@ -281,4 +284,13 @@ view_t* view_t::shiftFocus(int x, int y)
         setFocus(next);
     }
     return NULL;
+}
+
+void view_t::scroll(int s)
+{
+    scrollY -= s;
+    if (scrollY < 0)
+        scrollY = 0;
+    if (scrollY >= maxScrollY)
+        scrollY = maxScrollY - 1;
 }

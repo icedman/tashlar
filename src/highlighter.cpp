@@ -78,7 +78,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         return;
     }
 
-    // app_t::instance()->log("highlight %d", block.uid);
+    // app_t::instance()->log("highlight %d", block->lineNumber);
 
     struct blockdata_t* blockData = block->data.get();
 
@@ -228,11 +228,11 @@ void highlighter_t::highlightBlock(block_ptr block)
         block_ptr next = block->next();
         if (next && next->isValid()) {
             struct blockdata_t* nextBlockData = next->data.get();
-            //if (nextBlockData && blockData->lastRule != nextBlockData->lastPrevBlockRule) {
-            //    nextBlockData->dirty = true;
-            //}
+            if (nextBlockData && blockData->lastRule != nextBlockData->lastPrevBlockRule) {
+                nextBlockData->dirty = true;
+            }
 
-            if (nextBlockData) {
+            if (nextBlockData && (blockData->lastRule == BLOCK_STATE_COMMENT || nextBlockData->lastRule == BLOCK_STATE_COMMENT)) {
                 nextBlockData->dirty = true;
             }
         }

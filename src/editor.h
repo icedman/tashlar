@@ -28,12 +28,12 @@ struct editor_t : view_t {
     cursor_t findBracketMatchCursor(bracket_info_t bracket, cursor_t cursor);
 
     void toggleFold(size_t line);
+    void ensureVisibleCursor();
 
     // view
     void update(int delta) override;
     void layout(int x, int y, int width, int height) override;
     void render() override;
-    void preLayout() override;
     void preRender() override;
     bool input(char ch, std::string keys) override;
     void applyTheme() override;
@@ -54,6 +54,8 @@ struct editor_t : view_t {
     block_ptr hlTarget;
 
     completer_t completer;
+
+    bool _scrollToCursor;
 };
 
 typedef std::shared_ptr<struct editor_t> editor_ptr;

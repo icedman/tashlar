@@ -8,6 +8,7 @@
 #include "keybinding.h"
 #include "keyinput.h"
 #include "popup.h"
+#include "render.h"
 #include "scripting.h"
 #include "search.h"
 #include "statusbar.h"
@@ -48,16 +49,11 @@ popup_t::popup_t()
 
 void popup_t::layout(int _x, int _y, int w, int h)
 {
-    // view_t::layout(0, 0, POPUP_SEARCH_WIDTH, POPUP_MAX_HEIGHT);
 
     if (type == POPUP_SEARCH || type == POPUP_COMPLETION || type == POPUP_SEARCH_LINE) {
         width = POPUP_SEARCH_WIDTH;
     } else {
         width = POPUP_PALETTE_WIDTH;
-    }
-
-    if (width > w) {
-        width = w;
     }
 
     height = POPUP_HEIGHT + items.size() + 1;
@@ -68,11 +64,14 @@ void popup_t::layout(int _x, int _y, int w, int h)
     if (height > POPUP_MAX_HEIGHT) {
         height = POPUP_MAX_HEIGHT;
     }
-    if (height > h) {
-        height = h;
-    }
 
-    x = 0; // w - width;
+    cols = width;
+    rows = height;
+
+    width *= render_t::instance()->fw;
+    height *= render_t::instance()->fh;
+
+    x = 0;
     y = 0;
 
     if (true || type != POPUP_SEARCH) {
@@ -83,9 +82,13 @@ void popup_t::layout(int _x, int _y, int w, int h)
 
     if (type == POPUP_COMPLETION && !cursor.isNull()) {
         struct editor_t* editor = app_t::instance()->currentEditor.get();
-        x = editor->x + cursor.position();
-        y = editor->y + cursor.block()->screenLine + 1;
+        x = cursor.position();
+        y = cursor.block()->screenLine + 1;
         y -= editor->scrollY;
+
+        y *= render_t::instance()->fh;
+        x += editor->x;
+        y += editor->y;
         bool reverse = false;
         if (y > (editor->height * 2 / 3)) {
             y -= height;
@@ -100,10 +103,6 @@ void popup_t::layout(int _x, int _y, int w, int h)
             y += reverse ? -1 : 1;
         }
     }
-}
-
-void popup_t::preLayout()
-{
 }
 
 void popup_t::applyTheme()
@@ -419,6 +418,7 @@ void popup_t::onInput()
                 cursor.clearSelection();
                 doc->setCursor(cursor);
                 editor->preLayout();
+                break;
             }
         }
     }

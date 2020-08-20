@@ -7,6 +7,7 @@
 #include "editor.h"
 #include "explorer.h"
 #include "gutter.h"
+#include "render.h"
 
 gutter_t::gutter_t()
     : view_t("gutter")
@@ -21,9 +22,10 @@ void gutter_t::preLayout()
 {
     if (!isVisible())
         return;
+
     block_ptr block = editor->document.lastBlock();
     std::string lineNo = std::to_string(1 + block->lineNumber);
-    preferredWidth = (lineNo.length() + 2);
+    preferredWidth = (lineNo.length() + 2) * render_t::instance()->fw;
 }
 
 void gutter_t::applyTheme()

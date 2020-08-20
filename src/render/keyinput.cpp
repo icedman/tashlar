@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 // if != 0, then there is data to be read on stdin
-int kbhit(int timeout)
+int kbhit(int timeout = 500)
 {
     // timeout structure passed into select
     struct timeval tv;

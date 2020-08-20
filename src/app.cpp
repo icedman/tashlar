@@ -68,6 +68,8 @@ app_t::app_t()
     addView(&bottomBar);
     bottomBar.name = "bottom";
     bottomBar.preferredHeight = 1;
+    bottomBar.addView(&statusBar);
+
     mainView.addView(&explorer);
     mainView.addView(&tabView);
 
@@ -75,13 +77,17 @@ app_t::app_t()
     tabView.addView(&tabBar);
     tabView.addView(&tabContent);
 
-    bottomBar.addView(&statusBar);
-
     addView(&popup);
 }
 
 app_t::~app_t()
 {
+}
+
+void app_t::preLayout()
+{
+    bottomBar.preferredHeight = render_t::instance()->fh;
+    view_t::preLayout();
 }
 
 void app_t::setClipboard(std::string text)
@@ -258,6 +264,7 @@ void app_t::setupColors()
     theme->theme_color("editor.background", clr);
     if (!clr.is_blank()) {
         // bg = clr.index;
+        bgApp = clr.index;
     }
 
     theme->theme_color("editor.foreground", clr);

@@ -38,6 +38,7 @@ struct color_info_t {
 
     static int nearest_color_index(int red, int green, int blue);   
     static color_info_t term_color(int idx);
+    static color_info_t true_color(int idx);
     
 };
 

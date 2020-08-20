@@ -32,7 +32,6 @@ struct popup_t : view_t {
     void update(int delta) override;
     void layout(int x, int y, int width, int height) override;
     void render() override;
-    void preLayout() override;
     bool input(char ch, std::string keys) override;
     void applyTheme() override;
 
