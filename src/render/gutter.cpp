@@ -24,7 +24,7 @@ void gutter_t::render()
     }
     while (it != editor->document.blocks.end()) {
         auto& b = *it++;
-        if (l >= rows)
+        if (l >= rows + 1)
             break;
 
         std::string lineNo = std::to_string(1 + b->lineNumber);

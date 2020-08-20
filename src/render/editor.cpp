@@ -59,7 +59,7 @@ void editor_t::render()
     while (it != editor->document.blocks.end()) {
         auto& b = *it++;
 
-        if (l >= rows)
+        if (l >= rows + 1)
             break;
 
         int colorPair = color_pair_e::NORMAL;

@@ -42,7 +42,7 @@ void explorer_t::render()
         currentItem = 0;
     }
 
-    ensureVisibleCursor();
+    // ensureVisibleCursor();
 
     int idx = 0;
     int skip = scrollY;
@@ -111,7 +111,7 @@ void explorer_t::render()
         _bold(false);
         _reverse(false);
 
-        if (y >= rows) {
+        if (y >= rows + 1) {
             break;
         }
 

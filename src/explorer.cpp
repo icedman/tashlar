@@ -264,6 +264,8 @@ bool explorer_t::input(char ch, std::string keys)
 
     operation_e cmd = operationFromKeys(keys);
 
+    bool _scrollToCursor = true;
+
     switch (cmd) {
     case MOVE_CURSOR_RIGHT:
     case ENTER:
@@ -311,6 +313,7 @@ bool explorer_t::input(char ch, std::string keys)
         currentItem += height;
         break;
     default:
+        _scrollToCursor = false;
         break;
     }
 
@@ -320,6 +323,11 @@ bool explorer_t::input(char ch, std::string keys)
     }
     if (currentItem >= renderList.size()) {
         currentItem = renderList.size() - 1;
+    }
+
+    maxScrollY = renderList.size() - rows;
+    if (_scrollToCursor) {
+        ensureVisibleCursor();
     }
 
     struct fileitem_t* nextItem = renderList[currentItem];
@@ -340,7 +348,7 @@ void explorer_t::ensureVisibleCursor()
 {
     // scroll to cursor
     // TODO: use math not loops
-    if (rows > 0) {
+    while (rows > 0) {
         int blockVirtualLine = currentItem;
         int blockScreenLine = blockVirtualLine - scrollY;
 
@@ -350,6 +358,8 @@ void explorer_t::ensureVisibleCursor()
             scrollY++;
         } else if (blockScreenLine < 0) {
             scrollY--;
+        } else {
+            break;
         }
     }
 }
