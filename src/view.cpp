@@ -82,6 +82,10 @@ void view_t::mouseUp(int x, int y, int button)
 {
 }
 
+void view_t::mouseDrag(int x, int y)
+{
+}
+
 void view_t::layout(int x, int y, int width, int height)
 {
     this->x = x;

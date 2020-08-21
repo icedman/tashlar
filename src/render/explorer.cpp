@@ -33,7 +33,10 @@ void explorer_t::render()
 
     _move(0, 0);
 
-    if (renderList.size() == 0) {
+    if (regenerateList) {
+        regenerateList = false;
+        allFiles.clear();
+        renderList.clear();
         buildFileList(renderList, &files, 0);
     }
 

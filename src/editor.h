@@ -38,6 +38,7 @@ struct editor_t : view_t {
     bool input(char ch, std::string keys) override;
     void applyTheme() override;
     void mouseDown(int x, int y, int button, int clicks) override;
+    void mouseDrag(int x, int y) override;
 
     document_t document;
     operation_list operations;

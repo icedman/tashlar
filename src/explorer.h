@@ -59,6 +59,7 @@ struct explorer_t : view_t {
     int loadDepth;
 
     int currentItem;
+    bool regenerateList;
 };
 
 #endif // EXPLORER_H

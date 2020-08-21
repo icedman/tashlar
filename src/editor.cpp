@@ -825,12 +825,18 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
                     pushOp(MOVE_CURSOR, ss.str());
                     pushOp(SELECT_WORD, "");
                 }
+                view_t::setFocus(this);
             }
             l++;
         }
         if (l > rows)
             break;
     }
+}
+
+void editor_t::mouseDrag(int x, int y)
+{
+    mouseDown(x, y, 1, 0);
 }
 
 void editor_t::applyTheme()

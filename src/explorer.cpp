@@ -133,6 +133,7 @@ struct explorer_t* explorer_t::instance()
 explorer_t::explorer_t()
     : view_t("explorer")
     , currentItem(-1)
+    , regenerateList(true)
 {
     preferredWidth = EXPLORER_WIDTH;
 
@@ -203,8 +204,7 @@ void explorer_t::preloadFolders()
 
     allFilesLoaded = (loaded == 0 && loadDepth >= MAX_PRELOAD_DEPTH);
     if (loaded > 0) {
-        allFiles.clear();
-        renderList.clear();
+        regenerateList = true;
         // render();
         // app_t::instance()->refresh();
     }
@@ -277,8 +277,7 @@ bool explorer_t::input(char ch, std::string keys)
                 item->load();
                 item->canLoadMore = false;
             }
-            allFiles.clear();
-            renderList.clear();
+            regenerateList = true;
             return true;
         }
         if (cmd == ENTER) {
@@ -289,8 +288,7 @@ bool explorer_t::input(char ch, std::string keys)
     case MOVE_CURSOR_LEFT:
         if (item->isDirectory && item->expanded) {
             item->expanded = false;
-            allFiles.clear();
-            renderList.clear();
+            regenerateList = true;
             return true;
         }
         currentItem = parentItem(item, renderList)->lineNumber;
@@ -350,12 +348,12 @@ void explorer_t::mouseDown(int x, int y, int button, int clicks)
     view_t::setFocus(this);
 
     if (prev == currentItem) {
-        struct fileitem_t* item = renderList[currentItem];
-        if (item->isDirectory) {
-            // app_t::log(">currentItem %d", currentItem);
-        } else {
-            input(0, "enter");
-        }
+        //        struct fileitem_t* item = renderList[currentItem];
+        //        if (item->isDirectory) {
+        // app_t::log(">currentItem %d", currentItem);
+        //        } else {
+        input(0, "enter");
+        //        }
     }
 }
 
