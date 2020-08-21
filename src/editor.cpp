@@ -204,16 +204,36 @@ void editor_t::runOp(operation_t op)
 
         case INDENT: {
             int count = cur.indent();
-            cursor_util::advanceBlockCursors(cursors, cur, count);
-            cur.moveRight(count, cur.hasSelection());
-            cur.anchor.position += count;
+            bool m = cur.isMultiBlockSelection();
+            cursor_t c = cur;
+            c.cursor.position = 0;
+            c.anchor.position = 0;
+            cursor_t a = cur;
+            a.cursor = a.anchor;
+            a.cursor.position = 0;
+            a.anchor.position = 0;
+            cursor_util::advanceBlockCursors(cursors, c, count);
+            if (m) {
+                cursor_util::advanceBlockCursors(cursors, a, count);
+            }
         } break;
         case UNINDENT: {
-            int count = cur.unindent() - 1;
+            int count = cur.unindent();
             if (count > 0) {
-                cursor_util::advanceBlockCursors(cursors, cur, -count);
-                cur.moveLeft(count, cur.hasSelection());
-                cur.anchor.position -= count;
+                bool m = cur.isMultiBlockSelection();
+                cursor_t c = cur;
+                c.cursor.position = 0;
+                c.anchor.position = 0;
+                cursor_t a = cur;
+                a.cursor = a.anchor;
+                a.cursor.position = 0;
+                a.anchor.position = 0;
+                if (count > 1) {
+                    cursor_util::advanceBlockCursors(cursors, c, -count + 1);
+                    if (m) {
+                        cursor_util::advanceBlockCursors(cursors, a, -count + 1);
+                    }
+                }
             }
         } break;
         case SELECT_LINE:

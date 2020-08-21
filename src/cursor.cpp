@@ -698,7 +698,8 @@ int cursor_t::indent()
         return count;
     }
 
-    int count = _cursorIndent(this);
+    cursor_t cur = *this;
+    int count = _cursorIndent(&cur);
     return count;
 }
 
@@ -760,6 +761,7 @@ int cursor_t::unindent()
         return 1;
     }
 
-    int count = _cursorUnindent(this);
+    cursor_t cur = *this;
+    int count = _cursorUnindent(&cur);
     return count;
 }

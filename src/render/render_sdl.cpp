@@ -177,7 +177,7 @@ int _color_pair(int pair)
         .a = (uint8_t)bgFg.bg.alpha
     };
     drawBg = bg;
-    
+
     return drawColorPair;
 }
 
@@ -279,8 +279,8 @@ void render_t::initialize()
     // rencache_show_debug(true);
 
     // font = ren_load_font("./fonts/font.ttf", 16);
-    // font = ren_load_font("./fonts/FiraCode-Regular.ttf", 14);
-    font = ren_load_font("./fonts/monospace.ttf", 14);
+    font = ren_load_font("./fonts/FiraCode-Regular.ttf", 14);
+    // font = ren_load_font("./fonts/monospace.ttf", 14);
     if (font) {
         app_t::log("font loaded");
         fw = ren_get_font_width(font, "1234567890AaBbCcDdEeFfGg") / 24;
@@ -329,8 +329,6 @@ static int poll_event()
                 SDL_GetWindowSize(window, &render_t::instance()->width, &render_t::instance()->height);
                 ren_init(window);
                 pushKey(0, "resize");
-                // render_t::instance()->width = e.window.data1;
-                // render_t::instance()->height = e.window.data2;
             }
             return 0;
         } else if (e.window.event == SDL_WINDOWEVENT_EXPOSED) {

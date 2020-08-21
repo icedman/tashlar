@@ -74,7 +74,8 @@ int main(int argc, char** argv)
             }
         }
 
-        if (ch == -1) continue;
+        if (ch == -1)
+            continue;
 
         previousKeySequence = keySequence;
         if (expandedSequence.length()) {

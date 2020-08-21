@@ -84,7 +84,7 @@ void minimap_t::update(int delta)
 
     // try disable scroll
     int lastLine = doc->blocks.back()->lineNumber;
-    if (lastLine / 4 < height) {
+    if (lastLine / 4 < rows) {
         offsetY = 0;
     }
 

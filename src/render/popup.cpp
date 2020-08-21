@@ -66,7 +66,7 @@ void popup_t::render()
     } else {
 
         // fill input text background
-        for (int i = x; i < cols-1; i++) {
+        for (int i = x; i < cols - 1; i++) {
             _addch(' ');
         }
     }

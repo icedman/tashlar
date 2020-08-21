@@ -68,8 +68,6 @@ void popup_t::layout(int _x, int _y, int w, int h)
 
     cols = width;
     rows = height;
-    
-    app_t::log(">>%d", rows);
 
     width *= render_t::instance()->fw;
     height *= render_t::instance()->fh;
