@@ -811,7 +811,7 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
         block_ptr b = *it++;
         for (int i = 0; i < b->lineCount; i++) {
             if (l == row) {
-                app_t::log(">%d %d", b->lineNumber, 0);
+                // app_t::log(">%d %d", b->lineNumber, 0);
 
                 std::ostringstream ss;
                 ss << (b->lineNumber + 1);

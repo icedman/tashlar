@@ -142,6 +142,8 @@ explorer_t::explorer_t()
     allFilesLoaded = false;
 
     explorerInstance = this;
+
+    backgroundColor = 3;
 }
 
 void explorer_t::buildFileList(std::vector<struct fileitem_t*>& list, struct fileitem_t* files, int depth, bool deep)

@@ -19,9 +19,12 @@ struct minimap_t : view_t {
     void applyTheme() override;
     bool isVisible() override;
     void preLayout() override;
+    void mouseDown(int x, int y, int button, int clicks) override;
 
     editor_ptr editor;
     int currentLine;
+    size_t firstVisibleLine;
+    size_t lastVisibleLine;
 };
 
 void buildUpDotsForBlock(block_ptr block, float textCompress, int bufferWidth);

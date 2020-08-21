@@ -14,6 +14,8 @@ static view_list contextStack;
 SDL_Window* window;
 RenFont* font;
 
+static float scrollVelocity = 0;
+
 static int drawBaseX = 0;
 static int drawBaseY = 0;
 static int drawX = 0;
@@ -24,6 +26,10 @@ static RenColor drawBg;
 static bool drawBold = false;
 static bool drawReverse = false;
 static bool drawUnderline = false;
+
+static view_t* dragView = 0;
+static int dragX = 0;
+static int dragY = 0;
 
 static std::map<int, int> colorMap;
 
@@ -52,25 +58,6 @@ static view_t* context()
 
 void _clrtoeol(int w)
 {
-    /*
-    int fw = render_t::instance()->fw;
-    int fh = render_t::instance()->fh;
-
-    RenRect rect = {
-        .x = drawX + drawBaseX,
-        .y = drawY + drawBaseY,
-        .width = fw * w,
-        .height = fh
-    };
-    RenColor bg = {
-        .b = 0,
-        .g = 0,
-        .r = 0,
-        .a = 255
-    };
-
-    _draw_rect(rect, bg);
-    */
 }
 
 void _move(int y, int x)
@@ -97,8 +84,9 @@ void _addch(char c)
 
     // background
     RenRect rect = { .x = drawBaseX + drawX * fw, .y = drawBaseY + drawY * fh, .width = fw, .height = fh };
-    if (bg.r != bgColor.r || bg.b != bgColor.b || !bg.g != bgColor.g) {
+    if (bg.r != bgColor.r || bg.g != bgColor.g || bg.b != bgColor.b) {
         _draw_rect(rect, bg);
+        // app_t::log("bg: %d %d %d (%d %d %d)", bg.r, bg.g, bg.b, bgColor.r, bgColor.g, bgColor.b);
     }
     _draw_text(font, (char*)txt, drawBaseX + (drawX * fw) + (fw / 2 - cw / 2), drawBaseY + (drawY * fh), fg);
 
@@ -220,6 +208,32 @@ void _begin(view_t* view)
     };
     drawBaseX = view->x;
     drawBaseY = view->y;
+
+    if (view->backgroundColor != 0) {
+        int off = 5 * view->backgroundColor;
+        int bb = bgColor.b - off;
+        int gg = bgColor.g - off;
+        int rr = bgColor.r - off;
+        if (bb < 0)
+            bb = 0;
+        if (gg < 0)
+            gg = 0;
+        if (rr < 0)
+            rr = 0;
+        if (bb > 255)
+            bb = 255;
+        if (gg > 255)
+            gg = 255;
+        if (rr > 255)
+            rr = 255;
+        RenColor bg = {
+            .b = bb,
+            .g = gg,
+            .r = rr,
+            .a = 255
+        };
+        rencache_draw_rect(rect, bg);
+    }
 }
 
 void _end()
@@ -283,12 +297,18 @@ void render_t::shutdown()
     }
 }
 
-static view_t* dragView = 0;
-static int dragX = 0;
-static int dragY = 0;
-
 static int poll_event()
 {
+    if (scrollVelocity != 0) {
+        view_t::currentHovered()->scroll(scrollVelocity);
+        pushKey(0, "wheel");
+        float d = -scrollVelocity / 2;
+        scrollVelocity += d;
+        if (-1 < d && d < 1) {
+            scrollVelocity = 0;
+        }
+    }
+
     char buf[16];
     int mx, my, wx, wy;
     SDL_Event e;
@@ -449,8 +469,7 @@ static int poll_event()
     }
 
     case SDL_MOUSEWHEEL:
-        pushKey(0, "wheel");
-        view_t::currentHovered()->scroll(e.wheel.y);
+        scrollVelocity += (e.wheel.y * 2);
         return 0;
 
     default:
@@ -462,7 +481,6 @@ static int poll_event()
 
 void render_t::update(int delta)
 {
-
     RenRect rect = { .x = 0, .y = 0, .width = width, .height = height };
     BgFg bgFg = colorPairs[color_pair_e::NORMAL];
     bgColor = {

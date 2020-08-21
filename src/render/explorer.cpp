@@ -56,6 +56,7 @@ void explorer_t::render()
 
         int pair = colorPrimary;
         _move(y, 0);
+        _attron(_color_pair(pair));
 
         if (hasFocus && currentItem == idx) {
             if (hasFocus) {

@@ -73,6 +73,7 @@ struct view_t {
     bool visible;
     bool canFocus;
     bool floating;
+    int backgroundColor;
 
     layout_e viewLayout;
     view_list views;

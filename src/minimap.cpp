@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include <cstring>
+#include <sstream>
 
 #include "app.h"
 #include "editor.h"
@@ -17,6 +18,7 @@
 minimap_t::minimap_t()
     : view_t("minimap")
 {
+    backgroundColor = 1;
 }
 
 minimap_t::~minimap_t()
@@ -109,4 +111,19 @@ bool minimap_t::isVisible()
 void minimap_t::preLayout()
 {
     preferredWidth = MINIMAP_WIDTH * render_t::instance()->fw;
+}
+
+void minimap_t::mouseDown(int x, int y, int button, int clicks)
+{
+    int fw = render_t::instance()->fw;
+    int fh = render_t::instance()->fh;
+
+    int col = (x - this->x) / fw;
+    int row = (y - this->y) / fh;
+
+    std::ostringstream ss;
+    ss << (firstVisibleLine + (row * 4) - rows / 2);
+    ss << ":";
+    ss << "0";
+    app_t::instance()->currentEditor->pushOp(MOVE_CURSOR, ss.str());
 }

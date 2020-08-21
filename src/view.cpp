@@ -22,6 +22,7 @@ view_t::view_t(std::string name)
     , preferredHeight(0)
     , flex(1)
     , viewLayout(LAYOUT_HORIZONTAL)
+    , backgroundColor(0)
 {
 }
 

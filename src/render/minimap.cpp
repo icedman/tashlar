@@ -23,6 +23,11 @@ void minimap_t::render()
     for (int idx = editor->scrollY; idx < doc->blocks.size(); idx += 4) {
         auto& b = doc->blocks[idx];
 
+        if (y == 0) {
+            firstVisibleLine = b->lineNumber;
+        }
+        lastVisibleLine = b->lineNumber;
+
         int pair = colorPrimary;
         _move(y, 0);
         _clrtoeol(cols);
@@ -61,11 +66,11 @@ void minimap_t::render()
         _attroff(_color_pair(pair));
         _bold(false);
 
-        if (y >= height) {
+        if (y >= rows) {
             break;
         }
     }
-    while (y < height) {
+    while (y < rows) {
         _move(y++, 0);
         _clrtoeol(cols);
     }

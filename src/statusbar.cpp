@@ -11,6 +11,7 @@ statusbar_t::statusbar_t()
 {
     preferredHeight = 1;
     statusbarInstance = this;
+    backgroundColor = 2;
 }
 
 struct statusbar_t* statusbar_t::instance()
