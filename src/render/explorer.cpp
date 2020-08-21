@@ -66,6 +66,10 @@ void explorer_t::render()
             }
         }
 
+        if (file->fullPath == app_t::instance()->currentEditor->document.fullPath) {
+            pair = colorIndicator;
+        }
+
         int x = 0;
         _move(y++, x);
         _attron(_color_pair(pair));

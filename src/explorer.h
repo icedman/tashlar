@@ -41,7 +41,7 @@ struct explorer_t : view_t {
     bool input(char ch, std::string keys) override;
     bool isVisible() override;
     void preLayout() override;
-    void mouseDown(int x, int y, int button) override;
+    void mouseDown(int x, int y, int button, int clicks) override;
 
     void ensureVisibleCursor();
 

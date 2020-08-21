@@ -339,7 +339,7 @@ bool explorer_t::input(char ch, std::string keys)
     return false;
 }
 
-void explorer_t::mouseDown(int x, int y, int button)
+void explorer_t::mouseDown(int x, int y, int button, int clicks)
 {
     int prev = currentItem;
     int fh = render_t::instance()->fh;
@@ -348,10 +348,14 @@ void explorer_t::mouseDown(int x, int y, int button)
         currentItem = renderList.size() - 1;
     }
     view_t::setFocus(this);
-    // app_t::log(">row %d", row);
 
     if (prev == currentItem) {
-        input(0, "enter");
+        struct fileitem_t* item = renderList[currentItem];
+        if (item->isDirectory) {
+            // app_t::log(">currentItem %d", currentItem);
+        } else {
+            input(0, "enter");
+        }
     }
 }
 

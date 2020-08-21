@@ -37,6 +37,7 @@ struct editor_t : view_t {
     void preRender() override;
     bool input(char ch, std::string keys) override;
     void applyTheme() override;
+    void mouseDown(int x, int y, int button, int clicks) override;
 
     document_t document;
     operation_list operations;

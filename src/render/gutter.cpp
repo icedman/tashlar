@@ -35,14 +35,20 @@ void gutter_t::render()
         }
 
         if (b->data && b->data->foldable) {
-            lineNo += "-";
+            if (b->data->folded) {
+                lineNo += "+";
+            } else {
+                lineNo += "^";
+            }
         } else {
             lineNo += " ";
         }
 
         int pair = colorPrimary;
+
         if (b == currentBlock) {
             _bold(true);
+            pair = colorIndicator;
         }
         for (int sl = 0; sl < b->lineCount; sl++) {
             _move(l + sl, 0);

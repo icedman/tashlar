@@ -74,7 +74,7 @@ void view_t::update(int delta)
     }
 }
 
-void view_t::mouseDown(int x, int y, int button)
+void view_t::mouseDown(int x, int y, int button, int clicks)
 {
 }
 

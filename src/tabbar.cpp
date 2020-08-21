@@ -100,7 +100,7 @@ bool tabbar_t::input(char ch, std::string keys)
     return false;
 }
 
-void tabbar_t::mouseDown(int x, int y, int button)
+void tabbar_t::mouseDown(int x, int y, int button, int clicks)
 {
     int fw = render_t::instance()->fw;
     int col = (x - this->x) / fw;

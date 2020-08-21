@@ -270,7 +270,11 @@ void editor_t::runOp(operation_t op)
                 try {
                     line = std::stoi(strings[0]);
                     pos = std::stoi(strings[1]);
-                    cur.setPosition(document.blockAtLine(line), pos, _op == MOVE_CURSOR_ANCHORED);
+                    block_ptr block = document.blockAtLine(line);
+                    if (!block) {
+                        block = document.lastBlock();
+                    }
+                    cur.setPosition(block, pos, _op == MOVE_CURSOR_ANCHORED);
                 } catch (std::exception e) {
                 }
             }
@@ -771,6 +775,62 @@ bool editor_t::input(char ch, std::string keySequence)
     s += (char)ch;
     editor->pushOp("INSERT", s);
     return true;
+}
+
+void editor_t::mouseDown(int x, int y, int button, int clicks)
+{
+    int fw = render_t::instance()->fw;
+    int fh = render_t::instance()->fh;
+
+    int col = (x - this->x) / fw;
+    int row = (y - this->y) / fh;
+
+    // scroll
+    if (clicks == 0) {
+        if (row + 2 >= rows) {
+            if (scrollY < maxScrollY) {
+                scrollY++;
+                return;
+            }
+        }
+
+        if (row < 2) {
+            if (scrollY > 0) {
+                scrollY--;
+                return;
+            }
+        }
+    }
+
+    block_list::iterator it = document.blocks.begin();
+    if (scrollY > 0) {
+        it += scrollY;
+    }
+    int l = 0;
+    while (it != document.blocks.end()) {
+        block_ptr b = *it++;
+        for (int i = 0; i < b->lineCount; i++) {
+            if (l == row) {
+                app_t::log(">%d %d", b->lineNumber, 0);
+
+                std::ostringstream ss;
+                ss << (b->lineNumber + 1);
+                ss << ":";
+                ss << col + (i * cols);
+                if (clicks == 0) {
+                    pushOp(MOVE_CURSOR_ANCHORED, ss.str());
+                } else if (clicks == 1) {
+                    pushOp(MOVE_CURSOR, ss.str());
+                } else {
+                    pushOp(MOVE_CURSOR, ss.str());
+                    pushOp(SELECT_WORD, "");
+                }
+            }
+            l++;
+        }
+        if (l > rows)
+            break;
+    }
 }
 
 void editor_t::applyTheme()

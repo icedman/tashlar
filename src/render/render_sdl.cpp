@@ -283,6 +283,10 @@ void render_t::shutdown()
     }
 }
 
+static view_t* dragView = 0;
+static int dragX = 0;
+static int dragY = 0;
+
 static int poll_event()
 {
     char buf[16];
@@ -420,16 +424,27 @@ static int poll_event()
             SDL_CaptureMouse((SDL_bool)1);
         }
         pushKey(0, "mousedown");
-        view_t::currentHovered()->mouseDown(e.button.x, e.button.y, e.button.button);
+        dragView = view_t::currentHovered();
+        view_t::currentHovered()->mouseDown(e.button.x, e.button.y, e.button.button, e.button.clicks);
         return 0;
 
     case SDL_MOUSEBUTTONUP:
         pushKey(0, "mouseup");
-        view_t::currentHovered()->mouseUp(e.button.x, e.button.y, e.button.button);
+        if (view_t::currentHovered() == dragView) {
+            view_t::currentHovered()->mouseUp(e.button.x, e.button.y, e.button.button);
+        } else {
+            view_t::currentHovered()->mouseUp(-1, -1, e.button.button);
+        }
+        dragView = 0;
         return 0;
 
     case SDL_MOUSEMOTION: {
         view_t::setHovered(app_t::instance()->viewFromPointer(e.motion.x, e.motion.y));
+        if (view_t::currentHovered() == dragView) {
+            view_t::currentHovered()->mouseDown(e.motion.x, e.motion.y, 1, 0);
+            app_t::log("motion %d %d", e.motion.x, e.motion.y);
+            pushKey(0, "mousemove");
+        }
         return 0;
     }
 

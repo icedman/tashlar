@@ -28,7 +28,7 @@ struct view_t {
     virtual bool input(char ch, std::string keys);
     virtual void applyTheme();
     virtual void scroll(int s);
-    virtual void mouseDown(int x, int y, int button);
+    virtual void mouseDown(int x, int y, int button, int clicks);
     virtual void mouseUp(int x, int y, int button);
 
     void vlayout(int x, int y, int w, int h);

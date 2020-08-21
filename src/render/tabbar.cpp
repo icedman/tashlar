@@ -93,15 +93,14 @@ void tabbar_t::render()
         int pair = colorPrimary;
         _attron(_color_pair(pair));
         if (t.editor == app->currentEditor) {
-
+            pair = colorIndicator;
             if (hasFocus) {
                 _bold(true);
-                // pair = colorSecondary;
+                _reverse(true);
             }
 
-            _attron(_color_pair(colorIndicator));
+            _attron(_color_pair(pair));
             _bold(true);
-            _reverse(true);
             renderLine(" ", offsetX, x, cols);
             // _attroff(_color_pair(colorIndicator));
             _bold(false);
@@ -113,11 +112,10 @@ void tabbar_t::render()
         renderLine(t.name.c_str(), offsetX, x, cols);
 
         if (t.editor == app->currentEditor) {
-
-            _attron(_color_pair(colorIndicator));
+            _attron(_color_pair(pair));
             _bold(true);
             renderLine(" ", offsetX, x, cols);
-            _attroff(_color_pair(colorIndicator));
+            _attroff(_color_pair(pair));
             _bold(false);
             _reverse(false);
 
