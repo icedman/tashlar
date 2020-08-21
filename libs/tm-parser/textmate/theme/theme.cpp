@@ -24,13 +24,8 @@ int nearest_color(int r, int g, int b)
             idx = i;
         } 
     }
-    
-    color_info_t c = {
-        .red = r,
-        .green = g,
-        .blue = b,
-        .alpha = 255
-    };
+
+    color_info_t c(r, g, b, 255);
     trueColors[idx] = c;
     return idx;
 }
@@ -43,12 +38,7 @@ color_info_t color_info_t::true_color(int idx)
 color_info_t color_info_t::term_color(int idx)
 {
     const color_t clr = termColors[idx];
-    color_info_t c = {
-        .red = clr.r,
-        .green = clr.g,
-        .blue = clr.b,
-        .alpha = 255
-    };
+    color_info_t c(clr.r, clr.g, clr.b, 255);
     return c;
 }
 

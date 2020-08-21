@@ -13,7 +13,7 @@ tabbar_t::tabbar_t()
 {
     preferredHeight = 1;
     canFocus = true;
-    backgroundColor = 2;
+    backgroundColor = 3;
 }
 
 void tabbar_t::applyTheme()
