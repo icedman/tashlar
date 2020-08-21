@@ -163,22 +163,21 @@ int _color_pair(int pair)
     BgFg bgFg = colorPairs[drawColorPair];
 
     RenColor color = {
-        .b = bgFg.fg.blue,
-        .g = bgFg.fg.green,
-        .r = bgFg.fg.red,
-        .a = bgFg.fg.alpha
+        .b = (uint8_t)bgFg.fg.blue,
+        .g = (uint8_t)bgFg.fg.green,
+        .r = (uint8_t)bgFg.fg.red,
+        .a = (uint8_t)bgFg.fg.alpha
     };
-
     drawColor = color;
 
     RenColor bg = {
-        .b = bgFg.bg.blue,
-        .g = bgFg.bg.green,
-        .r = bgFg.bg.red,
-        .a = bgFg.bg.alpha
+        .b = (uint8_t)bgFg.bg.blue,
+        .g = (uint8_t)bgFg.bg.green,
+        .r = (uint8_t)bgFg.bg.red,
+        .a = (uint8_t)bgFg.bg.alpha
     };
-
     drawBg = bg;
+    
     return drawColorPair;
 }
 
@@ -227,9 +226,9 @@ void _begin(view_t* view)
         if (rr > 255)
             rr = 255;
         RenColor bg = {
-            .b = bb,
-            .g = gg,
-            .r = rr,
+            .b = (uint8_t)bb,
+            .g = (uint8_t)gg,
+            .r = (uint8_t)rr,
             .a = 255
         };
         rencache_draw_rect(rect, bg);
@@ -262,7 +261,7 @@ void render_t::initialize()
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
     SDL_EnableScreenSaver();
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+    // SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
     atexit(SDL_Quit);
 
@@ -280,8 +279,8 @@ void render_t::initialize()
     // rencache_show_debug(true);
 
     // font = ren_load_font("./fonts/font.ttf", 16);
-    font = ren_load_font("./fonts/FiraCode-Regular.ttf", 16);
-    // font = ren_load_font("./fonts/monospace.ttf", 16);
+    // font = ren_load_font("./fonts/FiraCode-Regular.ttf", 14);
+    font = ren_load_font("./fonts/monospace.ttf", 14);
     if (font) {
         app_t::log("font loaded");
         fw = ren_get_font_width(font, "1234567890AaBbCcDdEeFfGg") / 24;
@@ -486,10 +485,10 @@ void render_t::update(int delta)
     RenRect rect = { .x = 0, .y = 0, .width = width, .height = height };
     BgFg bgFg = colorPairs[color_pair_e::NORMAL];
     bgColor = {
-        .b = bgFg.bg.blue,
-        .g = bgFg.bg.green,
-        .r = bgFg.bg.red,
-        .a = bgFg.bg.alpha
+        .b = (uint8_t)bgFg.bg.blue,
+        .g = (uint8_t)bgFg.bg.green,
+        .r = (uint8_t)bgFg.bg.red,
+        .a = (uint8_t)bgFg.bg.alpha
     };
     _draw_rect(rect, bgColor);
 
