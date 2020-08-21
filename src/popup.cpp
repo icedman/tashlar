@@ -45,6 +45,7 @@ popup_t::popup_t()
     flex = 0;
 
     popupInstance = this;
+    backgroundColor = 3;
 }
 
 void popup_t::layout(int _x, int _y, int w, int h)
@@ -56,7 +57,7 @@ void popup_t::layout(int _x, int _y, int w, int h)
         width = POPUP_PALETTE_WIDTH;
     }
 
-    height = POPUP_HEIGHT + items.size() + 1;
+    height = POPUP_HEIGHT + items.size();
     if (type == POPUP_COMPLETION) {
         height--;
     }
@@ -67,6 +68,8 @@ void popup_t::layout(int _x, int _y, int w, int h)
 
     cols = width;
     rows = height;
+    
+    app_t::log(">>%d", rows);
 
     width *= render_t::instance()->fw;
     height *= render_t::instance()->fh;
@@ -177,7 +180,7 @@ bool popup_t::input(char ch, std::string keys)
         return true;
     default:
         if (type == POPUP_COMPLETION) {
-            const char* endCompletionChars = ";, ()[]{}-";
+            const char* endCompletionChars = ";, ()[]{}-?!.";
             char c;
             int idx = 0;
             while (endCompletionChars[idx]) {
@@ -308,6 +311,7 @@ void popup_t::update(int delta)
         // app_t::log(">%d" ,request);
         if ((request -= delta) <= 0) {
             showCompletion();
+            app_t::instance()->refresh();
         }
     }
 }
@@ -316,7 +320,7 @@ void popup_t::completion()
 {
     struct app_t* app = app_t::instance();
     struct editor_t* editor = app->currentEditor.get();
-    request = 10000;
+    request = 1000;
     // showCompletion();
 }
 

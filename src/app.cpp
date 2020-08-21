@@ -59,6 +59,7 @@ static void initLog()
 app_t::app_t()
     : view_t("app")
     , end(false)
+    , refreshCount(0)
 {
     appInstance = this;
     initLog();
@@ -82,6 +83,11 @@ app_t::app_t()
 
 app_t::~app_t()
 {
+}
+
+void app_t::refresh()
+{
+    refreshCount = 8;
 }
 
 void app_t::preLayout()

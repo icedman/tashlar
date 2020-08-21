@@ -24,24 +24,24 @@ void popup_t::render()
     }
 
     app_t* app = app_t::instance();
+    // app_t::log("%d %d %d %d ", x, y, width, height);
 
     _attron(_color_pair(colorPrimary));
 
     for (int i = 0; i < height - 1 || i == 0; i++) {
-        _move(0 + i, 0 + 1);
-        _clrtoeol(cols - 2);
+        _move(0 + i, 0);
+        _clrtoeol(cols);
     }
 
     _move(0, 0);
-
     if (!text.length()) {
-        _move(0, 0 + 2);
+        _move(0, 0 + 1);
         _addstr(placeholder.c_str());
     }
 
-    _move(0, 0 + 1);
+    _move(0, 0);
     int offsetX = 0;
-    int x = 1;
+    int x = 0;
 
     if (currentItem < 0) {
         currentItem = 0;
@@ -63,19 +63,25 @@ void popup_t::render()
     int inputOffset = 2;
     if (type == POPUP_COMPLETION) {
         inputOffset -= 1;
+    } else {
+
+        // fill input text background
+        for (int i = x; i < cols-1; i++) {
+            _addch(' ');
+        }
     }
 
     // app_t::instance()->log("items: %d inputOffset: %d", items.size(), inputOffset);
     // scroll to cursor
     // TODO: use math not loops
     if (items.size()) {
-        int viewportHeight = height - inputOffset;
+        int viewportHeight = rows - inputOffset;
 
         // app_t::instance()->log("items:%d current:%d scroll:%d h:%d", items.size(), currentItem, scrollY, viewportHeight);
         while (true) {
             int blockVirtualLine = currentItem;
             int blockScreenLine = blockVirtualLine - scrollY;
-            if (blockScreenLine >= viewportHeight) {
+            if (blockScreenLine > viewportHeight) {
                 scrollY++;
             } else if (blockScreenLine <= 0) {
                 scrollY--;
@@ -98,7 +104,7 @@ void popup_t::render()
         if (skip-- > 0) {
             continue;
         }
-        _move(y++, 1);
+        _move(y++, 0);
         x = 1;
         if (idx - 1 == currentItem) {
             _reverse(true);
@@ -109,13 +115,13 @@ void popup_t::render()
         _attron(_color_pair(colorPrimary));
         renderLine(item.name.c_str(), offsetX, x, cols);
 
-        for (int i = x; i < cols - 1; i++) {
+        for (int i = x; i < cols + 1; i++) {
             _addch(' ');
         }
 
         _attroff(_color_pair(colorPrimary));
         _reverse(false);
-        if (y >= height - 1) {
+        if (y >= rows) {
             break;
         }
     }

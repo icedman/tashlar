@@ -209,7 +209,7 @@ void _begin(view_t* view)
     drawBaseX = view->x;
     drawBaseY = view->y;
 
-    if (view->backgroundColor != 0) {
+    if (view->isVisible() && view->backgroundColor != 0) {
         int off = 5 * view->backgroundColor;
         int bb = bgColor.b - off;
         int gg = bgColor.g - off;
@@ -424,8 +424,10 @@ static int poll_event()
                 keySequence = mod + "+" + keySequence;
             }
 
-            app_t::log("keydown %s", keySequence.c_str());
-            pushKey(0, keySequence);
+            if (keySequence.length() > 1) {
+                pushKey(0, keySequence);
+                app_t::log("keydown %s", keySequence.c_str());
+            }
         }
 
         return 0;

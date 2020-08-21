@@ -341,7 +341,6 @@ bool explorer_t::input(char ch, std::string keys)
 
 void explorer_t::mouseDown(int x, int y, int button, int clicks)
 {
-    int prev = currentItem;
     int fh = render_t::instance()->fh;
     currentItem = ((y - this->y) / fh) + scrollY;
     if (currentItem >= renderList.size()) {
@@ -349,13 +348,8 @@ void explorer_t::mouseDown(int x, int y, int button, int clicks)
     }
     view_t::setFocus(this);
 
-    if (prev == currentItem) {
-        //        struct fileitem_t* item = renderList[currentItem];
-        //        if (item->isDirectory) {
-        // app_t::log(">currentItem %d", currentItem);
-        //        } else {
+    if (clicks > 1) {
         input(0, "enter");
-        //        }
     }
 }
 

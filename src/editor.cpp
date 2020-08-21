@@ -128,7 +128,6 @@ void editor_t::runOp(operation_t op)
 
     case PASTE:
         // app_t::log("paste %s", app_t::instance()->clipboard().c_str());
-        // inputBuffer = app_t::instance()->clipboard();
         if (!app_t::instance()->clipboard().length()) {
             return;
         }
@@ -141,7 +140,6 @@ void editor_t::runOp(operation_t op)
             document.clearCursors();
             createSnapshot();
         }
-
         break;
 
     case CUT:
@@ -222,9 +220,20 @@ void editor_t::runOp(operation_t op)
             cur.moveStartOfLine();
             cur.moveEndOfLine(true);
             break;
-        case DUPLICATE_LINE:
+        case DUPLICATE_LINE: {
+            cur.moveStartOfLine();
+            cur.moveEndOfLine(true);
+            std::string text = cur.selectedText();
+            cur.splitLine();
+            cur.moveDown(1);
+            cur.moveStartOfLine();
+            cur.insertText(text);
             break;
+        }
         case DELETE_LINE:
+            cur.moveStartOfLine();
+            cur.eraseText(cur.block()->length());
+            cur.mergeNextLine();
             break;
         case MOVE_LINE_UP:
             break;

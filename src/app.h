@@ -35,6 +35,8 @@ struct app_t : view_t {
     bool input(char ch, std::string keys) override;
     void preLayout() override;
 
+    void refresh();
+
     extension_list extensions;
     theme_ptr theme;
 
@@ -84,6 +86,7 @@ struct app_t : view_t {
     editor_ptr currentEditor;
 
     bool end;
+    int refreshCount;
 };
 
 int pairForColor(int colorIdx, bool selected);

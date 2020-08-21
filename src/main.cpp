@@ -48,6 +48,11 @@ int main(int argc, char** argv)
 
         renderer.render();
 
+        if (app.refreshCount > 0) {
+            app.refreshCount--;
+            continue;
+        }
+
         int ch = -1;
         std::string keySequence;
         while (true) {
@@ -63,11 +68,13 @@ int main(int argc, char** argv)
             }
 
             app.update(delta);
+            if (app.refreshCount) {
+                ch = -1;
+                break;
+            }
         }
 
-        if (ch == -2) {
-            continue;
-        }
+        if (ch == -1) continue;
 
         previousKeySequence = keySequence;
         if (expandedSequence.length()) {
