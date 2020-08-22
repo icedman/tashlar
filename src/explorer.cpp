@@ -227,6 +227,9 @@ void explorer_t::preLayout()
         return;
 
     preferredWidth = EXPLORER_WIDTH * render_t::instance()->fw;
+    if (render_t::instance()->fw > 10) {
+        preferredWidth += (padding * 2);
+    }
     maxScrollY = renderList.size() - rows;
 }
 

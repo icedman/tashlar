@@ -2,23 +2,13 @@
 #define COMPLETER_H
 
 #include <map>
+#include <pthread.h>
 #include <queue>
 #include <string>
 #include <vector>
-// #include <pthread.h>
 
+struct editor_t;
 typedef std::vector<std::string> string_list;
-
-// #define MAX_COMPLETER_THREADS 32
-
-// struct completer_thread_info {
-// completer_thread_info() : state(0), id(0) {}
-// std::string line;
-// int id;
-// int state;
-// string_list result;
-// pthread_t thread;
-// };
 
 struct completer_t {
 
@@ -31,6 +21,12 @@ struct completer_t {
     void addLine(std::string line);
 
     std::vector<std::string>& findWords(std::string prefix);
+
+    void run(editor_t* editor);
+    void cancel();
+
+    editor_t* editor;
+    pthread_t threadId;
 };
 
 #endif // COMPLETER_H

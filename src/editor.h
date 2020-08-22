@@ -53,8 +53,6 @@ struct editor_t : view_t {
     bracket_info_t cursorBracket1;
     bracket_info_t cursorBracket2;
 
-    block_ptr hlTarget;
-
     completer_t completer;
 
     bool _scrollToCursor;

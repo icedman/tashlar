@@ -21,7 +21,9 @@ struct highlighter_t {
     void gatherBrackets(block_ptr block, char* first, char* last);
     void highlightBlock(block_ptr block);
     void run(editor_t* editor);
+    void cancel();
 
+    editor_t* editor;
     pthread_t threadId;
 };
 

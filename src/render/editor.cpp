@@ -43,13 +43,7 @@ void editor_t::render()
             break;
     }
 
-    // if (hlTarget == nullptr && it != document.blocks.end()) {
-    // hlTarget = *it;
-    // highlighter.run(this);
-    // }
-
     //---------------
-
     it = document.blocks.begin();
     if (editor->scrollY > 0) {
         it += editor->scrollY;
@@ -66,16 +60,9 @@ void editor_t::render()
         int colorPairSelected = color_pair_e::SELECTED;
 
         size_t lineNo = b->lineNumber;
-
-        // editor->highlighter.highlightBlock(b);
         struct blockdata_t* blockData = b->data.get();
 
         std::string text = b->text() + " ";
-
-        // todo.. find a proper place for this
-        if (b != mainCursor.block()) {
-            editor->completer.addLine(text);
-        }
 
         char* line = (char*)text.c_str();
         for (int sl = 0; sl < b->lineCount; sl++) {

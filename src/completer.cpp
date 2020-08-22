@@ -1,5 +1,6 @@
 #include "completer.h"
 #include "app.h"
+#include "editor.h"
 #include "search.h"
 
 #include <algorithm>
@@ -10,6 +11,7 @@
 #include <string>
 
 completer_t::completer_t()
+    : threadId(0)
 {
 }
 
@@ -50,5 +52,39 @@ void completer_t::addLine(std::string line)
     std::vector<search_result_t> result = search_t::instance()->findWords(line);
     for (auto r : result) {
         addWord(r.text);
+    }
+}
+
+void* completeThread(void* arg)
+{
+    completer_t* completer = (completer_t*)arg;
+    editor_t* editor = completer->editor;
+
+    completer_t tmp;
+
+    std::ifstream file = std::ifstream(editor->document.tmpPaths[0], std::ifstream::in);
+    std::string line;
+
+    while (std::getline(file, line)) {
+        tmp.addLine(line);
+    }
+
+    // mutex? todo!
+    completer->words = tmp.words;
+    completer->threadId = 0;
+    return NULL;
+}
+
+void completer_t::run(editor_t* editor)
+{
+    this->editor = editor;
+    pthread_create(&threadId, NULL, &completeThread, this);
+}
+
+void completer_t::cancel()
+{
+    if (threadId) {
+        pthread_cancel(threadId);
+        threadId = 0;
     }
 }

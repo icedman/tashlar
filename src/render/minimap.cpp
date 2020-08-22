@@ -19,8 +19,12 @@ void minimap_t::render()
 
     _move(0, 0);
 
+    // int fh = render_t::instance()->fh;
+    // int sy = editor->scrollY / fh;
+
+    int sy = offsetY;
     int y = 0;
-    for (int idx = editor->scrollY; idx < doc->blocks.size(); idx += 4) {
+    for (int idx = sy; idx < doc->blocks.size(); idx += 4) {
         auto& b = doc->blocks[idx];
 
         if (y == 0) {

@@ -21,8 +21,6 @@ void snapshot_t::save(block_list& blocks)
 
         snapshot.push_back(b);
     }
-
-    // document_t::updateBlocks(snapshot, 0);
 }
 
 void snapshot_t::restore(block_list& blocks)

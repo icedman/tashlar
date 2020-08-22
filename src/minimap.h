@@ -25,6 +25,8 @@ struct minimap_t : view_t {
     int currentLine;
     size_t firstVisibleLine;
     size_t lastVisibleLine;
+
+    int offsetY;
 };
 
 void buildUpDotsForBlock(block_ptr block, float textCompress, int bufferWidth);

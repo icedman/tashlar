@@ -35,6 +35,10 @@ struct view_t {
     void vlayout(int x, int y, int w, int h);
     void hlayout(int x, int y, int w, int h);
 
+    int padding;
+    int contentWidth;
+    int contentHeight;
+
     int width;
     int height;
     int x;

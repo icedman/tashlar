@@ -6,6 +6,7 @@
 #include <cstring>
 
 highlighter_t::highlighter_t()
+    : threadId(0)
 {
 }
 
@@ -345,29 +346,42 @@ void highlighter_t::gatherBrackets(block_ptr block, char* first, char* last)
     }
 }
 
-void* hl(void* arg)
+void* highlightThread(void* arg)
 {
-    editor_t* editor = (editor_t*)arg;
-    document_t* doc = &editor->document;
+    highlighter_t* hl = (highlighter_t*)arg;
+    editor_t* editor = hl->editor;
+    snapshot_t* snapshot = &editor->snapshots[0];
 
-    block_ptr blk = editor->hlTarget;
-    if (!blk)
-        return NULL;
+    //--------------
+    // call the grammar parser
+    //--------------
+    bool firstLine = true;
+    parse::stack_ptr parser_state = NULL;
 
-    int idx = 0;
-    while (blk) {
-        app_t::log("hl:%d", blk->lineNumber);
-        editor->highlighter.highlightBlock(blk);
-        blk = blk->next();
-        if (idx++ > 200)
-            break;
+    std::ifstream file = std::ifstream(editor->document.tmpPaths[0], std::ifstream::in);
+    std::string line;
+
+    while (std::getline(file, line)) {
+        std::string str = line;
+        str += "\n";
+        std::map<size_t, scope::scope_t> scopes;
+        const char* first = str.c_str();
+        const char* last = first + line.length() + 1;
     }
 
-    editor->hlTarget = nullptr;
     return NULL;
 }
 
 void highlighter_t::run(editor_t* editor)
 {
-    pthread_create(&threadId, NULL, &hl, editor);
+    this->editor = editor;
+    pthread_create(&threadId, NULL, &highlightThread, this);
+}
+
+void highlighter_t::cancel()
+{
+    if (threadId) {
+        pthread_cancel(threadId);
+        threadId = 0;
+    }
 }

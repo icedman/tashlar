@@ -66,10 +66,13 @@ app_t::app_t()
 
     viewLayout = LAYOUT_VERTICAL;
     addView(&mainView);
+    /*
     addView(&bottomBar);
     bottomBar.name = "bottom";
     bottomBar.preferredHeight = 1;
     bottomBar.addView(&statusBar);
+    */
+    addView(&statusBar);
 
     mainView.addView(&explorer);
     mainView.addView(&tabView);

@@ -205,8 +205,8 @@ void _begin(view_t* view)
         .width = view->width,
         .height = view->height,
     };
-    drawBaseX = view->x;
-    drawBaseY = view->y;
+    drawBaseX = view->x + view->padding;
+    drawBaseY = view->y + view->padding;
 
     if (view->isVisible() && view->backgroundColor != 0) {
         int off = 5 * view->backgroundColor;
@@ -275,6 +275,7 @@ void render_t::initialize()
         "", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,
         SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN);
 
+    SDL_SetWindowTitle(window, "Ashlar Text");
     ren_init(window);
     // rencache_show_debug(true);
 

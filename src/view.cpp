@@ -21,6 +21,7 @@ view_t::view_t(std::string name)
     , preferredWidth(0)
     , preferredHeight(0)
     , flex(1)
+    , padding(2)
     , viewLayout(LAYOUT_HORIZONTAL)
     , backgroundColor(0)
 {
@@ -94,8 +95,16 @@ void view_t::layout(int x, int y, int width, int height)
     this->width = width;
     this->height = height;
 
-    rows = height / render_t::instance()->fh;
-    cols = width / render_t::instance()->fw;
+    rows = height;
+    if (render_t::instance()->fh > 10) {
+        rows -= padding * 2;
+    }
+    rows /= render_t::instance()->fh;
+    cols = width;
+    if (render_t::instance()->fw > 10) {
+        cols -= padding * 2;
+    }
+    cols /= render_t::instance()->fw;
 
     switch (viewLayout) {
     case LAYOUT_HORIZONTAL:

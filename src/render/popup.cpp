@@ -33,6 +33,17 @@ void popup_t::render()
         _clrtoeol(cols);
     }
 
+    int inputOffset = 2;
+    if (type == POPUP_COMPLETION) {
+        inputOffset -= 1;
+    } else {
+        _move(0, 0);
+        // fill input text background
+        for (int i = 0; i < cols; i++) {
+            _addch(' ');
+        }
+    }
+
     _move(0, 0);
     if (!text.length()) {
         _move(0, 0 + 1);
@@ -59,17 +70,6 @@ void popup_t::render()
     _addch('|');
     _attroff(_color_pair(colorIndicator));
     _attron(_color_pair(colorPrimary));
-
-    int inputOffset = 2;
-    if (type == POPUP_COMPLETION) {
-        inputOffset -= 1;
-    } else {
-
-        // fill input text background
-        for (int i = x; i < cols - 1; i++) {
-            _addch(' ');
-        }
-    }
 
     // app_t::instance()->log("items: %d inputOffset: %d", items.size(), inputOffset);
     // scroll to cursor

@@ -157,7 +157,6 @@ bool document_t::open(std::string path)
     }
 
     tmp.close();
-
     if (!blocks.size()) {
         addBlockAtLine(0);
     }

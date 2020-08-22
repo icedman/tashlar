@@ -17,6 +17,7 @@
 
 minimap_t::minimap_t()
     : view_t("minimap")
+    , offsetY(0)
 {
     backgroundColor = 1;
 }
@@ -78,19 +79,22 @@ void minimap_t::update(int delta)
     struct cursor_t cursor = doc->cursor();
     block_ptr block = cursor.block();
 
-    int scroll = editor->scrollY + (-height * 0.8);
-    int offsetY = scroll / 4;
+    int fh = render_t::instance()->fh;
+    int scroll = (editor->scrollY + (-rows * 0.8)) / fh;
+    offsetY = scroll;
     currentLine = block->lineNumber;
 
     // try disable scroll
     int lastLine = doc->blocks.back()->lineNumber;
-    if (lastLine / 4 < rows) {
+    if (lastLine / 4 < rows || offsetY < 0) {
         offsetY = 0;
     }
 
+    /*
     int wc = 0;
     wc = buildUpDots(wc, 1, 1, 1);
     wc = buildUpDots(wc, 2, 1, 1);
+    */
 }
 
 void minimap_t::applyTheme()
@@ -110,7 +114,7 @@ bool minimap_t::isVisible()
 
 void minimap_t::preLayout()
 {
-    preferredWidth = MINIMAP_WIDTH * render_t::instance()->fw;
+    preferredWidth = (padding * 2) + (MINIMAP_WIDTH * render_t::instance()->fw);
 }
 
 void minimap_t::mouseDown(int x, int y, int button, int clicks)
@@ -122,7 +126,7 @@ void minimap_t::mouseDown(int x, int y, int button, int clicks)
     int row = (y - this->y) / fh;
 
     std::ostringstream ss;
-    ss << (firstVisibleLine + (row * 4) - rows / 2);
+    ss << (firstVisibleLine + row * 4);
     ss << ":";
     ss << "0";
     app_t::instance()->currentEditor->pushOp(MOVE_CURSOR, ss.str());

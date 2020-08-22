@@ -66,11 +66,18 @@ void popup_t::layout(int _x, int _y, int w, int h)
         height = POPUP_MAX_HEIGHT;
     }
 
-    cols = width;
-    rows = height;
+    int fw = render_t::instance()->fw;
+    int fh = render_t::instance()->fh;
 
-    width *= render_t::instance()->fw;
-    height *= render_t::instance()->fh;
+    width *= fw;
+    height *= fh;
+    if (fh > 10) {
+        width += padding * 2;
+        height += padding * 2;
+    }
+
+    cols = width / fw;
+    rows = height / fh;
 
     x = 0;
     y = 0;
@@ -83,16 +90,21 @@ void popup_t::layout(int _x, int _y, int w, int h)
 
     if (type == POPUP_COMPLETION && !cursor.isNull()) {
         struct editor_t* editor = app_t::instance()->currentEditor.get();
-        x = cursor.position();
+        x = (1 + cursor.position()) * fw;
         y = cursor.block()->screenLine + 1;
         y -= editor->scrollY;
 
-        y *= render_t::instance()->fh;
+        y *= fh;
         x += editor->x;
         y += editor->y;
         bool reverse = false;
+
         if (y > (editor->height * 2 / 3)) {
-            y -= height;
+            if (fh > 10) {
+                y -= (height + fh);
+            } else {
+                y -= (rows + 1);
+            }
             reverse = true;
             if (x + width >= w) {
                 y += 2;
@@ -153,12 +165,20 @@ bool popup_t::input(char ch, std::string keys)
         if (type == POPUP_SEARCH) {
             onSubmit();
         }
+        if (type == POPUP_FILES && items.size() && currentItem >= 0 && currentItem < items.size()) {
+            struct item_t& item = items[currentItem];
+            statusbar_t::instance()->setStatus(item.fullPath, 3500);
+        }
         return true;
     case MOVE_CURSOR_DOWN:
         searchDirection = 0;
         currentItem++;
         if (type == POPUP_SEARCH) {
             onSubmit();
+        }
+        if (type == POPUP_FILES && items.size() && currentItem >= 0 && currentItem < items.size()) {
+            struct item_t& item = items[currentItem];
+            statusbar_t::instance()->setStatus(item.fullPath, 3500);
         }
         return true;
     case MOVE_CURSOR_RIGHT:
@@ -579,7 +599,10 @@ void popup_t::onSubmit()
                 struct item_t& item = items[currentItem];
                 scripting_t::instance()->runScript(item.script);
             }
+
+            text = "";
         }
+
         hide();
     }
 

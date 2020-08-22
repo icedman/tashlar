@@ -23,6 +23,8 @@ editor_t::editor_t()
 
 editor_t::~editor_t()
 {
+    completer.cancel();
+    highlighter.cancel();
 }
 
 void editor_t::pushOp(std::string op, std::string params)
@@ -101,6 +103,8 @@ void editor_t::runOp(operation_t op)
     case OPEN:
         document.open(strParam);
         createSnapshot();
+        completer.run(this);
+        highlighter.run(this);
         return;
     case SAVE: {
         if (document.fileName == "") {
