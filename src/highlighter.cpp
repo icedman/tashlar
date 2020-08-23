@@ -70,16 +70,16 @@ static void setFormatFromStyle(size_t start, size_t length, style_t& style, cons
 
 void highlighter_t::highlightBlock(block_ptr block)
 {
-    if (!lang) {
-        return;
-    }
-
     if (!block->data) {
         block->data = std::make_shared<blockdata_t>();
         block->data->dirty = true;
     }
 
     if (!block->data->dirty) {
+        return;
+    }
+
+    if (!lang) {
         return;
     }
 

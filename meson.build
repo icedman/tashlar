@@ -55,9 +55,25 @@ tashlar_curses_files = [
     'src/render/keyinput.cpp'
 ]
 
-tashlar_render_files = tashlar_sdl_files
-# tashlar_render_files = tashlar_curses_files
+textmate_inc = include_directories(
+    'libs/tm-parser/textmate/parser',
+    'libs/tm-parser/textmate/theme',
+    'libs/tm-parser/textmate/scopes'
+)
 
+textmate_files = [
+    'libs/tm-parser/textmate/parser/grammar.cpp',
+    'libs/tm-parser/textmate/parser/reader.cpp',
+    'libs/tm-parser/textmate/parser/pattern.cpp',
+    'libs/tm-parser/textmate/parser/parser.cpp',
+    'libs/tm-parser/textmate/scopes/scope.cpp',
+    'libs/tm-parser/textmate/scopes/types.cpp',
+    'libs/tm-parser/textmate/scopes/parse.cpp',
+    'libs/tm-parser/textmate/scopes/match.cpp',
+    'libs/tm-parser/textmate/theme/theme.cpp',
+    'libs/tm-parser/textmate/theme/util.cpp'
+]
+ 
 curses_dep = dependency('ncursesw', required: true, disabler: true)
 if not curses_dep.found()
   curses_root = get_option('curses_root')
@@ -65,52 +81,41 @@ if not curses_dep.found()
   curses_dep = declare_dependency(include_directories: curses_root, dependencies: curses_lib)
 endif
 
-onigmo_inc = include_directories('libs/Onigmo')
-onigmo_lib = cc.find_library('libonigmo', dirs:[pwd + '/libs'])
-onigmo_dep = declare_dependency(
-    dependencies: onigmo_lib,
-    include_directories : onigmo_inc
-)
-
-qjs_inc = include_directories('libs/quickjs-2020-07-05')
-qjs_lib = cc.find_library('libquickjs', dirs:[pwd + '/libs'])
-qjs_dep = declare_dependency(
-    dependencies: qjs_lib,
-    include_directories : qjs_inc
-)
-
 dl_dep = cc.find_library('dl', required : true) 
 pthread_dep = cc.find_library('pthread', required : true) 
 
-sdl2_lib = cc.find_library('SDL2')
+sdl2_lib = cc.find_library('SDL2', required: true)
 sdl2_dep = declare_dependency(dependencies: [ sdl2_lib ])
-# sdl2gfx_lib = cc.find_library('SDL2_gfx')
-# sdl2gfx_dep = declare_dependency(dependencies: [ sdl2gfx_lib ])
 
-sdl2ttf_lib = cc.find_library('SDL2_ttf')
+sdl2ttf_lib = cc.find_library('SDL2_ttf', required: true)
 sdl2ttf_dep = declare_dependency(dependencies: [ sdl2ttf_lib ])
 
-sdl2image_lib  = cc.find_library('SDL2_image')
+sdl2image_lib  = cc.find_library('SDL2_image', required: true)
 sdl2image_dep  = declare_dependency(dependencies: [ sdl2image_lib ])
     
-jsoncpp_proj = subproject('jsoncpp-1.8.4')
-jsoncpp_dep = jsoncpp_proj.get_variable('jsoncpp_dep')
+jsoncpp_lib = cc.find_library('jsoncpp', required: true)
+jsoncpp_dep = declare_dependency(dependencies: [ jsoncpp_lib ])
 
-textmate_inc = include_directories('libs/tm-parser/textmate')
-subdir('libs/tm-parser/textmate')
-    
-executable('tashlar',
+onigmo_lib = cc.find_library('onigmo', required: true)
+onigmo_dep = declare_dependency(dependencies: [ onigmo_lib ])
+
+quickjs_lib = cc.find_library('quickjs', required: true, dirs:['/usr/lib/quickjs'])
+quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/include/quickjs'])
+  
+executable('ashlr',
     tashlar_files,
     tashlar_curses_files,
-    include_directories: [ './src', './src/render', parser_inc, scopes_inc, theme_inc ],
-    dependencies: [ qjs_dep, dl_dep, pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
+    textmate_files,
+    include_directories: [ './src', './src/render', textmate_inc ],
+    dependencies: [ quickjs_dep, dl_dep, pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )
 
 executable('ashlar',
     tashlar_files,
     tashlar_sdl_files,
-    include_directories: [ './src', './src/render', './libs/lite', parser_inc, scopes_inc, theme_inc ],
-    dependencies: [ qjs_dep, dl_dep, pthread_dep, sdl2_dep, sdl2ttf_dep, sdl2image_dep, curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
+    textmate_files,
+    include_directories: [ './src', './src/render', './libs/lite', textmate_inc ],
+    dependencies: [ quickjs_dep, dl_dep, pthread_dep, sdl2_dep, sdl2ttf_dep, sdl2image_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )
