@@ -9,6 +9,7 @@ int _color_pair(int pair);
 void _underline(bool);
 void _bold(bool);
 void _reverse(bool);
+void _italic(bool);
 
 void _clrtoeol(int w);
 

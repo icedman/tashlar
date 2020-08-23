@@ -21,6 +21,8 @@ typedef struct {
     RenRect rect;
     RenColor color;
     RenFont* font;
+    int bold;
+    int italic;
     char text[0];
 } Command;
 
@@ -135,7 +137,7 @@ void rencache_draw_rect(RenRect rect, RenColor color)
     }
 }
 
-int rencache_draw_text(RenFont* font, const char* text, int x, int y, RenColor color)
+int rencache_draw_text(RenFont* font, const char* text, int x, int y, RenColor color, bool bold, bool italic)
 {
     RenRect rect;
     rect.x = x;
@@ -151,6 +153,8 @@ int rencache_draw_text(RenFont* font, const char* text, int x, int y, RenColor c
             cmd->color = color;
             cmd->font = font;
             cmd->rect = rect;
+            cmd->bold = bold;
+            cmd->italic = italic;
         }
     }
 
@@ -266,7 +270,7 @@ void rencache_end_frame(void)
                 ren_draw_rect(cmd->rect, cmd->color);
                 break;
             case DRAW_TEXT:
-                ren_draw_text(cmd->font, cmd->text, cmd->rect.x, cmd->rect.y, cmd->color);
+                ren_draw_text(cmd->font, cmd->text, cmd->rect.x, cmd->rect.y, cmd->color, cmd->bold, cmd->italic);
                 break;
             }
         }

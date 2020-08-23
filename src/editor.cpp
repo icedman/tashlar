@@ -179,8 +179,9 @@ void editor_t::runOp(operation_t op)
         }
         break;
     case CLEAR_CURSORS:
+        mainCursor.clearSelection();
         document.clearCursors();
-        document.setCursor(mainCursor);
+        document.setCursor(mainCursor, true);
         break;
 
     case SELECT_ALL:
@@ -793,10 +794,7 @@ bool editor_t::input(char ch, std::string keySequence)
     }
 
     if (ch == K_ESC) {
-        cursor_t mainCursor = editor->document.cursor();
-        mainCursor.clearSelection();
-        editor->document.clearCursors();
-        editor->document.setCursor(mainCursor, true);
+        editor->pushOp(CLEAR_CURSORS);
         return true;
     }
 
@@ -806,7 +804,7 @@ bool editor_t::input(char ch, std::string keySequence)
 
     std::string s;
     s += (char)ch;
-    editor->pushOp("INSERT", s);
+    editor->pushOp(INSERT, s);
     return true;
 }
 

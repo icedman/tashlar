@@ -13,6 +13,8 @@ highlighter_t::highlighter_t()
 struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
 {
     span_info_t res;
+    res.bold = false;
+    res.italic = false;
     res.length = 0;
     for (auto span : blockData->spans) {
         if (span.length == 0) {
@@ -55,6 +57,8 @@ static void setFormatFromStyle(size_t start, size_t length, style_t& style, cons
                     .start = s,
                     .length = i - s + 1,
                     .colorIndex = style.foreground.index,
+                    .bold = style.bold == bool_true,
+                    .italic = style.italic == bool_true,
                     .state = state
                 };
                 blockData->spans.insert(blockData->spans.begin(), 1, span);

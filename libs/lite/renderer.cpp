@@ -13,20 +13,13 @@
 #define MAX_GLYPHSET 256
 
 #define RENDER_MODE 2
-#define USE_SDL_TTF
+#define USE_SDL_TTF // better quality (doesn't support glyphsets)
 
-void cache_glyphs(RenFont *font);
+void cache_glyphs(RenFont* font, int style);
 TTF_Font* load_font(char* fname, int size);
 
 static int sdlFontWidth = 1;
 static int sdlFontHeight = 1;
-
-int start_glyph = 0,
-    style = TTF_STYLE_NORMAL,
-    kerning = 1,
-    hinting = TTF_HINTING_NORMAL,
-    outline = 0,
-    font_size = 32;
 
 struct RenImage {
     RenColor* pixels;
@@ -48,12 +41,16 @@ typedef struct {
 struct RenFont {
     void* data;
     stbtt_fontinfo stbfont;
+
     GlyphSet* sets[MAX_GLYPHSET];
+    GlyphSet* sets_bold[MAX_GLYPHSET];
+    GlyphSet* sets_italic[MAX_GLYPHSET];
+
     float size;
     int height;
 
 #ifdef USE_SDL_TTF
-    TTF_Font *font;
+    TTF_Font* font;
 #endif
 };
 
@@ -206,13 +203,15 @@ RenFont* ren_load_font(const char* filename, float size)
     RenFont* font = NULL;
 
 #ifdef USE_SDL_TTF
-        /* cache new glyphs */
+    /* cache new glyphs */
     font = (RenFont*)check_alloc(calloc(1, sizeof(RenFont)));
     font->size = size;
 
     font->font = load_font((char*)filename, size);
-    cache_glyphs(font);
- 
+    cache_glyphs(font, TTF_STYLE_NORMAL);
+    cache_glyphs(font, TTF_STYLE_BOLD);
+    cache_glyphs(font, TTF_STYLE_ITALIC);
+
     return font;
 #else
     FILE* fp = NULL;
@@ -301,7 +300,7 @@ int ren_get_font_width(RenFont* font, const char* text)
     unsigned codepoint;
     while (*p) {
         p = utf8_to_codepoint(p, &codepoint);
-        x += sdlFontWidth;// gm[codepoint].advance;
+        x += font->sets[codepoint]->advance;
     }
 
     return x;
@@ -430,7 +429,7 @@ void ren_draw_image(RenImage* image, RenRect* sub, int x, int y, RenColor color)
     }
 }
 
-int ren_draw_text(RenFont* font, const char* text, int x, int y, RenColor color)
+int ren_draw_text(RenFont* font, const char* text, int x, int y, RenColor color, bool bold, bool italic)
 {
     RenRect rect;
     const char* p = text;
@@ -438,14 +437,21 @@ int ren_draw_text(RenFont* font, const char* text, int x, int y, RenColor color)
     while (*p) {
         p = utf8_to_codepoint(p, &codepoint);
 #ifdef USE_SDL_TTF
-        if (font->sets[codepoint]) {
-            RenImage *image = font->sets[codepoint]->image;
+        GlyphSet** sets = font->sets;
+        if (bold) {
+            sets = font->sets_bold;
+        }
+        if (italic) {
+            sets = font->sets_italic;
+        }
+        if (sets[codepoint]) {
+            RenImage* image = sets[codepoint]->image;
             rect.x = 0;
             rect.y = 0;
             rect.width = image->width;
             rect.height = image->height;
             ren_draw_image(image, &rect, x, y, color);
-            // x += gm[codepoint].advance;
+            x += sets[codepoint]->advance;
         }
 #else
         GlyphSet* set = get_glyphset(font, codepoint);
@@ -468,7 +474,7 @@ TTF_Font* load_font(char* fname, int size)
 
     char* p;
 
-    TTF_Font *font = TTF_OpenFont(fname, size);
+    TTF_Font* font = TTF_OpenFont(fname, size);
     if (!font) {
         app_t::log("TTF_OpenFont: %s", TTF_GetError());
         return NULL;
@@ -511,7 +517,7 @@ TTF_Font* load_font(char* fname, int size)
         p = fname;
     else
         p++;
-   
+
     return font;
 }
 
@@ -546,10 +552,15 @@ static Uint32 get_pixel(SDL_Surface* surface, int x, int y)
     }
 }
 
-void cache_glyphs(RenFont *renFont)
+void cache_glyphs(RenFont* renFont, int style)
 {
-    TTF_Font *font = renFont->font;
-    SDL_Surface* text[128];
+    int start_glyph = 0,
+        kerning = 1,
+        hinting = TTF_HINTING_NORMAL,
+        outline = 0,
+        font_size = 32;
+
+    TTF_Font* font = renFont->font;
 
     app_t::log("cache_glyphs");
 
@@ -580,10 +591,20 @@ void cache_glyphs(RenFont *renFont)
         char _p[] = { (char)i, 0 };
         unsigned codepoint = 0;
         utf8_to_codepoint(_p, &codepoint);
-        SDL_Surface *surf = NULL;
+        SDL_Surface* surf = NULL;
 
         GlyphSet* set = (GlyphSet*)check_alloc(calloc(1, sizeof(GlyphSet)));
-        renFont->sets[codepoint] = set; 
+        switch (style) {
+        case TTF_STYLE_NORMAL:
+            renFont->sets[codepoint] = set;
+            break;
+        case TTF_STYLE_BOLD:
+            renFont->sets_bold[codepoint] = set;
+            break;
+        case TTF_STYLE_ITALIC:
+            renFont->sets_italic[codepoint] = set;
+            break;
+        }
 
         /* cache rendered surface */
 #if RENDER_MODE == 0
@@ -613,33 +634,30 @@ void cache_glyphs(RenFont *renFont)
         hh += _h;
         ii++;
 
-        {
-            // app_t::log(">> %d %d %d", codepoint, _w, _h);
-            set->image = ren_new_image(_w, _h);
+        set->image = ren_new_image(_w, _h);
 
-            for (int y = 0; y < _h; y++) {
-                for (int x = 0; x < _w; x++) {
-                    SDL_Color rgb;
-                    Uint32 pixel = get_pixel(surf, x, y);
-                    SDL_GetRGBA(pixel, surf->format, &rgb.r, &rgb.g, &rgb.b, &rgb.a);
-                    RenColor clr = {
-                        .b = rgb.b,
-                        .g = rgb.g,
-                        .r = rgb.r,
-                        .a = rgb.a
-                    };
-                    set->image->pixels[y * _w + x] = clr;
-                }
+        for (int y = 0; y < _h; y++) {
+            for (int x = 0; x < _w; x++) {
+                SDL_Color rgb;
+                Uint32 pixel = get_pixel(surf, x, y);
+                SDL_GetRGBA(pixel, surf->format, &rgb.r, &rgb.g, &rgb.b, &rgb.a);
+                RenColor clr = {
+                    .b = rgb.b,
+                    .g = rgb.g,
+                    .r = rgb.r,
+                    .a = rgb.a
+                };
+                set->image->pixels[y * _w + x] = clr;
             }
+        }
 
-            /*
+        /*
             char tmp[255];
             sprintf(tmp, "t%d.bmp", i);
             SDL_SaveBMP(surf, tmp);
             */
 
-            SDL_FreeSurface(surf);
-        }
+        SDL_FreeSurface(surf);
     }
 
     sdlFontWidth = ww / ii;

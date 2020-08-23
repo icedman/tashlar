@@ -93,6 +93,8 @@ void editor_t::render()
 
                 bool hl = false;
                 bool ul = false;
+                bool bl = false; // bold
+                bool il = false; // italic
 
                 colorPair = color_pair_e::NORMAL;
                 colorPairSelected = color_pair_e::SELECTED;
@@ -100,6 +102,8 @@ void editor_t::render()
                 // syntax here
                 if (blockData) {
                     struct span_info_t span = spanAtBlock(blockData, pos);
+                    bl = span.bold;
+                    il = span.italic;
                     if (span.length) {
                         colorPair = pairForColor(span.colorIndex, false);
                         colorPairSelected = pairForColor(span.colorIndex, true);
@@ -118,6 +122,7 @@ void editor_t::render()
                     if (pos == c.position() && b == c.block()) {
                         hl = true;
                         ul = c.hasSelection();
+                        bl = c.hasSelection();
                     }
                     if (!c.hasSelection())
                         continue;
@@ -138,14 +143,20 @@ void editor_t::render()
                     colorPair = colorPairSelected;
                 }
                 if (ul) {
-                    _bold(true);
                     _underline(true);
+                }
+                if (bl) {
+                    _bold(true);
+                }
+                if (il) {
+                    _italic(true);
                 }
 
                 _attron(_color_pair(colorPair));
                 _addch(ch);
                 _attroff(_color_pair(colorPair));
                 _bold(false);
+                _italic(false);
                 _underline(false);
             }
         }

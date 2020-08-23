@@ -1,11 +1,10 @@
 #include "app.h"
 #include "editor.h"
 #include "explorer.h"
+#include "keyinput.h"
 #include "render.h"
 #include "scripting.h"
 #include "search.h"
-
-#include "keyinput.h" // terminal input
 
 int main(int argc, char** argv)
 {

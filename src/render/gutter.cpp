@@ -47,7 +47,8 @@ void gutter_t::render()
         int pair = colorPrimary;
 
         if (b == currentBlock) {
-            _bold(true);
+            // _italic(true);
+            // _bold(true);
             pair = colorIndicator;
         }
         for (int sl = 0; sl < b->lineCount; sl++) {
@@ -58,6 +59,7 @@ void gutter_t::render()
         _move(l, cols - lineNo.length());
         _addstr(lineNo.c_str());
         _attroff(_color_pair(pair));
+        _italic(false);
         _bold(false);
 
         l += b->lineCount;

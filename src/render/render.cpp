@@ -97,6 +97,10 @@ void _reverse(bool b)
         attroff(A_REVERSE);
 }
 
+void _italic(bool)
+{
+}
+
 void _begin(view_t* view)
 {
     contextStack.push_back(view);

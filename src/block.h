@@ -27,6 +27,8 @@ struct span_info_t {
     int start;
     int length;
     int colorIndex;
+    bool bold;
+    bool italic;
     block_state_e state;
 };
 

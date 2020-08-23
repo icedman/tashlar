@@ -25,6 +25,7 @@ static RenColor drawColor;
 static RenColor drawBg;
 static bool drawBold = false;
 static bool drawReverse = false;
+static bool drawItalic = false;
 static bool drawUnderline = false;
 
 static view_t* dragView = 0;
@@ -90,7 +91,8 @@ void _addch(char c)
         _draw_rect(rect, bg);
         // app_t::log("bg: %d %d %d (%d %d %d)", bg.r, bg.g, bg.b, bgColor.r, bgColor.g, bgColor.b);
     }
-    _draw_text(font, (char*)txt, drawBaseX + (drawX * fw) + (fw / 2 - cw / 2), drawBaseY + (drawY * fh), fg);
+
+    _draw_text(font, (char*)txt, drawBaseX + (drawX * fw) + (fw / 2 - cw / 2), drawBaseY + (drawY * fh), fg, drawBold, drawItalic);
 
     if (drawUnderline) {
         rect.y += (rect.height - 2);
@@ -200,6 +202,11 @@ void _reverse(bool b)
     drawReverse = b;
 }
 
+void _italic(bool b)
+{
+    drawItalic = b;
+}
+
 void _begin(view_t* view)
 {
     contextStack.push_back(view);
@@ -283,9 +290,10 @@ void render_t::initialize()
     ren_init(window);
     // rencache_show_debug(true);
 
-    // font = ren_load_font("./fonts/font.ttf", 16);
+    // font = ren_load_font("./fonts/font.ttf", 14);
     font = ren_load_font("./fonts/FiraCode-Regular.ttf", 14);
     // font = ren_load_font("./fonts/monospace.ttf", 14);
+    // font = ren_load_font("/usr/share/fonts/TTF/DejaVuSansMono.ttf", 14);
 
     fw = ren_get_font_width(font, "1234567890AaBbCcDdEeFfGg") / 24;
     fh = ren_get_font_height(font);

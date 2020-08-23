@@ -13,7 +13,6 @@ gutter_t::gutter_t()
     : view_t("gutter")
 {
     backgroundColor = 1;
-    padding = 0;
 }
 
 gutter_t::~gutter_t()
@@ -27,7 +26,7 @@ void gutter_t::preLayout()
 
     block_ptr block = editor->document.lastBlock();
     std::string lineNo = std::to_string(1 + block->lineNumber);
-    preferredWidth = (lineNo.length() + 2) * render_t::instance()->fw;
+    preferredWidth = (lineNo.length() + 3) * render_t::instance()->fw;
     if (render_t::instance()->fw > 10) {
         preferredWidth += padding * 2;
     }
