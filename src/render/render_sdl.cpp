@@ -284,13 +284,11 @@ void render_t::initialize()
     // rencache_show_debug(true);
 
     // font = ren_load_font("./fonts/font.ttf", 16);
-    font = ren_load_font("./fonts/FiraCode-Regular.ttf", 14);
+    font = ren_load_font("./fonts/FiraCode-Regular.ttf", 16);
     // font = ren_load_font("./fonts/monospace.ttf", 14);
-    if (font) {
-        app_t::log("font loaded");
-        fw = ren_get_font_width(font, "1234567890AaBbCcDdEeFfGg") / 24;
-        fh = ren_get_font_height(font);
-    }
+
+    fw = ren_get_font_width(font, "1234567890AaBbCcDdEeFfGg") / 24;
+    fh = ren_get_font_height(font);
 }
 
 void render_t::shutdown()
@@ -299,6 +297,7 @@ void render_t::shutdown()
     if (font) {
         ren_free_font(font);
     }
+    ren_free();
 }
 
 static int poll_event()
@@ -441,7 +440,7 @@ static int poll_event()
 
     case SDL_TEXTINPUT:
         app_t::log("text input %c", e.text.text[0]);
-        if (keyMods == 0) {
+        if (keyMods == 0 || keyMods & KMOD_SHIFT) {
             pushKey(e.text.text[0], "");
         }
         return 0;

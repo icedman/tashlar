@@ -32,4 +32,6 @@ void ren_draw_rect(RenRect rect, RenColor color);
 void ren_draw_image(RenImage* image, RenRect* sub, int x, int y, RenColor color);
 int ren_draw_text(RenFont* font, const char* text, int x, int y, RenColor color);
 
+void ren_free();
+
 #endif

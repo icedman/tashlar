@@ -15,6 +15,7 @@ int main(int argc, char** argv)
     app_t app;
 
     renderer.initialize();
+
     app.configure(argc, argv);
     app.setupColors();
     app.applyTheme();

@@ -815,8 +815,8 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
     int fw = render_t::instance()->fw;
     int fh = render_t::instance()->fh;
 
-    int col = (x - this->x) / fw;
-    int row = (y - this->y) / fh;
+    int col = (x - this->x - padding) / fw;
+    int row = (y - this->y - padding) / fh;
 
     // scroll
     if (clicks == 0) {

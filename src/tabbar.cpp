@@ -104,7 +104,7 @@ bool tabbar_t::input(char ch, std::string keys)
 void tabbar_t::mouseDown(int x, int y, int button, int clicks)
 {
     int fw = render_t::instance()->fw;
-    int col = (x - this->x) / fw;
+    int col = (x - this->x - padding) / fw;
     for (auto& t : tabs) {
         if (col >= t.x && col < t.x + t.width) {
             // app_t::log("tab %s", t.name.c_str());

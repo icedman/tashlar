@@ -86,10 +86,12 @@ sdl2_lib = cc.find_library('SDL2')
 sdl2_dep = declare_dependency(dependencies: [ sdl2_lib ])
 # sdl2gfx_lib = cc.find_library('SDL2_gfx')
 # sdl2gfx_dep = declare_dependency(dependencies: [ sdl2gfx_lib ])
-# sdl2ttf_lib = cc.find_library('SDL2_ttf')
-# sdl2ttf_dep = declare_dependency(dependencies: [ sdl2ttf_lib ])
-# sdl2image_lib  = cc.find_library('SDL2_image')
-# sdl2image_dep  = declare_dependency(dependencies: [ sdl2image_lib ])
+
+sdl2ttf_lib = cc.find_library('SDL2_ttf')
+sdl2ttf_dep = declare_dependency(dependencies: [ sdl2ttf_lib ])
+
+sdl2image_lib  = cc.find_library('SDL2_image')
+sdl2image_dep  = declare_dependency(dependencies: [ sdl2image_lib ])
     
 jsoncpp_proj = subproject('jsoncpp-1.8.4')
 jsoncpp_dep = jsoncpp_proj.get_variable('jsoncpp_dep')
@@ -109,6 +111,6 @@ executable('ashlar',
     tashlar_files,
     tashlar_sdl_files,
     include_directories: [ './src', './src/render', './libs/lite', parser_inc, scopes_inc, theme_inc ],
-    dependencies: [ qjs_dep, dl_dep, pthread_dep, sdl2_dep, curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
+    dependencies: [ qjs_dep, dl_dep, pthread_dep, sdl2_dep, sdl2ttf_dep, sdl2image_dep, curses_dep, onigmo_dep, jsoncpp_dep, textmate_dep ],
     install : true
 )
