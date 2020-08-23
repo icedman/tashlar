@@ -31,6 +31,8 @@ static view_t* dragView = 0;
 static int dragX = 0;
 static int dragY = 0;
 
+static int keyMods = 0;
+
 static std::map<int, int> colorMap;
 
 RenColor bgColor;
@@ -354,6 +356,7 @@ static int poll_event()
     case SDL_KEYDOWN: {
         std::string keySequence;
         std::string mod;
+        keyMods = e.key.keysym.mod;
 
         switch (e.key.keysym.sym) {
         case SDLK_ESCAPE:
@@ -407,15 +410,15 @@ static int poll_event()
         }
 
         if (keySequence.length()) {
-            if (e.key.keysym.mod & KMOD_CTRL) {
+            if (keyMods & KMOD_CTRL) {
                 mod = "ctrl";
             }
-            if (e.key.keysym.mod & KMOD_SHIFT) {
+            if (keyMods & KMOD_SHIFT) {
                 if (mod.length())
                     mod += "+";
                 mod += "shift";
             }
-            if (e.key.keysym.mod & KMOD_ALT) {
+            if (keyMods & KMOD_ALT) {
                 if (mod.length())
                     mod += "+";
                 mod += "alt";
@@ -426,8 +429,6 @@ static int poll_event()
             if (keySequence.length() > 1) {
                 pushKey(0, keySequence);
                 app_t::log("keydown %s", keySequence.c_str());
-            } else {
-                pushKey(keySequence[0], "");
             }
         }
 
@@ -435,11 +436,14 @@ static int poll_event()
     }
 
     case SDL_KEYUP:
+        keyMods = 0;
         return 0;
 
     case SDL_TEXTINPUT:
         app_t::log("text input %c", e.text.text[0]);
-        // pushKey(e.text.text[0], "");
+        if (keyMods == 0) {
+            pushKey(e.text.text[0], "");
+        }
         return 0;
 
     case SDL_MOUSEBUTTONDOWN:
