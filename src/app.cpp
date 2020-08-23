@@ -82,6 +82,7 @@ app_t::app_t()
     tabView.addView(&tabContent);
 
     addView(&popup);
+    refresh();
 }
 
 app_t::~app_t()

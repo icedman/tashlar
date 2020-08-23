@@ -18,7 +18,7 @@ void _addstr(const char* str);
 void _addwstr(const wchar_t* str);
 void _attron(int attr);
 void _attroff(int attr);
-bool _drawdots(int dots);
+bool _drawdots(int dots, int* colors);
 
 void _begin(view_t* view);
 void _end();
@@ -34,6 +34,7 @@ struct render_t {
     void render();
     void updateColors();
     void input();
+    void delay(int ms);
 
     static render_t* instance();
 

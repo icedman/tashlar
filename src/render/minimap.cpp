@@ -22,6 +22,8 @@ void minimap_t::render()
     // int fh = render_t::instance()->fh;
     // int sy = editor->scrollY / fh;
 
+    // block_list::iterator it = editor->snapshots[0].snapshot.begin();
+
     int sy = offsetY;
     int y = 0;
     for (int idx = sy; idx < doc->blocks.size(); idx += 4) {
@@ -46,6 +48,7 @@ void minimap_t::render()
 #else
             _addch('>');
 #endif
+
             _attroff(_color_pair(colorIndicator));
         } else {
             _addch(' ');
@@ -55,11 +58,59 @@ void minimap_t::render()
         for (int x = 0; x < 25; x++) {
 
             _attron(_color_pair(pair));
-#ifdef ENABLE_UTF8
-            if (!_drawdots(b->data->dots[x])) {
-                _addwstr(wcharFromDots(b->data->dots[x]));
+
+            int colors[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+            /*
+            blockdata_t *blockData = b->data.get();
+            if (blockData) {
+                span_info_t si = spanAtBlock(blockData, x * MINIMAP_TEXT_COMPRESS);
+                colors[0] = pairForColor(si.colorIndex,false);
+                si = spanAtBlock(blockData, (x + 1) * MINIMAP_TEXT_COMPRESS);
+                colors[1] = pairForColor(si.colorIndex,false);
+
+                colors[2] = colors[0]; colors[3] = colors[1];
+                colors[4] = colors[0]; colors[5] = colors[1];
+                colors[6] = colors[0]; colors[7] = colors[1];
+
+                block_ptr bNext = b->next();
+                if (bNext) {
+                    blockData = bNext->data.get();
+                    if (blockData) {
+                        si = spanAtBlock(blockData, x * MINIMAP_TEXT_COMPRESS);
+                        colors[2] = pairForColor(si.colorIndex,false);
+                        si = spanAtBlock(blockData, (x + 1) * MINIMAP_TEXT_COMPRESS);
+                        colors[3] = pairForColor(si.colorIndex,false);
+                    }
+                    block_ptr bNext = b->next();
+                    if (bNext) {
+                        blockData = bNext->data.get();
+                        if (blockData) {
+                            si = spanAtBlock(blockData, x * MINIMAP_TEXT_COMPRESS);
+                            colors[4] = pairForColor(si.colorIndex,false);
+                            si = spanAtBlock(blockData, (x + 1) * MINIMAP_TEXT_COMPRESS);
+                            colors[5] = pairForColor(si.colorIndex,false);
+                        }
+                        block_ptr bNext = b->next();
+                        if (bNext) {
+                            blockData = bNext->data.get();
+                            if (blockData) {
+                                si = spanAtBlock(blockData, x * MINIMAP_TEXT_COMPRESS);
+                                colors[6] = pairForColor(si.colorIndex,false);
+                                si = spanAtBlock(blockData, (x + 1) * MINIMAP_TEXT_COMPRESS);
+                                colors[7] = pairForColor(si.colorIndex,false);
+                            }
+                        }
+                    }
+                }
             }
+            */
+
+            if (!_drawdots(b->data->dots[x], colors)) {
+#ifdef ENABLE_UTF8
+                _addwstr(wcharFromDots(b->data->dots[x]));
 #endif
+            }
+
             _attroff(_color_pair(pair));
 
             if (x >= cols - 2) {

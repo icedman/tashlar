@@ -63,7 +63,7 @@ void _attroff(int attr)
     attroff(attr);
 }
 
-bool _drawdots(int dots)
+bool _drawdots(int dots, int* colors)
 {
     return false;
 }
@@ -199,4 +199,8 @@ void render_t::updateColors()
         }
         it++;
     }
+}
+
+void render_t::delay(int ms)
+{
 }

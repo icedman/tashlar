@@ -79,7 +79,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         return;
     }
 
-    // app_t::instance()->log("highlight %d", block->lineNumber);
+    app_t::instance()->log("highlight %d", block->lineNumber);
 
     struct blockdata_t* blockData = block->data.get();
 
@@ -151,11 +151,9 @@ void highlighter_t::highlightBlock(block_ptr block)
         n = it->first;
         scope::scope_t scope = it->second;
 
-        // if (settings->debug_scopes) {
         blockData->scopes.emplace(n, scope);
-        // }
-
         std::string scopeName = to_s(scope);
+
         it++;
 
         if (n > si) {
@@ -164,9 +162,6 @@ void highlighter_t::highlightBlock(block_ptr block)
         }
 
         prevScopeName = scopeName;
-        // if (prevScopeName.find("variable") != std::string::npos) {
-        //    prevScopeName = "parameter";
-        // }
         si = n;
     }
 
@@ -348,27 +343,18 @@ void highlighter_t::gatherBrackets(block_ptr block, char* first, char* last)
 
 void* highlightThread(void* arg)
 {
-    highlighter_t* hl = (highlighter_t*)arg;
-    editor_t* editor = hl->editor;
-    snapshot_t* snapshot = &editor->snapshots[0];
+    highlighter_t* threadHl = (highlighter_t*)arg;
+    editor_t* editor = threadHl->editor;
 
-    //--------------
-    // call the grammar parser
-    //--------------
-    bool firstLine = true;
-    parse::stack_ptr parser_state = NULL;
-
-    std::ifstream file = std::ifstream(editor->document.tmpPaths[0], std::ifstream::in);
-    std::string line;
-
-    while (std::getline(file, line)) {
-        std::string str = line;
-        str += "\n";
-        std::map<size_t, scope::scope_t> scopes;
-        const char* first = str.c_str();
-        const char* last = first + line.length() + 1;
+    /*
+    threadHl->runLine = 500;
+    while (threadHl->runLine < editor->document.blocks.size()) {
+        block_ptr b = editor->document.blocks[threadHl->runLine];
+        editor->highlighter.highlightBlock(b);
+        threadHl->runLine++;
     }
-
+    */
+    threadHl->threadId = 0;
     return NULL;
 }
 

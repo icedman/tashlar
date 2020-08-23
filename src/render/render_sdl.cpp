@@ -99,7 +99,7 @@ void _addch(char c)
     drawX++;
 }
 
-bool _drawdots(int dots)
+bool _drawdots(int dots, int* colors)
 {
     static const int offs[] = {
         0, 0, 0, 1,
@@ -112,12 +112,14 @@ bool _drawdots(int dots)
     int fw = render_t::instance()->fw;
     int fh = render_t::instance()->fh;
     int dw = 2;
-    RenColor fg = drawColor;
 
     float ffw = fw / 2;
     float ffh = fh / 4;
 
     for (int i = 0; i < 8; i++) {
+        // _color_pair(colors[1]);
+        RenColor fg = drawColor;
+
         if (dots & dm[i]) {
             int ofx = offs[i * 2 + 1] * ffw;
             int ofy = offs[i * 2] * ffh;
@@ -421,10 +423,11 @@ static int poll_event()
             if (mod.length()) {
                 keySequence = mod + "+" + keySequence;
             }
-
             if (keySequence.length() > 1) {
                 pushKey(0, keySequence);
                 app_t::log("keydown %s", keySequence.c_str());
+            } else {
+                pushKey(keySequence[0], "");
             }
         }
 
@@ -436,7 +439,7 @@ static int poll_event()
 
     case SDL_TEXTINPUT:
         app_t::log("text input %c", e.text.text[0]);
-        pushKey(e.text.text[0], "");
+        // pushKey(e.text.text[0], "");
         return 0;
 
     case SDL_MOUSEBUTTONDOWN:
@@ -584,4 +587,9 @@ void render_t::updateColors()
         }
         it++;
     }
+}
+
+void render_t::delay(int ms)
+{
+    SDL_Delay(ms);
 }

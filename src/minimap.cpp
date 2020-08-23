@@ -89,12 +89,6 @@ void minimap_t::update(int delta)
     if (lastLine / 4 < rows || offsetY < 0) {
         offsetY = 0;
     }
-
-    /*
-    int wc = 0;
-    wc = buildUpDots(wc, 1, 1, 1);
-    wc = buildUpDots(wc, 2, 1, 1);
-    */
 }
 
 void minimap_t::applyTheme()

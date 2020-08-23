@@ -345,7 +345,7 @@ bool explorer_t::input(char ch, std::string keys)
 void explorer_t::mouseDown(int x, int y, int button, int clicks)
 {
     int fh = render_t::instance()->fh;
-    currentItem = ((y - this->y) / fh) + scrollY;
+    currentItem = ((y - this->y - padding) / fh) + scrollY;
     if (currentItem >= renderList.size()) {
         currentItem = renderList.size() - 1;
     }
