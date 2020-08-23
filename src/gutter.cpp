@@ -13,6 +13,7 @@ gutter_t::gutter_t()
     : view_t("gutter")
 {
     backgroundColor = 1;
+    padding = 0;
 }
 
 gutter_t::~gutter_t()

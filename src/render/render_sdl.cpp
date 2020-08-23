@@ -284,7 +284,7 @@ void render_t::initialize()
     // rencache_show_debug(true);
 
     // font = ren_load_font("./fonts/font.ttf", 16);
-    font = ren_load_font("./fonts/FiraCode-Regular.ttf", 16);
+    font = ren_load_font("./fonts/FiraCode-Regular.ttf", 14);
     // font = ren_load_font("./fonts/monospace.ttf", 14);
 
     fw = ren_get_font_width(font, "1234567890AaBbCcDdEeFfGg") / 24;
@@ -297,7 +297,6 @@ void render_t::shutdown()
     if (font) {
         ren_free_font(font);
     }
-    ren_free();
 }
 
 static int poll_event()
