@@ -353,7 +353,7 @@ void explorer_t::mouseDown(int x, int y, int button, int clicks)
     if (clicks > 0) {
         view_t::setFocus(this);
     }
-    if (clicks > 1) { //  || (clicks == 1 && prevItem == currentItem)) {
+    if (clicks > 1 || (clicks == 1 && prevItem == currentItem)) {
         input(0, "enter");
     }
 }
@@ -372,20 +372,29 @@ void explorer_t::ensureVisibleCursor()
 {
     int fh = render_t::instance()->fh;
 
-    // scroll to cursor
-    // TODO: use math not loops
-    while (rows > 0) {
-        int blockVirtualLine = currentItem;
-        int blockScreenLine = blockVirtualLine - scrollY;
+    if (renderList.size()) {
+        if (currentItem < 0)
+            currentItem = 0;
+        if (currentItem >= renderList.size())
+            currentItem = renderList.size() - 1;
+        int viewportHeight = rows - 0;
 
-        // app_t::instance()->log(">%d %d scroll:%d items:%d h:%d", blockScreenLine, currentItem, scrollY, renderList.size(), rows);
+        while (true) {
+            int blockVirtualLine = currentItem;
+            int blockScreenLine = blockVirtualLine - (scrollY / fh);
 
-        if (blockScreenLine + 1 >= rows) {
-            scrollY += fh;
-        } else if (blockScreenLine < 0) {
-            scrollY -= fh;
-        } else {
+            app_t::instance()->log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, currentItem);
+
+            if (blockScreenLine > viewportHeight) {
+                scrollY += fh;
+            } else if (blockScreenLine <= 0) {
+                scrollY -= fh;
+            } else {
+                break;
+            }
             break;
         }
+    } else {
+        scrollY = 0;
     }
 }
