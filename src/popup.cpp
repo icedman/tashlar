@@ -118,6 +118,40 @@ void popup_t::layout(int _x, int _y, int w, int h)
     }
 }
 
+void popup_t::preLayout()
+{
+    int inputOffset = 2;
+    if (type == POPUP_COMPLETION) {
+        inputOffset -= 1;
+    }
+    maxScrollY = 0;
+    if (items.size() > 1) {
+        maxScrollY = (items.size() - rows + inputOffset) * render_t::instance()->fh;
+    }
+}
+
+void popup_t::mouseDown(int x, int y, int button, int clicks)
+{
+    int fh = render_t::instance()->fh;
+    currentItem = ((y - this->y - padding) / fh) + (scrollY / fh);
+    if (type != POPUP_COMPLETION) {
+        currentItem -= 1;
+    }
+    if (currentItem >= items.size()) {
+        currentItem = items.size() - 1;
+    }
+    if (currentItem < 0)
+        currentItem = 0;
+    if (clicks > 0) {
+        input(0, "enter");
+    }
+}
+
+void popup_t::mouseHover(int x, int y)
+{
+    mouseDown(x, y, 1, 0);
+}
+
 void popup_t::applyTheme()
 {
     app_t* app = app_t::instance();
@@ -134,6 +168,7 @@ bool popup_t::input(char ch, std::string keys)
         return false;
     }
 
+    bool _scrollToCursor = false;
     operation_e cmd = operationFromKeys(keys);
 
     struct app_t* app = app_t::instance();
@@ -169,7 +204,8 @@ bool popup_t::input(char ch, std::string keys)
             struct item_t& item = items[currentItem];
             statusbar_t::instance()->setStatus(item.fullPath, 3500);
         }
-        return true;
+        _scrollToCursor = true;
+        break;
     case MOVE_CURSOR_DOWN:
         searchDirection = 0;
         currentItem++;
@@ -180,7 +216,8 @@ bool popup_t::input(char ch, std::string keys)
             struct item_t& item = items[currentItem];
             statusbar_t::instance()->setStatus(item.fullPath, 3500);
         }
-        return true;
+        _scrollToCursor = true;
+        break;
     case MOVE_CURSOR_RIGHT:
         hide();
         return true;
@@ -224,7 +261,47 @@ bool popup_t::input(char ch, std::string keys)
         break;
     };
 
+    if (_scrollToCursor) {
+        ensureVisibleCursor();
+    }
+
     return true;
+}
+
+void popup_t::ensureVisibleCursor()
+{
+    int inputOffset = 2;
+    if (type == POPUP_COMPLETION) {
+        inputOffset -= 1;
+    }
+
+    int fh = render_t::instance()->fh;
+
+    if (items.size()) {
+        if (currentItem < 0)
+            currentItem = 0;
+        if (currentItem >= items.size())
+            currentItem = items.size() - 1;
+        int viewportHeight = rows - inputOffset;
+
+        while (true) {
+            int blockVirtualLine = currentItem;
+            int blockScreenLine = blockVirtualLine - (scrollY / fh);
+
+            app_t::instance()->log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, currentItem);
+
+            if (blockScreenLine > viewportHeight) {
+                scrollY += fh;
+            } else if (blockScreenLine <= inputOffset) {
+                scrollY -= fh;
+            } else {
+                break;
+            }
+            break;
+        }
+    } else {
+        scrollY = 0;
+    }
 }
 
 void popup_t::hide()
@@ -248,6 +325,7 @@ void popup_t::prompt(std::string _placeholder)
     items.clear();
     view_t::setFocus(this);
     setVisible(true);
+    scrollY = 0;
 }
 
 void popup_t::search(std::string t)
@@ -269,6 +347,7 @@ void popup_t::search(std::string t)
     items.clear();
     view_t::setFocus(this);
     setVisible(true);
+    scrollY = 0;
 }
 
 void popup_t::files()
@@ -283,6 +362,7 @@ void popup_t::files()
     items.clear();
     view_t::setFocus(this);
     setVisible(true);
+    scrollY = 0;
 }
 
 void popup_t::commands()
@@ -321,6 +401,7 @@ void popup_t::commands()
     placeholder = "enter command";
     items.clear();
     setVisible(true);
+    scrollY = 0;
 }
 
 void popup_t::update(int delta)
@@ -409,6 +490,7 @@ void popup_t::showCompletion()
     if (items.size()) {
         sort(items.begin(), items.end(), compareItem);
         setVisible(true);
+        scrollY = 0;
     }
 }
 

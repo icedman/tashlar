@@ -453,10 +453,10 @@ static int poll_event()
         return 0;
 
     case SDL_MOUSEBUTTONDOWN:
+        pushKey(0, "mousedown");
         if (e.button.button == 1) {
             SDL_CaptureMouse((SDL_bool)1);
         }
-        pushKey(0, "mousedown");
         dragView = view_t::currentHovered();
         view_t::currentHovered()->mouseDown(e.button.x, e.button.y, e.button.button, e.button.clicks);
         return 0;
@@ -475,8 +475,12 @@ static int poll_event()
         view_t::setHovered(app_t::instance()->viewFromPointer(e.motion.x, e.motion.y));
         if (view_t::currentHovered() == dragView) {
             view_t::currentHovered()->mouseDrag(e.motion.x, e.motion.y);
-            app_t::log("motion %d %d", e.motion.x, e.motion.y);
-            pushKey(0, "mousemove");
+            // app_t::log("drag %d %d", e.motion.x, e.motion.y);
+            pushKey(0, "mousedrag");
+        } else {
+            view_t::currentHovered()->mouseHover(e.motion.x, e.motion.y);
+            // app_t::log("hover %d %d", e.motion.x, e.motion.y);
+            pushKey(0, "mousehover");
         }
         return 0;
     }

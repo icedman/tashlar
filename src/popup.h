@@ -34,6 +34,11 @@ struct popup_t : view_t {
     void render() override;
     bool input(char ch, std::string keys) override;
     void applyTheme() override;
+    void preLayout() override;
+    void mouseDown(int x, int y, int button, int clicks) override;
+    void mouseHover(int x, int y) override;
+
+    void ensureVisibleCursor();
 
     void hide();
     void search(std::string text);

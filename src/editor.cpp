@@ -857,6 +857,7 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
                     pushOp(SELECT_WORD, "");
                 }
                 view_t::setFocus(this);
+                popup_t::instance()->hide();
             }
             l++;
         }

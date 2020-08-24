@@ -230,7 +230,7 @@ void explorer_t::preLayout()
     if (render_t::instance()->fw > 10) {
         preferredWidth += (padding * 2);
     }
-    maxScrollY = renderList.size() - rows;
+    maxScrollY = (renderList.size() - rows + 1) * render_t::instance()->fh;
 }
 
 void explorer_t::applyTheme()
@@ -344,16 +344,23 @@ bool explorer_t::input(char ch, std::string keys)
 
 void explorer_t::mouseDown(int x, int y, int button, int clicks)
 {
+    int prevItem = currentItem;
     int fh = render_t::instance()->fh;
-    currentItem = ((y - this->y - padding) / fh) + scrollY;
+    currentItem = ((y - this->y - padding) / fh) + (scrollY / fh);
     if (currentItem >= renderList.size()) {
         currentItem = renderList.size() - 1;
     }
-    view_t::setFocus(this);
-
-    if (clicks > 1) {
+    if (clicks > 0) {
+        view_t::setFocus(this);
+    }
+    if (clicks > 1) { //  || (clicks == 1 && prevItem == currentItem)) {
         input(0, "enter");
     }
+}
+
+void explorer_t::mouseHover(int x, int y)
+{
+    mouseDown(x, y, 1, 0);
 }
 
 bool explorer_t::isVisible()
@@ -363,6 +370,8 @@ bool explorer_t::isVisible()
 
 void explorer_t::ensureVisibleCursor()
 {
+    int fh = render_t::instance()->fh;
+
     // scroll to cursor
     // TODO: use math not loops
     while (rows > 0) {
@@ -372,9 +381,9 @@ void explorer_t::ensureVisibleCursor()
         // app_t::instance()->log(">%d %d scroll:%d items:%d h:%d", blockScreenLine, currentItem, scrollY, renderList.size(), rows);
 
         if (blockScreenLine + 1 >= rows) {
-            scrollY++;
+            scrollY += fh;
         } else if (blockScreenLine < 0) {
-            scrollY--;
+            scrollY -= fh;
         } else {
             break;
         }

@@ -71,32 +71,7 @@ void popup_t::render()
     _attroff(_color_pair(colorIndicator));
     _attron(_color_pair(colorPrimary));
 
-    // app_t::instance()->log("items: %d inputOffset: %d", items.size(), inputOffset);
-    // scroll to cursor
-    // TODO: use math not loops
-    if (items.size()) {
-        int viewportHeight = rows - inputOffset;
-
-        // app_t::instance()->log("items:%d current:%d scroll:%d h:%d", items.size(), currentItem, scrollY, viewportHeight);
-        while (true) {
-            int blockVirtualLine = currentItem;
-            int blockScreenLine = blockVirtualLine - scrollY;
-            if (blockScreenLine > viewportHeight) {
-                scrollY++;
-            } else if (blockScreenLine <= 0) {
-                scrollY--;
-            } else {
-                break;
-            }
-            break;
-        }
-
-    } else {
-        scrollY = 0;
-    }
-
-    int skip = scrollY;
-
+    int skip = (scrollY / render_t::instance()->fh);
     int idx = 0;
     int y = (inputOffset - 1);
     for (auto& item : items) {

@@ -114,6 +114,11 @@ void tabbar_t::mouseDown(int x, int y, int button, int clicks)
     }
 }
 
+void tabbar_t::mouseHover(int x, int y)
+{
+    // mouseDown(x, y, 1, 0);
+}
+
 bool tabbar_t::isVisible()
 {
     return visible && app_t::instance()->showTabbar;

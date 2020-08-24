@@ -27,6 +27,7 @@ struct tabbar_t : view_t {
     bool isVisible() override;
     void preLayout() override;
     void mouseDown(int x, int y, int button, int clicks) override;
+    void mouseHover(int x, int y) override;
 
     std::vector<struct tabitem_t> tabs;
 };

@@ -40,13 +40,14 @@ void explorer_t::render()
         buildFileList(renderList, &files, 0);
     }
 
-    bool hasFocus = isFocused();
+    bool isHovered = view_t::currentHovered() == this;
+    bool hasFocus = isFocused() || isHovered;
     if (currentItem == -1) {
         currentItem = 0;
     }
 
     int idx = 0;
-    int skip = scrollY;
+    int skip = (scrollY / render_t::instance()->fh);
     int y = 0;
     for (auto file : renderList) {
         if (skip-- > 0) {
