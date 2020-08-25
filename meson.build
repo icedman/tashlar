@@ -91,16 +91,12 @@ sdl2_dep = declare_dependency(dependencies: [ sdl2_lib ])
 
 sdl2ttf_lib = cc.find_library('SDL2_ttf', required: true)
 sdl2ttf_dep = declare_dependency(dependencies: [ sdl2ttf_lib ])
-
-#sdl2image_lib  = cc.find_library('SDL2_image', required: true)
-#sdl2image_dep  = declare_dependency(dependencies: [ sdl2image_lib ])
-    
+   
 jsoncpp_lib = cc.find_library('jsoncpp', required: true)
 jsoncpp_dep = declare_dependency(dependencies: [ jsoncpp_lib ])
 
 onigmo_lib = cc.find_library('onigmo', required: true)
 onigmo_dep = declare_dependency(dependencies: [ onigmo_lib ])
-
 
 quickjs_lib = cc.find_library('quickjs', required: true, dirs:['/usr/lib/quickjs', '/usr/local/lib/quickjs'])
 if build_machine.system() == 'darwin'

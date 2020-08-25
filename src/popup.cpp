@@ -416,6 +416,7 @@ void popup_t::update(int delta)
 
 void popup_t::completion()
 {
+    hide();
     struct app_t* app = app_t::instance();
     struct editor_t* editor = app->currentEditor.get();
     request = 1000;

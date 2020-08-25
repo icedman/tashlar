@@ -765,3 +765,63 @@ int cursor_t::unindent()
     int count = _cursorUnindent(&cur);
     return count;
 }
+
+static int _cursorComment(cursor_t* cursor)
+{
+    return 0;
+}
+
+int cursor_t::comment()
+{
+    block_list blocks = selectedBlocks();
+
+    if (blocks.size() > 1) {
+
+        cursor_position_t posCur = selectionStart();
+        cursor_position_t anchorCur = selectionEnd();
+
+        int count = 0;
+        int idx = 0;
+        for (auto b : blocks) {
+            cursor_t cur = *this;
+            cur.setPosition(b, 0);
+            count = _cursorComment(&cur);
+        }
+
+        return count;
+    }
+
+    cursor_t cur = *this;
+    int count = _cursorComment(&cur);
+    return count;
+}
+
+static int _cursorUncomment(cursor_t* cursor)
+{
+    return 0;
+}
+
+int cursor_t::uncomment()
+{
+    block_list blocks = selectedBlocks();
+
+    if (blocks.size() > 1) {
+
+        cursor_position_t posCur = selectionStart();
+        cursor_position_t anchorCur = selectionEnd();
+
+        int count = 0;
+        int idx = 0;
+        for (auto b : blocks) {
+            cursor_t cur = *this;
+            cur.setPosition(b, 0);
+            count = _cursorUncomment(&cur);
+        }
+
+        return count;
+    }
+
+    cursor_t cur = *this;
+    int count = _cursorUncomment(&cur);
+    return count;
+}

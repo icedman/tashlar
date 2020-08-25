@@ -163,7 +163,7 @@ bool document_t::open(std::string path)
 
     // reopen from tmp
     file = std::ifstream(tmpPath, std::ifstream::in);
-    
+
     std::set<char> delims = { '\\', '/' };
     std::vector<std::string> spath = split_path(filePath, delims);
     fileName = spath.back();

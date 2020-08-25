@@ -260,7 +260,7 @@ void explorer_t::preLayout()
         preferredWidth += (padding * 2);
     }
 
-    if (scrollbar->scrollTo >= 0 && scrollbar->scrollTo < scrollbar->maxScrollY) {
+    if (scrollbar->scrollTo >= 0 && scrollbar->scrollTo < scrollbar->maxScrollY && scrollbar->maxScrollY > 0) {
         scrollY = scrollbar->scrollTo;
         scrollbar->scrollTo = -1;
     }
@@ -274,6 +274,10 @@ void explorer_t::preLayout()
     scrollbar->thumbSize = rows / renderList.size();
     if (scrollbar->thumbSize < 2) {
         scrollbar->thumbSize = 2;
+    }
+
+    if (!scrollbar->isVisible()) {
+        scrollY = 0;
     }
 }
 
@@ -315,7 +319,11 @@ bool explorer_t::input(char ch, std::string keys)
     }
 
     struct app_t* app = app_t::instance();
-    struct fileitem_t* item = renderList[currentItem];
+    struct fileitem_t* item = NULL;
+
+    if (currentItem != -1) {
+        item = renderList[currentItem];
+    }
 
     operation_e cmd = operationFromKeys(keys);
 
@@ -324,7 +332,7 @@ bool explorer_t::input(char ch, std::string keys)
     switch (cmd) {
     case MOVE_CURSOR_RIGHT:
     case ENTER:
-        if (item->isDirectory) {
+        if (item && item->isDirectory) {
             item->expanded = !item->expanded || cmd == MOVE_CURSOR_RIGHT;
             app->log("expand/collapse folder %s", item->fullPath.c_str());
             if (item->canLoadMore) {
@@ -340,7 +348,7 @@ bool explorer_t::input(char ch, std::string keys)
         }
         return true;
     case MOVE_CURSOR_LEFT:
-        if (item->isDirectory && item->expanded) {
+        if (item && item->isDirectory && item->expanded) {
             item->expanded = false;
             regenerateList = true;
             return true;
@@ -352,6 +360,9 @@ bool explorer_t::input(char ch, std::string keys)
         break;
     case MOVE_CURSOR_DOWN:
         currentItem++;
+        if (currentItem >= renderList.size()) {
+            currentItem = renderList.size() - 1;
+        }
         break;
     case MOVE_CURSOR_START_OF_DOCUMENT:
         currentItem = 0;
@@ -364,6 +375,9 @@ bool explorer_t::input(char ch, std::string keys)
         break;
     case MOVE_CURSOR_NEXT_PAGE:
         currentItem += height;
+        if (currentItem >= renderList.size()) {
+            currentItem = renderList.size() - 1;
+        }
         break;
     default:
         _scrollToCursor = false;
@@ -371,21 +385,23 @@ bool explorer_t::input(char ch, std::string keys)
     }
 
     // validate
-    if (currentItem < 0) {
+    if (currentItem < -1) {
         currentItem = 0;
     }
     if (currentItem >= renderList.size()) {
-        currentItem = renderList.size() - 1;
+        currentItem = -1;
     }
 
     if (_scrollToCursor) {
         ensureVisibleCursor();
     }
 
-    struct fileitem_t* nextItem = renderList[currentItem];
-    if (nextItem != item) {
-        statusbar_t::instance()->setStatus(nextItem->fullPath, 3500);
-        return true;
+    if (currentItem != -1) {
+        struct fileitem_t* nextItem = renderList[currentItem];
+        if (nextItem != item) {
+            statusbar_t::instance()->setStatus(nextItem->fullPath, 3500);
+            return true;
+        }
     }
 
     return false;
@@ -396,8 +412,8 @@ void explorer_t::mouseDown(int x, int y, int button, int clicks)
     int prevItem = currentItem;
     int fh = render_t::instance()->fh;
     currentItem = ((y - this->y - padding) / fh) + (scrollY / fh);
-    if (currentItem >= renderList.size()) {
-        currentItem = renderList.size() - 1;
+    if (currentItem < 0 || currentItem >= renderList.size()) {
+        currentItem = -1;
     }
     if (clicks > 0) {
         view_t::setFocus(this);
@@ -405,6 +421,7 @@ void explorer_t::mouseDown(int x, int y, int button, int clicks)
     if (clicks > 1 || (clicks == 1 && prevItem == currentItem)) {
         input(0, "enter");
     }
+    app_t::log(">>>%d", currentItem);
 }
 
 void explorer_t::mouseHover(int x, int y)
@@ -422,17 +439,18 @@ void explorer_t::ensureVisibleCursor()
     int fh = render_t::instance()->fh;
 
     if (renderList.size()) {
-        if (currentItem < 0)
-            currentItem = 0;
-        if (currentItem >= renderList.size())
-            currentItem = renderList.size() - 1;
+        int current = currentItem;
+        if (current < 0)
+            current = 0;
+        if (current >= renderList.size())
+            current = renderList.size() - 1;
         int viewportHeight = rows - 0;
 
         while (renderList.size() > 4) {
-            int blockVirtualLine = currentItem;
+            int blockVirtualLine = current;
             int blockScreenLine = blockVirtualLine - (scrollY / fh);
 
-            app_t::instance()->log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, currentItem);
+            app_t::instance()->log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, current);
 
             if (blockScreenLine >= viewportHeight) {
                 scrollY += fh;

@@ -25,8 +25,6 @@ void explorer_t::render()
     // view_t::render();
     // return;
 
-    // app_t::log("explorer h:%d", height);
-
     app_t* app = app_t::instance();
 
     editor_ptr editor = app_t::instance()->currentEditor;
@@ -38,9 +36,6 @@ void explorer_t::render()
 
     bool isHovered = view_t::currentHovered() == this;
     bool hasFocus = isFocused() || isHovered;
-    if (currentItem == -1) {
-        currentItem = 0;
-    }
 
     int idx = 0;
     int skip = (scrollY / render_t::instance()->fh);

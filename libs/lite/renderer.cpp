@@ -2,7 +2,6 @@
 #include "stb_truetype.h"
 #include "app.h"
 
-#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
 #include <assert.h>
@@ -442,7 +441,13 @@ int ren_draw_text(RenFont* font, const char* text, int x, int y, RenColor color,
     const char* p = text;
     unsigned codepoint;
     while (*p) {
+        unsigned cp = *p;
         p = utf8_to_codepoint(p, &codepoint);
+
+        if (codepoint >= 128 || !isprint(codepoint)) {
+            codepoint = '?';
+        }
+
 #ifdef USE_SDL_TTF
         GlyphSet** sets = font->sets;
         if (bold) {
@@ -468,7 +473,7 @@ int ren_draw_text(RenFont* font, const char* text, int x, int y, RenColor color,
         rect.width = g->x1 - g->x0;
         rect.height = g->y1 - g->y0;
         ren_draw_image(set->image, &rect, x + g->xoff, y + g->yoff, color);
-        x += g->xadvance;
+        x += sdlFontWidth; // g->xadvance;
 #endif
     }
     return x;
@@ -657,12 +662,6 @@ void cache_glyphs(RenFont* renFont, int style)
                 set->image->pixels[y * _w + x] = clr;
             }
         }
-
-        /*
-            char tmp[255];
-            sprintf(tmp, "t%d.bmp", i);
-            SDL_SaveBMP(surf, tmp);
-            */
 
         SDL_FreeSurface(surf);
     }

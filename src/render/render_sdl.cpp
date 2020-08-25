@@ -302,7 +302,7 @@ RenFont* find_font(std::string filename, int size)
         // const std::string path(cpath);
         free(cpath);
     }
-    
+
     return font;
 }
 

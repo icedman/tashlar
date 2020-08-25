@@ -14,6 +14,7 @@ enum operation_e {
 
     INDENT,
     UNINDENT,
+    TOGGLE_COMMENT,
 
     SELECT_ALL,
     SELECT_LINE,

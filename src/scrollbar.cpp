@@ -31,8 +31,8 @@ void scrollbar_t::render()
     if (sy < 0)
         sy = 0;
 
-    int s = (rows - thumbSize + 1)  * sy / maxScrollY;
-    for(int i=0;i<thumbSize; i++) {
+    int s = (rows - thumbSize + 1) * sy / maxScrollY;
+    for (int i = 0; i < thumbSize; i++) {
         _move(s + i, 0);
         _addch(' ');
     }

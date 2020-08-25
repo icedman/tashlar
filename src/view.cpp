@@ -329,10 +329,10 @@ view_t* view_t::shiftFocus(int x, int y)
 void view_t::scroll(int s)
 {
     scrollY -= s;
+    if (scrollY >= maxScrollY && maxScrollY > 0)
+        scrollY = maxScrollY - 1;
     if (scrollY < 0)
         scrollY = 0;
-    if (scrollY >= maxScrollY)
-        scrollY = maxScrollY - 1;
 }
 
 view_t* view_t::viewFromPointer(int x, int y)
