@@ -4,9 +4,9 @@
 
 scrollbar_t::scrollbar_t()
     : view_t("item")
-    , scrollTo(0)
+    , scrollTo(-1)
 {
-    preferredWidth = 6;
+    preferredWidth = 8;
     padding = 0;
 }
 
@@ -64,10 +64,11 @@ void scrollbar_t::applyTheme()
 
 void scrollbar_t::mouseDown(int x, int y, int button, int clicks)
 {
-    app_t::log("down >>%d", y);
+    scrollTo = maxScrollY * (y - this->y) / height;
+    // app_t::log(">y:%d t:%d h:%d %d", y, this->y, height, scrollTo);
 }
 
 void scrollbar_t::mouseDrag(int x, int y, bool within)
 {
-    app_t::log("drag >>%d", y);
+    mouseDown(x, y, 1, 0);
 }

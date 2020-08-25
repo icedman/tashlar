@@ -504,7 +504,7 @@ static int poll_event()
     case SDL_MOUSEMOTION: {
         view_t::setHovered(app_t::instance()->viewFromPointer(e.motion.x, e.motion.y));
         if (dragView) {
-            view_t::currentHovered()->mouseDrag(e.motion.x, e.motion.y, (view_t::currentHovered() == dragView));
+            dragView->mouseDrag(e.motion.x, e.motion.y, (view_t::currentHovered() == dragView));
             // app_t::log("drag %d %d", e.motion.x, e.motion.y);
             pushKey(0, "mousedrag");
         } else {

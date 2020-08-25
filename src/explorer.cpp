@@ -259,6 +259,12 @@ void explorer_t::preLayout()
     if (render_t::instance()->fw > 10) {
         preferredWidth += (padding * 2);
     }
+
+    if (scrollbar->scrollTo >= 0 && scrollbar->scrollTo < scrollbar->maxScrollY) {
+        scrollY = scrollbar->scrollTo;
+        scrollbar->scrollTo = -1;
+    }
+
     maxScrollY = (renderList.size() - rows + 1) * render_t::instance()->fh;
     scrollbar->setVisible(maxScrollY > rows && render_t::instance()->fh > 10);
     scrollbar->scrollY = scrollY;

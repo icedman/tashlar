@@ -111,17 +111,27 @@ void minimap_t::preLayout()
     preferredWidth = (padding * 2) + (MINIMAP_WIDTH * render_t::instance()->fw);
 }
 
+void minimap_t::scroll(int s)
+{
+    editor->scroll(s);
+}
+
 void minimap_t::mouseDown(int x, int y, int button, int clicks)
 {
-    int fw = render_t::instance()->fw;
-    int fh = render_t::instance()->fh;
+    scrollbar->mouseDown(x, y, button, clicks);
+}
 
-    int col = (x - this->x) / fw;
-    int row = (y - this->y) / fh;
+void minimap_t::mouseUp(int x, int y, int button)
+{
+    scrollbar->mouseUp(x, y, button);
+}
 
-    std::ostringstream ss;
-    ss << (firstVisibleLine + row * 4);
-    ss << ":";
-    ss << "0";
-    app_t::instance()->currentEditor->pushOp(MOVE_CURSOR, ss.str());
+void minimap_t::mouseDrag(int x, int y, bool within)
+{
+    scrollbar->mouseDrag(x, y, within);
+}
+
+void minimap_t::mouseHover(int x, int y)
+{
+    scrollbar->mouseHover(x, y);
 }

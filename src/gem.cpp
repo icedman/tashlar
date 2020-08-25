@@ -14,6 +14,7 @@ gem_t::gem_t()
     addView(editor.get());
     addView(&minimap);
     addView(&scrollbar);
+    minimap.scrollbar = &scrollbar;
 }
 
 gem_t::~gem_t()
@@ -51,6 +52,11 @@ void gem_t::update(int delta)
     }
 
     view_t::update(delta);
+
+    if (scrollbar.scrollTo >= 0 && scrollbar.scrollTo < scrollbar.maxScrollY) {
+        editor->scrollY = scrollbar.scrollTo;
+        scrollbar.scrollTo = -1;
+    }
     scrollbar.setVisible(render_t::instance()->fh > 10 && editor->maxScrollY > editor->rows);
     scrollbar.scrollY = editor->scrollY;
     scrollbar.maxScrollY = editor->maxScrollY;
