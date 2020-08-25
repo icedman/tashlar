@@ -22,6 +22,9 @@ void explorer_t::render()
         return;
     }
 
+    // view_t::render();
+    // return;
+
     // app_t::log("explorer h:%d", height);
 
     app_t* app = app_t::instance();
@@ -32,13 +35,6 @@ void explorer_t::render()
     block_t& block = *cursor.block();
 
     _move(0, 0);
-
-    if (regenerateList) {
-        regenerateList = false;
-        allFiles.clear();
-        renderList.clear();
-        buildFileList(renderList, &files, 0);
-    }
 
     bool isHovered = view_t::currentHovered() == this;
     bool hasFocus = isFocused() || isHovered;

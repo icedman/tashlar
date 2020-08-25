@@ -1,6 +1,7 @@
 #include "gem.h"
 #include "app.h"
 #include "keybinding.h"
+#include "render.h"
 
 gem_t::gem_t()
     : view_t("gutter-editor-minimap")
@@ -12,6 +13,7 @@ gem_t::gem_t()
     addView(&gutter);
     addView(editor.get());
     addView(&minimap);
+    addView(&scrollbar);
 }
 
 gem_t::~gem_t()
@@ -33,7 +35,7 @@ bool gem_t::input(char ch, std::string keys)
     switch (op) {
     case SPLIT_VIEW:
         split = true;
-        app_t::log("split!");
+        //        app_t::log("split!");
         return true;
     default:
         break;
@@ -49,4 +51,8 @@ void gem_t::update(int delta)
     }
 
     view_t::update(delta);
+    scrollbar.setVisible(render_t::instance()->fh > 10 && editor->maxScrollY > editor->rows);
+    scrollbar.scrollY = editor->scrollY;
+    scrollbar.maxScrollY = editor->maxScrollY;
+    scrollbar.colorPrimary = minimap.colorPrimary;
 }

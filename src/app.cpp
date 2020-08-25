@@ -75,6 +75,8 @@ app_t::app_t()
     addView(&statusBar);
 
     mainView.addView(&explorer);
+    mainView.addView(&explorerScrollbar);
+    explorer.scrollbar = &explorerScrollbar;
     mainView.addView(&tabView);
 
     tabView.viewLayout = LAYOUT_VERTICAL;

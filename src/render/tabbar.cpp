@@ -52,6 +52,7 @@ void tabbar_t::render()
 
             if (!item.name.length()) {
                 item.name = "untitled";
+                item.width = 10;
             }
             tabs.emplace_back(item);
         }

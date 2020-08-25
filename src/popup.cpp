@@ -297,7 +297,6 @@ void popup_t::ensureVisibleCursor()
             } else {
                 break;
             }
-            break;
         }
     } else {
         scrollY = 0;
@@ -518,10 +517,18 @@ void popup_t::onInput()
         std::stringstream(text) >> line;
         for (auto b : doc->blocks) {
             if (b->lineNumber == line - 1) {
+                /*
                 cursor.setPosition(b, 0);
                 cursor.clearSelection();
                 doc->setCursor(cursor);
                 editor->preLayout();
+                editor->ensureVisibleCursor();
+                */
+                std::ostringstream ss;
+                ss << (b->lineNumber + 1);
+                ss << ":";
+                ss << 0;
+                editor->pushOp(MOVE_CURSOR, ss.str());
                 break;
             }
         }

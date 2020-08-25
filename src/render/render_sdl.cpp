@@ -3,6 +3,7 @@
 #include "rencache.h"
 #include "render.h"
 #include "renderer.h"
+#include "util.h"
 
 #include <SDL2/SDL.h>
 
@@ -267,6 +268,29 @@ render_t::~render_t()
 {
 }
 
+RenFont* find_font(std::string filename, int size)
+{
+    RenFont* font = NULL; // ren_load_font(filename.c_str(), size);
+
+    char tmp[255];
+    if (!font) {
+        sprintf(tmp, "/usr/share/fonts/TTF/%s", filename.c_str());
+        font = ren_load_font(tmp, size);
+    }
+
+    if (!font) {
+        sprintf(tmp, "~/.local/share/fonts/%s", filename.c_str());
+        char* cpath = (char*)malloc(strlen(tmp) + 1 * sizeof(char));
+        strcpy(cpath, tmp);
+        expand_path((char**)(&cpath));
+        font = ren_load_font(cpath, size);
+        // const std::string path(cpath);
+        free(cpath);
+    }
+
+    return font;
+}
+
 void render_t::initialize()
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
@@ -290,10 +314,16 @@ void render_t::initialize()
     ren_init(window);
     // rencache_show_debug(true);
 
-    // font = ren_load_font("./fonts/font.ttf", 14);
-    font = ren_load_font("./fonts/FiraCode-Regular.ttf", 14);
-    // font = ren_load_font("./fonts/monospace.ttf", 14);
-    // font = ren_load_font("/usr/share/fonts/TTF/DejaVuSansMono.ttf", 14);
+    // read settings
+    font = find_font("FiraCode-Regular.ttf", 14);
+    if (!font) {
+        // font = find_font("./fonts/font.ttf", 14);
+        font = find_font("monospace.ttf", 14);
+    }
+    // fallback
+    if (font) {
+        font = find_font("DejaVuSansMono.ttf", 14);
+    }
 
     fw = ren_get_font_width(font, "1234567890AaBbCcDdEeFfGg") / 24;
     fh = ren_get_font_height(font);
@@ -473,8 +503,8 @@ static int poll_event()
 
     case SDL_MOUSEMOTION: {
         view_t::setHovered(app_t::instance()->viewFromPointer(e.motion.x, e.motion.y));
-        if (view_t::currentHovered() == dragView) {
-            view_t::currentHovered()->mouseDrag(e.motion.x, e.motion.y);
+        if (dragView) {
+            view_t::currentHovered()->mouseDrag(e.motion.x, e.motion.y, (view_t::currentHovered() == dragView));
             // app_t::log("drag %d %d", e.motion.x, e.motion.y);
             pushKey(0, "mousedrag");
         } else {

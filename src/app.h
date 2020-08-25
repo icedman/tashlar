@@ -5,6 +5,7 @@
 #include "extension.h"
 #include "gem.h"
 #include "popup.h"
+#include "scrollbar.h"
 #include "statusbar.h"
 #include "tabbar.h"
 #include "view.h"
@@ -75,6 +76,9 @@ struct app_t : view_t {
     statusbar_t statusBar;
     tabbar_t tabBar;
     popup_t popup;
+
+    scrollbar_t explorerScrollbar;
+    scrollbar_t editorScrollbar;
 
     view_t mainView;
     view_t tabView;

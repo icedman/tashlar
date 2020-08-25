@@ -866,8 +866,10 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
     }
 }
 
-void editor_t::mouseDrag(int x, int y)
+void editor_t::mouseDrag(int x, int y, bool within)
 {
+    if (!within)
+        return;
     mouseDown(x, y, 1, 0);
 }
 

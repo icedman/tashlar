@@ -10,6 +10,7 @@
 #include "app.h"
 #include "editor.h"
 #include "explorer.h"
+#include "item.h"
 #include "render.h"
 #include "util.h"
 
@@ -136,6 +137,7 @@ explorer_t::explorer_t()
     , regenerateList(true)
 {
     preferredWidth = EXPLORER_WIDTH;
+    viewLayout = LAYOUT_VERTICAL;
 
     canFocus = true;
     loadDepth = 0;
@@ -156,6 +158,24 @@ void explorer_t::buildFileList(std::vector<struct fileitem_t*>& list, struct fil
             buildFileList(list, file.get(), depth + 1, deep);
         }
     }
+
+    /*
+    while(views.size() > renderList.size()) {
+        views.pop_back();
+    }
+    while(views.size() < renderList.size()) {
+        item_view_t *item = new item_view_t();
+        views.push_back((view_t*)item);
+    }
+    
+    int idx = 0;
+    for(auto i : renderList) {
+        item_view_t *item = (item_view_t*)views[idx++];
+        item->text = i->name;
+        item->colorPrimary = colorPrimary;
+        item->colorIndicator = colorIndicator;
+    }
+    */
 }
 
 std::vector<struct fileitem_t*> explorer_t::fileList()
@@ -219,6 +239,13 @@ void explorer_t::update(int delta)
         preloadFolders();
     }
     */
+
+    if (regenerateList) {
+        regenerateList = false;
+        allFiles.clear();
+        renderList.clear();
+        buildFileList(renderList, &files, 0);
+    }
 }
 
 void explorer_t::preLayout()
@@ -226,11 +253,17 @@ void explorer_t::preLayout()
     if (width == 0 || height == 0 || !isVisible())
         return;
 
+    view_t::preLayout();
+
     preferredWidth = EXPLORER_WIDTH * render_t::instance()->fw;
     if (render_t::instance()->fw > 10) {
         preferredWidth += (padding * 2);
     }
     maxScrollY = (renderList.size() - rows + 1) * render_t::instance()->fh;
+    scrollbar->setVisible(maxScrollY > rows && render_t::instance()->fh > 10);
+    scrollbar->scrollY = scrollY;
+    scrollbar->maxScrollY = maxScrollY;
+    scrollbar->colorPrimary = colorPrimary;
 }
 
 void explorer_t::applyTheme()
@@ -241,6 +274,11 @@ void explorer_t::applyTheme()
 
     colorPrimary = pairForColor(comment.foreground.index, false);
     colorIndicator = pairForColor(app->tabActiveBorder, false);
+
+    for (auto view : views) {
+        view->colorPrimary = colorPrimary;
+        view->colorIndicator = colorIndicator;
+    }
 }
 
 static struct fileitem_t* parentItem(struct fileitem_t* item, std::vector<struct fileitem_t*>& list)
@@ -385,14 +423,13 @@ void explorer_t::ensureVisibleCursor()
 
             app_t::instance()->log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, currentItem);
 
-            if (blockScreenLine > viewportHeight) {
+            if (blockScreenLine >= viewportHeight) {
                 scrollY += fh;
             } else if (blockScreenLine <= 0) {
                 scrollY -= fh;
             } else {
                 break;
             }
-            break;
         }
     } else {
         scrollY = 0;

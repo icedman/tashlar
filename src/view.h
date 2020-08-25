@@ -30,7 +30,7 @@ struct view_t {
     virtual void scroll(int s);
     virtual void mouseDown(int x, int y, int button, int clicks);
     virtual void mouseUp(int x, int y, int button);
-    virtual void mouseDrag(int x, int y);
+    virtual void mouseDrag(int x, int y, bool within);
     virtual void mouseHover(int x, int y);
 
     void vlayout(int x, int y, int w, int h);

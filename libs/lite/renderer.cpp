@@ -1,6 +1,6 @@
 #include "renderer.h"
-#include "app.h"
 #include "stb_truetype.h"
+#include "app.h"
 
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -208,6 +208,12 @@ RenFont* ren_load_font(const char* filename, float size)
     font->size = size;
 
     font->font = load_font((char*)filename, size);
+
+    if (!font->font) {
+        free(font);
+        return NULL;
+    }
+
     cache_glyphs(font, TTF_STYLE_NORMAL);
     cache_glyphs(font, TTF_STYLE_BOLD);
     cache_glyphs(font, TTF_STYLE_ITALIC);

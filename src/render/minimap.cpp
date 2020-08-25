@@ -3,7 +3,7 @@
 #include "dots.h"
 #include "render.h"
 
-#define MINIMAP_TEXT_COMPRESS 5
+#define MINIMAP_TEXT_COMPRESS 4
 
 void minimap_t::render()
 {
