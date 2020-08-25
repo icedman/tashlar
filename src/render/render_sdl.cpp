@@ -289,12 +289,12 @@ RenFont* find_font(std::string filename, int size)
     }
 
     if (!font) {
-        sprintf(tmp, "/Library/fonts/%s", filename.c_str());
+        sprintf(tmp, "/Library/Fonts/%s", filename.c_str());
         font = ren_load_font(tmp, size);
     }
 
     if (!font) {
-        sprintf(tmp, "~/Library/fonts/%s", filename.c_str());
+        sprintf(tmp, "~/Library/Fonts/%s", filename.c_str());
         char* cpath = (char*)malloc(strlen(tmp) + 1 * sizeof(char));
         strcpy(cpath, tmp);
         expand_path((char**)(&cpath));

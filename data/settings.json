@@ -1,0 +1,42 @@
+{
+   "extensions_paths": [
+      "/opt/visual-studio-code/resources/app/extensions/"
+   ],
+   
+   "debug_scopes": false,
+   "smooth_scroll": true,
+   
+   "theme": "Monokai",
+   "_theme": "Bluloco Light",
+   "_theme": "Bluloco Dark",
+   "_theme": "Dracula",
+   "_theme": "Shades of Purple",
+   
+   "icon_theme": "vs-seti",
+   "_icon_theme": "material-icon-theme",
+   
+   "default_icons": "editor-icons",
+
+   "gutter": true,
+   "mini_map": true,
+   
+   "font_size": 12,
+   "font": "Source Code Pro for Powerline",
+   
+   "tab_size": 4,
+   "tab_to_spaces": true,
+
+   "word_wrap": true,
+   
+   "sidebar": true,
+   "statusbar": true,
+   "menubar": true,
+
+   /* copied from sublime */
+   "folder_exclude_patterns": [".svn", ".git", ".hg", "CVS", "node_modules"],
+   "file_exclude_patterns": ["*.pyc", "*.pyo", "*.exe", "*.dll", "*.obj","*.o", "*.a", "*.lib", "*.so", "*.dylib", "*.ncb", "*.sdf", "*.suo", "*.pdb", "*.idb", ".DS_Store", "*.class", "*.psd", "*.db"],
+   "binary_file_patterns": ["*.jpg", "*.jpeg", "*.png", "*.gif", "*.ttf", "*.tga", "*.dds", "*.ico", "*.eot", "*.pdf", "*.swf", "*.jar", "*.zip"]
+}
+
+}
+
