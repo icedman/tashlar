@@ -1,0 +1,40 @@
+{
+	"name": "theme-bluloco-light",
+	"displayName": "Bluloco Light Theme",
+	"description": "A fancy but yet sophisticated light designer color scheme / theme.",
+	"version": "3.1.1",
+	"publisher": "uloco",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/uloco/theme-bluloco-light.git"
+	},
+	"icon": "icon.png",
+	"engines": {
+		"vscode": "^1.10.0"
+	},
+	"categories": [
+		"Themes"
+	],
+	"contributes": {
+		"themes": [
+			{
+				"label": "Bluloco Light",
+				"uiTheme": "vs",
+				"path": "./themes/bluloco-light-color-theme.json"
+			},
+			{
+				"label": "Bluloco Light Italic",
+				"uiTheme": "vs",
+				"path": "./themes/bluloco-light-italic-color-theme.json"
+			}
+		]
+	},
+	"devDependencies": {
+		"shelljs": "^0.8.3"
+	},
+	"__metadata": {
+		"id": "ee960969-f319-4daf-b7a0-a4bc8982cb8a",
+		"publisherId": "97df0873-3318-4b23-927e-f0aa91a951ba",
+		"publisherDisplayName": "Umut Topuzoğlu"
+	}
+}

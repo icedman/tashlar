@@ -1,15 +1,22 @@
 {
    "extensions_paths": [
-      "/opt/visual-studio-code/resources/app/extensions/"
+      "/opt/visual-studio-code/resources/app/extensions/",
+      "/home/iceman/Developer/textmate/ashlar-text/extensions/"
    ],
    
-   "debug_scopes": false,
+   "extensions": {
+       "hello-world": {},
+       "search": {},
+       "fuzzy": {}
+   },
+   
+   "debug_scopes": true,
    "smooth_scroll": true,
    
-   "theme": "Monokai",
+   "_theme": "Monokai",
    "_theme": "Bluloco Light",
    "_theme": "Bluloco Dark",
-   "_theme": "Dracula",
+   "theme": "Dracula",
    "_theme": "Shades of Purple",
    
    "icon_theme": "vs-seti",
@@ -31,12 +38,11 @@
    "sidebar": true,
    "statusbar": true,
    "menubar": true,
+   "tabbar": true,
 
    /* copied from sublime */
    "folder_exclude_patterns": [".svn", ".git", ".hg", "CVS", "node_modules"],
    "file_exclude_patterns": ["*.pyc", "*.pyo", "*.exe", "*.dll", "*.obj","*.o", "*.a", "*.lib", "*.so", "*.dylib", "*.ncb", "*.sdf", "*.suo", "*.pdb", "*.idb", ".DS_Store", "*.class", "*.psd", "*.db"],
    "binary_file_patterns": ["*.jpg", "*.jpeg", "*.png", "*.gif", "*.ttf", "*.tga", "*.dds", "*.ico", "*.eot", "*.pdf", "*.swf", "*.jar", "*.zip"]
-}
-
 }
 

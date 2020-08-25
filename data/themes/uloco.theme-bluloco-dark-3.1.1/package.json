@@ -1,0 +1,37 @@
+{
+	"name": "theme-bluloco-dark",
+	"displayName": "Bluloco Dark Theme",
+	"description": "A fancy but yet sophisticated dark designer color scheme / theme.",
+	"version": "3.1.1",
+	"publisher": "uloco",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/uloco/theme-bluloco-dark.git"
+	},
+	"icon": "icon.png",
+	"engines": {
+		"vscode": "^1.10.0"
+	},
+	"categories": [
+		"Themes"
+	],
+	"contributes": {
+		"themes": [
+			{
+				"label": "Bluloco Dark",
+				"uiTheme": "vs-dark",
+				"path": "./themes/bluloco-dark-color-theme.json"
+			},
+			{
+				"label": "Bluloco Dark Italic",
+				"uiTheme": "vs-dark",
+				"path": "./themes/bluloco-dark-italic-color-theme.json"
+			}
+		]
+	},
+	"__metadata": {
+		"id": "13bc2ec0-b396-4d55-a0e3-45bec5917fc3",
+		"publisherId": "97df0873-3318-4b23-927e-f0aa91a951ba",
+		"publisherDisplayName": "Umut Topuzoğlu"
+	}
+}
