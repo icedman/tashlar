@@ -288,6 +288,21 @@ RenFont* find_font(std::string filename, int size)
         free(cpath);
     }
 
+    if (!font) {
+        sprintf(tmp, "/Library/fonts/%s", filename.c_str());
+        font = ren_load_font(tmp, size);
+    }
+
+    if (!font) {
+        sprintf(tmp, "~/Library/fonts/%s", filename.c_str());
+        char* cpath = (char*)malloc(strlen(tmp) + 1 * sizeof(char));
+        strcpy(cpath, tmp);
+        expand_path((char**)(&cpath));
+        font = ren_load_font(cpath, size);
+        // const std::string path(cpath);
+        free(cpath);
+    }
+    
     return font;
 }
 
@@ -321,8 +336,11 @@ void render_t::initialize()
         font = find_font("monospace.ttf", 14);
     }
     // fallback
-    if (font) {
+    if (!font) {
         font = find_font("DejaVuSansMono.ttf", 14);
+    }
+    if (!font) {
+        font = find_font("Courier New.ttf", 14);
     }
 
     fw = ren_get_font_width(font, "1234567890AaBbCcDdEeFfGg") / 24;

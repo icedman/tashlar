@@ -101,8 +101,14 @@ jsoncpp_dep = declare_dependency(dependencies: [ jsoncpp_lib ])
 onigmo_lib = cc.find_library('onigmo', required: true)
 onigmo_dep = declare_dependency(dependencies: [ onigmo_lib ])
 
-quickjs_lib = cc.find_library('quickjs', required: true, dirs:['/usr/lib/quickjs'])
+
+quickjs_lib = cc.find_library('quickjs', required: true, dirs:['/usr/lib/quickjs', '/usr/local/lib/quickjs'])
+
+if build_machine.system() == 'darwin'
+quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/local/include/quickjs'])
+else
 quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/include/quickjs'])
+endif
   
 executable('ashlr',
     tashlar_files,

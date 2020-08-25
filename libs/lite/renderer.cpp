@@ -306,6 +306,7 @@ int ren_get_font_width(RenFont* font, const char* text)
     unsigned codepoint;
     while (*p) {
         p = utf8_to_codepoint(p, &codepoint);
+        if (codepoint > 128) return 0;
         x += font->sets[codepoint]->advance;
     }
 
