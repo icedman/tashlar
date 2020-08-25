@@ -92,8 +92,8 @@ sdl2_dep = declare_dependency(dependencies: [ sdl2_lib ])
 sdl2ttf_lib = cc.find_library('SDL2_ttf', required: true)
 sdl2ttf_dep = declare_dependency(dependencies: [ sdl2ttf_lib ])
 
-sdl2image_lib  = cc.find_library('SDL2_image', required: true)
-sdl2image_dep  = declare_dependency(dependencies: [ sdl2image_lib ])
+#sdl2image_lib  = cc.find_library('SDL2_image', required: true)
+#sdl2image_dep  = declare_dependency(dependencies: [ sdl2image_lib ])
     
 jsoncpp_lib = cc.find_library('jsoncpp', required: true)
 jsoncpp_dep = declare_dependency(dependencies: [ jsoncpp_lib ])
@@ -103,11 +103,10 @@ onigmo_dep = declare_dependency(dependencies: [ onigmo_lib ])
 
 
 quickjs_lib = cc.find_library('quickjs', required: true, dirs:['/usr/lib/quickjs', '/usr/local/lib/quickjs'])
-
 if build_machine.system() == 'darwin'
-quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/local/include/quickjs'])
+    quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/local/include/quickjs'])
 else
-quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/include/quickjs'])
+    quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/include/quickjs'])
 endif
   
 executable('ashlr',
@@ -124,6 +123,6 @@ executable('ashlar',
     tashlar_sdl_files,
     textmate_files,
     include_directories: [ './src', './src/render', './libs/lite', textmate_inc ],
-    dependencies: [ quickjs_dep, dl_dep, pthread_dep, sdl2_dep, sdl2ttf_dep, sdl2image_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
+    dependencies: [ quickjs_dep, dl_dep, pthread_dep, sdl2_dep, sdl2ttf_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )

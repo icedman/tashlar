@@ -39,7 +39,6 @@ int main(int argc, char** argv)
         renderer.update(delta);
 
         // app_t::log("h:%d", renderer.height);
-
         app.update(delta);
         app.preLayout();
         app.layout(0, 0, renderer.width, renderer.height);
