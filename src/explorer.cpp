@@ -270,6 +270,11 @@ void explorer_t::preLayout()
     scrollbar->scrollY = scrollY;
     scrollbar->maxScrollY = maxScrollY;
     scrollbar->colorPrimary = colorPrimary;
+
+    scrollbar->thumbSize = rows / renderList.size();
+    if (scrollbar->thumbSize < 2) {
+        scrollbar->thumbSize = 2;
+    }
 }
 
 void explorer_t::applyTheme()
@@ -423,7 +428,7 @@ void explorer_t::ensureVisibleCursor()
             currentItem = renderList.size() - 1;
         int viewportHeight = rows - 0;
 
-        while (true) {
+        while (renderList.size() > 4) {
             int blockVirtualLine = currentItem;
             int blockScreenLine = blockVirtualLine - (scrollY / fh);
 

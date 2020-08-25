@@ -341,7 +341,12 @@ view_t* view_t::viewFromPointer(int x, int y)
         return NULL;
     view_t* view = this;
     view_t* res = NULL;
-    if (x >= view->x && x < view->x + view->width && y >= view->y && y < view->y + view->height) {
+
+    int adjust = 0;
+    if (name == "scrollbar") {
+        adjust = 4;
+    }
+    if (x + adjust >= view->x && x - adjust < view->x + view->width && y >= view->y && y < view->y + view->height) {
         res = view;
         for (auto v : views) {
             view_t* cres = v->viewFromPointer(x, y);

@@ -61,4 +61,9 @@ void gem_t::update(int delta)
     scrollbar.scrollY = editor->scrollY;
     scrollbar.maxScrollY = editor->maxScrollY;
     scrollbar.colorPrimary = minimap.colorPrimary;
+
+    scrollbar.thumbSize = rows / editor->document.blocks.size();
+    if (scrollbar.thumbSize < 2) {
+        scrollbar.thumbSize = 2;
+    }
 }

@@ -3,11 +3,12 @@
 #include "render.h"
 
 scrollbar_t::scrollbar_t()
-    : view_t("item")
+    : view_t("scrollbar")
     , scrollTo(-1)
 {
-    preferredWidth = 8;
+    preferredWidth = 6;
     padding = 0;
+    thumbSize = 2;
 }
 
 scrollbar_t::~scrollbar_t()
@@ -23,18 +24,16 @@ void scrollbar_t::render()
     _move(0, 0);
     _attron(_color_pair(colorIndicator));
 
+    int fh = render_t::instance()->fh;
+
+    int th = thumbSize;
     int sy = scrollY;
     if (sy < 0)
         sy = 0;
-    int fh = render_t::instance()->fh;
 
-    int s = sy / fh;
-    int m = maxScrollY / fh;
-    int h = (rows + 4) / m;
-    if (h < 10) h = 10;
-
-    for (int i = 0; i < h; i++) {
-        _move((s * h) + i, 0);
+    int s = (rows - thumbSize + 1)  * sy / maxScrollY;
+    for(int i=0;i<thumbSize; i++) {
+        _move(s + i, 0);
         _addch(' ');
     }
 

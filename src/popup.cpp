@@ -284,7 +284,7 @@ void popup_t::ensureVisibleCursor()
             currentItem = items.size() - 1;
         int viewportHeight = rows - inputOffset;
 
-        while (true) {
+        while (items.size() > 4) {
             int blockVirtualLine = currentItem;
             int blockScreenLine = blockVirtualLine - (scrollY / fh);
 

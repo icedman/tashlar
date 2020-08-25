@@ -16,6 +16,7 @@ struct scrollbar_t : view_t {
     void mouseDrag(int x, int y, bool within) override;
 
     int scrollTo;
+    int thumbSize;
 };
 
 #endif // SCROLLBAR_H

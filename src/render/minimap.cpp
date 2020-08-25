@@ -3,7 +3,7 @@
 #include "dots.h"
 #include "render.h"
 
-#define MINIMAP_TEXT_COMPRESS 4
+#define MINIMAP_TEXT_COMPRESS 5
 
 void minimap_t::render()
 {
@@ -121,7 +121,7 @@ void minimap_t::render()
         _attroff(_color_pair(pair));
         _bold(false);
 
-        if (y >= rows) {
+        if (y > rows) {
             break;
         }
     }
