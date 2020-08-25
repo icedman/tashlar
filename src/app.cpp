@@ -411,6 +411,8 @@ bool app_t::input(char ch, std::string keys)
         end = true;
         return true;
     case CLOSE: {
+        view_t::setFocus(NULL);
+        view_t::setHovered(NULL);
         bool found = false;
         view_list::iterator it = tabContent.views.begin();
         while (it != tabContent.views.end()) {

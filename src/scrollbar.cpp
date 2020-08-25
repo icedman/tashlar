@@ -31,6 +31,7 @@ void scrollbar_t::render()
     int s = sy / fh;
     int m = maxScrollY / fh;
     int h = (rows + 4) / m;
+    if (h < 10) h = 10;
 
     for (int i = 0; i < h; i++) {
         _move((s * h) + i, 0);
