@@ -382,7 +382,6 @@ static int poll_event()
         if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
             if (e.window.data1 && e.window.data2) {
                 // SDL_SetWindowSize(window, e.window.data1, e.window.data2);
-
                 SDL_GetWindowSize(window, &render_t::instance()->width, &render_t::instance()->height);
                 ren_init(window);
                 pushKey(0, "resize");

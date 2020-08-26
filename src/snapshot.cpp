@@ -6,7 +6,6 @@ void snapshot_t::save(block_list& blocks)
     snapshot.clear();
     for (auto block : blocks) {
         block_ptr b = std::make_shared<block_t>();
-
         b->document = block->document;
         b->originalLineNumber = block->originalLineNumber;
         b->file = block->file;
@@ -18,7 +17,6 @@ void snapshot_t::save(block_list& blocks)
         b->content = block->content;
         b->data = nullptr;
         b->cachedLength = 0;
-
         snapshot.push_back(b);
     }
 }

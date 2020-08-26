@@ -79,6 +79,9 @@ void editor_t::render()
                 continue;
             }
 
+            if (l >= rows + 1)
+                break;
+
             // app_t::instance()->log("%s", line);
             int col = 0;
             for (int i = editor->scrollX;; i++) {

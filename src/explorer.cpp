@@ -342,7 +342,7 @@ bool explorer_t::input(char ch, std::string keys)
             regenerateList = true;
             return true;
         }
-        if (cmd == ENTER) {
+        if (item && cmd == ENTER) {
             app->log("open file %s", item->fullPath.c_str());
             app->openEditor(item->fullPath);
         }
@@ -357,6 +357,9 @@ bool explorer_t::input(char ch, std::string keys)
         break;
     case MOVE_CURSOR_UP:
         currentItem--;
+        if (currentItem < 0) {
+            currentItem = 0;
+        }
         break;
     case MOVE_CURSOR_DOWN:
         currentItem++;
@@ -382,14 +385,6 @@ bool explorer_t::input(char ch, std::string keys)
     default:
         _scrollToCursor = false;
         break;
-    }
-
-    // validate
-    if (currentItem < -1) {
-        currentItem = 0;
-    }
-    if (currentItem >= renderList.size()) {
-        currentItem = -1;
     }
 
     if (_scrollToCursor) {

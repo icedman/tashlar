@@ -143,6 +143,8 @@ void highlighter_t::highlightBlock(block_ptr block)
 
     if (text.length() > 500) {
         // too long to parse
+        blockData->dirty = false;
+        return;
     } else {
         parser_state = parse::parse(first, last, parser_state, scopes, firstLine);
     }

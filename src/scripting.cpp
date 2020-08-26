@@ -1,7 +1,11 @@
+#ifdef ENABLE_SCRIPTING
+
 extern "C" {
 #include "quickjs-libc.h"
 #include "quickjs.h"
 }
+
+#endif
 
 #include "app.h"
 #include "extension.h"
@@ -18,8 +22,10 @@ extern "C" {
 
 static struct scripting_t* scriptingInstance = 0;
 
+#ifdef ENABLE_SCRIPTING
 static JSRuntime* rt = 0;
 static JSContext* ctx = 0;
+#endif
 
 struct scripting_t* scripting_t::instance()
 {
@@ -33,10 +39,13 @@ scripting_t::scripting_t()
 
 scripting_t::~scripting_t()
 {
+#ifdef ENABLE_SCRIPTING
     JS_FreeContext(ctx);
     JS_FreeRuntime(rt);
+#endif
 }
 
+#ifdef ENABLE_SCRIPTING
 static JSValue js_log(JSContext* ctx, JSValueConst this_val,
     int argc, JSValueConst* argv)
 {
@@ -129,9 +138,11 @@ static JSValue js_theme(JSContext* ctx, JSValueConst this_val,
     }
     return JS_UNDEFINED;
 }
+#endif
 
 void scripting_t::initialize()
 {
+#ifdef ENABLE_SCRIPTING
     rt = JS_NewRuntime();
     js_std_init_handlers(rt);
     ctx = JS_NewContextRaw(rt);
@@ -150,26 +161,32 @@ void scripting_t::initialize()
     JS_SetPropertyStr(ctx, app, "runFile", JS_NewCFunction(ctx, js_runFile, "runFile", 1));
     JS_SetPropertyStr(ctx, global_obj, "app", app);
     JS_FreeValue(ctx, global_obj);
-
+#endif
     scriptingInstance = this;
 }
 
 int scripting_t::runScript(std::string script)
 {
+#ifdef ENABLE_SCRIPTING
     JSValue ret = JS_Eval(ctx, script.c_str(), script.length(), "<eval>", JS_EVAL_TYPE_GLOBAL);
+#endif
     return 0;
 }
 
 int scripting_t::runFile(std::string path)
 {
+#ifdef ENABLE_SCRIPTING
     // js_loadScript(ctx, path.c_str());
     std::ifstream file(path, std::ifstream::in);
     std::string script((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     JSValue ret = JS_Eval(ctx, script.c_str(), script.length(), path.c_str(), JS_EVAL_TYPE_GLOBAL);
+#endif
     return 0;
 }
 
 void scripting_t::update(int frames)
 {
+#ifdef ENABLE_SCRIPTING
     js_std_loop(ctx);
+#endif
 }

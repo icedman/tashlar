@@ -83,7 +83,7 @@ if not curses_dep.found()
   curses_dep = declare_dependency(include_directories: curses_root, dependencies: curses_lib)
 endif
 
-dl_dep = cc.find_library('dl', required : true) 
+#dl_dep = cc.find_library('dl', required : true) 
 pthread_dep = cc.find_library('pthread', required : true) 
 
 sdl2_lib = cc.find_library('SDL2', required: true)
@@ -98,19 +98,19 @@ jsoncpp_dep = declare_dependency(dependencies: [ jsoncpp_lib ])
 onigmo_lib = cc.find_library('onigmo', required: true)
 onigmo_dep = declare_dependency(dependencies: [ onigmo_lib ])
 
-quickjs_lib = cc.find_library('quickjs', required: true, dirs:['/usr/lib/quickjs', '/usr/local/lib/quickjs'])
-if build_machine.system() == 'darwin'
-    quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/local/include/quickjs'])
-else
-    quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/include/quickjs'])
-endif
+#quickjs_lib = cc.find_library('quickjs', required: true, dirs:['/usr/lib/quickjs', '/usr/local/lib/quickjs'])
+#if build_machine.system() == 'darwin'
+#    quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/local/include/quickjs'])
+#else
+#    quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/include/quickjs'])
+#endif
   
 executable('ashlr',
     tashlar_files,
     tashlar_curses_files,
     textmate_files,
     include_directories: [ './src', './src/render', textmate_inc ],
-    dependencies: [ quickjs_dep, dl_dep, pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
+    dependencies: [ pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )
 
@@ -119,6 +119,6 @@ executable('ashlar',
     tashlar_sdl_files,
     textmate_files,
     include_directories: [ './src', './src/render', './libs/lite', textmate_inc ],
-    dependencies: [ quickjs_dep, dl_dep, pthread_dep, sdl2_dep, sdl2ttf_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
+    dependencies: [ pthread_dep, sdl2_dep, sdl2ttf_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )

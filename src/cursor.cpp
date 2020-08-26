@@ -776,7 +776,7 @@ static int _cursorToggleLineComment(cursor_t* cursor)
     }
 
     std::string text = cursor->block()->text();
-    
+
     // check existing comment
     int indent = countIndentSize(text);
     std::string trimmed(text.c_str() + indent);
@@ -820,4 +820,3 @@ int cursor_t::toggleLineComment()
     int count = _cursorToggleLineComment(&cur);
     return count;
 }
-
