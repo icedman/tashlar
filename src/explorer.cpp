@@ -421,7 +421,6 @@ void explorer_t::mouseDown(int x, int y, int button, int clicks)
     if (clicks > 1 || (clicks == 1 && prevItem == currentItem)) {
         input(0, "enter");
     }
-    app_t::log(">>>%d", currentItem);
 }
 
 void explorer_t::mouseHover(int x, int y)

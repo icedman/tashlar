@@ -57,8 +57,7 @@ struct cursor_t {
 
     int indent();
     int unindent();
-    int comment();
-    int uncomment();
+    int toggleLineComment();
 
     block_ptr block();
     size_t position();

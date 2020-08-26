@@ -68,6 +68,9 @@ struct view_t {
     static void setHovered(view_t* view);
     static view_t* currentHovered();
 
+    static void setDragged(view_t* view);
+    static view_t* currentDragged();
+
     view_t* viewFromPointer(int x, int y);
 
     bool isFocused();

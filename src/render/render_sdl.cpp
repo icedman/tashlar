@@ -29,7 +29,6 @@ static bool drawReverse = false;
 static bool drawItalic = false;
 static bool drawUnderline = false;
 
-static view_t* dragView = 0;
 static int dragX = 0;
 static int dragY = 0;
 
@@ -80,7 +79,6 @@ void _addch(char c)
 
     RenColor bg = drawBg;
     RenColor fg = drawColor;
-
     if (drawReverse) {
         fg = drawBg;
         bg = drawColor;
@@ -459,6 +457,8 @@ static int poll_event()
                 keySequence += (char)(e.key.keysym.sym - SDLK_1) + '1';
             } else if (e.key.keysym.sym == SDLK_0) {
                 keySequence += (char)'0';
+            } else if (e.key.keysym.sym == '/') {
+                keySequence += (char)'/';
             }
             break;
         }
@@ -505,24 +505,24 @@ static int poll_event()
         if (e.button.button == 1) {
             SDL_CaptureMouse((SDL_bool)1);
         }
-        dragView = view_t::currentHovered();
+        view_t::setDragged(view_t::currentHovered());
         view_t::currentHovered()->mouseDown(e.button.x, e.button.y, e.button.button, e.button.clicks);
         return 0;
 
     case SDL_MOUSEBUTTONUP:
         pushKey(0, "mouseup");
-        if (view_t::currentHovered() == dragView) {
+        if (view_t::currentHovered() == view_t::currentDragged()) {
             view_t::currentHovered()->mouseUp(e.button.x, e.button.y, e.button.button);
         } else {
             view_t::currentHovered()->mouseUp(-1, -1, e.button.button);
         }
-        dragView = 0;
+        view_t::setDragged(NULL);
         return 0;
 
     case SDL_MOUSEMOTION: {
         view_t::setHovered(app_t::instance()->viewFromPointer(e.motion.x, e.motion.y));
-        if (dragView) {
-            dragView->mouseDrag(e.motion.x, e.motion.y, (view_t::currentHovered() == dragView));
+        if (view_t::currentDragged()) {
+            view_t::currentDragged()->mouseDrag(e.motion.x, e.motion.y, (view_t::currentHovered() == view_t::currentDragged()));
             // app_t::log("drag %d %d", e.motion.x, e.motion.y);
             pushKey(0, "mousedrag");
         } else {

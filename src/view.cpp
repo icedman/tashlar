@@ -4,6 +4,7 @@
 
 static view_t* focused = 0;
 static view_t* hovered = 0;
+static view_t* dragged = 0;
 
 view_t::view_t(std::string name)
     : name(name)
@@ -52,6 +53,16 @@ view_t* view_t::currentHovered()
         return focused;
     }
     return hovered;
+}
+
+void view_t::setDragged(view_t* w)
+{
+    dragged = w;
+}
+
+view_t* view_t::currentDragged()
+{
+    return dragged;
 }
 
 bool view_t::isFocused()

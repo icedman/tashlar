@@ -1,4 +1,3 @@
-
 extern "C" {
 #include "quickjs-libc.h"
 #include "quickjs.h"

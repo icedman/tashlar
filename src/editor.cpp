@@ -207,6 +207,22 @@ void editor_t::runOp(operation_t op)
             cur.selectWord();
             break;
 
+        case TOGGLE_COMMENT: {
+            int count = cur.toggleLineComment();
+            bool m = cur.isMultiBlockSelection();
+            cursor_t c = cur;
+            c.cursor.position = 0;
+            c.anchor.position = 0;
+            cursor_t a = cur;
+            a.cursor = a.anchor;
+            a.cursor.position = 0;
+            a.anchor.position = 0;
+            cursor_util::advanceBlockCursors(cursors, c, count);
+            if (m) {
+                cursor_util::advanceBlockCursors(cursors, a, count);
+            }
+            break;
+        }
         case INDENT: {
             int count = cur.indent();
             bool m = cur.isMultiBlockSelection();

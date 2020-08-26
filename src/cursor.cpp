@@ -699,6 +699,7 @@ int cursor_t::indent()
     }
 
     cursor_t cur = *this;
+    cur.setPosition(cur.block(), 0);
     int count = _cursorIndent(&cur);
     return count;
 }
@@ -762,16 +763,39 @@ int cursor_t::unindent()
     }
 
     cursor_t cur = *this;
+    cur.setPosition(cur.block(), 0);
     int count = _cursorUnindent(&cur);
     return count;
 }
 
-static int _cursorComment(cursor_t* cursor)
+static int _cursorToggleLineComment(cursor_t* cursor)
 {
-    return 0;
+    editor_ptr editor = app_t::instance()->currentEditor;
+    if (!editor->highlighter.lang || !editor->highlighter.lang->lineComment.length()) {
+        return 0;
+    }
+
+    std::string text = cursor->block()->text();
+    
+    // check existing comment
+    int indent = countIndentSize(text);
+    std::string trimmed(text.c_str() + indent);
+
+    std::string singleLineComment = editor->highlighter.lang->lineComment;
+    singleLineComment += " ";
+
+    cursor->cursor.position = indent;
+
+    if (trimmed.find(singleLineComment) == 0) {
+        cursor->eraseText(singleLineComment.length());
+        return -singleLineComment.length();
+    }
+
+    cursor->insertText(singleLineComment);
+    return singleLineComment.length();
 }
 
-int cursor_t::comment()
+int cursor_t::toggleLineComment()
 {
     block_list blocks = selectedBlocks();
 
@@ -785,43 +809,15 @@ int cursor_t::comment()
         for (auto b : blocks) {
             cursor_t cur = *this;
             cur.setPosition(b, 0);
-            count = _cursorComment(&cur);
+            count = _cursorToggleLineComment(&cur);
         }
 
         return count;
     }
 
     cursor_t cur = *this;
-    int count = _cursorComment(&cur);
+    cur.setPosition(cur.block(), 0);
+    int count = _cursorToggleLineComment(&cur);
     return count;
 }
 
-static int _cursorUncomment(cursor_t* cursor)
-{
-    return 0;
-}
-
-int cursor_t::uncomment()
-{
-    block_list blocks = selectedBlocks();
-
-    if (blocks.size() > 1) {
-
-        cursor_position_t posCur = selectionStart();
-        cursor_position_t anchorCur = selectionEnd();
-
-        int count = 0;
-        int idx = 0;
-        for (auto b : blocks) {
-            cursor_t cur = *this;
-            cur.setPosition(b, 0);
-            count = _cursorUncomment(&cur);
-        }
-
-        return count;
-    }
-
-    cursor_t cur = *this;
-    int count = _cursorUncomment(&cur);
-    return count;
-}

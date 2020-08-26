@@ -21,8 +21,14 @@ void scrollbar_t::render()
         return;
     }
 
+    int pair = colorPrimary;
+    if (this == view_t::currentDragged() || (this == view_t::currentHovered() && !view_t::currentDragged)) {
+        pair = colorIndicator;
+    }
+
     _move(0, 0);
-    _attron(_color_pair(colorIndicator));
+    _attron(_color_pair(pair));
+    _reverse(true);
 
     int fh = render_t::instance()->fh;
 
@@ -37,7 +43,8 @@ void scrollbar_t::render()
         _addch(' ');
     }
 
-    _attroff(_color_pair(colorIndicator));
+    _attroff(_color_pair(pair));
+    _reverse(false);
 }
 
 void scrollbar_t::update(int delta)

@@ -34,7 +34,7 @@ static const operation_name operation_names[] = {
 
     { "INDENT", INDENT, "ctrl+l+ctrl+k" },
     { "UNINDENT", UNINDENT, "ctrl+l+ctrl+j" },
-    { "TOGGLE_COMMENT", TOGGLE_COMMENT, "ctrl+l+ctrl+m" },
+    { "TOGGLE_COMMENT", TOGGLE_COMMENT, "ctrl+k+ctrl+k" },
 
     { "SELECT_ALL", SELECT_ALL, "ctrl+a" },
     { "SELECT_LINE", SELECT_LINE, "ctrl+l+ctrl+l" },
