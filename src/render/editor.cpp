@@ -49,6 +49,7 @@ void editor_t::render()
         it += editor->scrollY;
     }
 
+    bool hlMainCursor = document.cursors.size() == 1 && !mainCursor.hasSelection();
     bool firstLine = true;
     while (it != editor->document.blocks.end()) {
         auto& b = *it++;

@@ -44,6 +44,7 @@ struct explorer_t : view_t {
     void preLayout() override;
     void mouseDown(int x, int y, int button, int clicks) override;
     void mouseHover(int x, int y) override;
+    void onFocusChanged(bool focused) override;
 
     void ensureVisibleCursor();
 

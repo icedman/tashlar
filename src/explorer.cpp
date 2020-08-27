@@ -276,7 +276,7 @@ void explorer_t::preLayout()
         scrollbar->thumbSize = 2;
     }
 
-    if (!scrollbar->isVisible()) {
+    if (!scrollbar->isVisible() && render_t::instance()->fh > 10) {
         scrollY = 0;
     }
 }
@@ -353,7 +353,9 @@ bool explorer_t::input(char ch, std::string keys)
             regenerateList = true;
             return true;
         }
-        currentItem = parentItem(item, renderList)->lineNumber;
+        if (item) {
+            currentItem = parentItem(item, renderList)->lineNumber;
+        }
         break;
     case MOVE_CURSOR_UP:
         currentItem--;
@@ -426,6 +428,13 @@ void explorer_t::mouseHover(int x, int y)
 bool explorer_t::isVisible()
 {
     return visible && app_t::instance()->showSidebar;
+}
+
+void explorer_t::onFocusChanged(bool focused)
+{
+    if (focused && currentItem == -1 && renderList.size()) {
+        currentItem = 0;
+    }
 }
 
 void explorer_t::ensureVisibleCursor()

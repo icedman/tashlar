@@ -288,7 +288,7 @@ void popup_t::ensureVisibleCursor()
             int blockVirtualLine = currentItem;
             int blockScreenLine = blockVirtualLine - (scrollY / fh);
 
-            app_t::instance()->log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, currentItem);
+            // app_t::instance()->log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, currentItem);
 
             if (blockScreenLine > viewportHeight) {
                 scrollY += fh;

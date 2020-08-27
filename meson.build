@@ -8,6 +8,7 @@ cc = meson.get_compiler('cpp')
 
 add_global_arguments('-D_XOPEN_SOURCE_EXTENDED=1', language: 'cpp')
 add_global_arguments('-DENABLE_UTF8=1', language: 'cpp')
+add_global_arguments('-DENABLE_SCRIPTING=1', language: 'cpp')
 
 tashlar_files = [
     'src/main.cpp',
@@ -76,41 +77,34 @@ textmate_files = [
     'libs/tm-parser/textmate/theme/util.cpp'
 ]
  
-curses_dep = dependency('ncursesw', required: true, disabler: true)
+curses_dep = dependency('ncursesw', required: false, disabler: true)
 if not curses_dep.found()
   curses_root = get_option('curses_root')
   curses_lib = cc.find_library('cursesw', dirs : curses_root, required : false, disabler: true)
   curses_dep = declare_dependency(include_directories: curses_root, dependencies: curses_lib)
 endif
 
-#dl_dep = cc.find_library('dl', required : true) 
-pthread_dep = cc.find_library('pthread', required : true) 
+dl_dep = cc.find_library('dl', required : true) 
+pthread_dep = cc.find_library('pthread', required : true, disabler: true) 
+sdl2_dep = dependency('SDL2', required: false, disabler: true)
+sdl2ttf_dep = dependency('SDL2_ttf', required: false, disabler: true)  
 
-sdl2_lib = cc.find_library('SDL2', required: true)
-sdl2_dep = declare_dependency(dependencies: [ sdl2_lib ])
+jsoncpp_dep = dependency('jsoncpp', required: true)
+onigmo_dep = dependency('onigmo', required: true)
 
-sdl2ttf_lib = cc.find_library('SDL2_ttf', required: true)
-sdl2ttf_dep = declare_dependency(dependencies: [ sdl2ttf_lib ])
-   
-jsoncpp_lib = cc.find_library('jsoncpp', required: true)
-jsoncpp_dep = declare_dependency(dependencies: [ jsoncpp_lib ])
+quickjs_lib = cc.find_library('quickjs', required: false, dirs:['/usr/lib/quickjs', '/usr/local/lib/quickjs'])
+if build_machine.system() == 'darwin'
+    quickjs_dep = declare_dependency(dependencies: [ dl_dep, quickjs_lib ], include_directories: ['/usr/local/include/quickjs'])
+else
+    quickjs_dep = declare_dependency(dependencies: [ dl_dep, quickjs_lib ], include_directories: ['/usr/include/quickjs'])
+endif
 
-onigmo_lib = cc.find_library('onigmo', required: true)
-onigmo_dep = declare_dependency(dependencies: [ onigmo_lib ])
-
-#quickjs_lib = cc.find_library('quickjs', required: true, dirs:['/usr/lib/quickjs', '/usr/local/lib/quickjs'])
-#if build_machine.system() == 'darwin'
-#    quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/local/include/quickjs'])
-#else
-#    quickjs_dep = declare_dependency(dependencies: [ quickjs_lib ], include_directories: ['/usr/include/quickjs'])
-#endif
-  
 executable('ashlr',
     tashlar_files,
     tashlar_curses_files,
     textmate_files,
     include_directories: [ './src', './src/render', textmate_inc ],
-    dependencies: [ pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
+    dependencies: [ quickjs_dep, pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )
 
@@ -119,6 +113,6 @@ executable('ashlar',
     tashlar_sdl_files,
     textmate_files,
     include_directories: [ './src', './src/render', './libs/lite', textmate_inc ],
-    dependencies: [ pthread_dep, sdl2_dep, sdl2ttf_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
+    dependencies: [ quickjs_dep, sdl2_dep, sdl2ttf_dep, pthread_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )

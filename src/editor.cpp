@@ -872,13 +872,16 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
                     pushOp(MOVE_CURSOR, ss.str());
                     pushOp(SELECT_WORD, "");
                 }
-                view_t::setFocus(this);
-                popup_t::instance()->hide();
             }
             l++;
         }
         if (l > rows)
             break;
+    }
+
+    if (clicks > 0) {
+        view_t::setFocus(this);
+        popup_t::instance()->hide();
     }
 }
 

@@ -34,12 +34,24 @@ view_t::~view_t()
 
 void view_t::setFocus(view_t* w)
 {
+    if (focused != w) {
+        if (w) {
+            w->onFocusChanged(true);
+        }
+        if (focused) {
+            focused->onFocusChanged(false);
+        }
+    }
     focused = w;
 }
 
 view_t* view_t::currentFocus()
 {
     return focused;
+}
+
+void view_t::onFocusChanged(bool focused)
+{
 }
 
 void view_t::setHovered(view_t* view)

@@ -39,6 +39,8 @@ void explorer_t::render()
 
     int idx = 0;
     int skip = (scrollY / render_t::instance()->fh);
+    // app_t::log("??%d %d %d", scrollY, skip, render_t::instance()->fh);
+
     int y = 0;
     for (auto file : renderList) {
         if (skip-- > 0) {
