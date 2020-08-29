@@ -16,7 +16,7 @@ struct document_t {
     block_list blocks;
     std::ifstream file;
 
-    bool open(std::string path);
+    bool open(std::string path, bool enableBuffer = true);
     void close();
     void save();
     void saveAs(const char* path, bool replacePath = false);

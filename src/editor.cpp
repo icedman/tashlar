@@ -102,7 +102,7 @@ void editor_t::runOp(operation_t op)
         operations.clear();
         return;
     case OPEN:
-        document.open(strParam);
+        document.open(strParam, false);
         createSnapshot();
         highlighter.run(this);
         completer.run(this);

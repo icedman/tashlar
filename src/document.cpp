@@ -108,7 +108,7 @@ block_ptr document_t::previousBlock(block_t* block)
     return *it;
 }
 
-bool document_t::open(std::string path)
+bool document_t::open(std::string path, bool enableBuffer)
 {
     blocks.clear();
     cursors.clear();
@@ -118,7 +118,10 @@ bool document_t::open(std::string path)
     mkstemp((char*)tmpPath.c_str());
 
     file = std::ifstream(path, std::ifstream::in);
-    std::ofstream tmp(tmpPath, std::ofstream::out);
+    std::ofstream tmp;
+    if (enableBuffer) {
+        tmp = std::ofstream(tmpPath, std::ofstream::out);
+    }
 
     size_t screenLine = 0;
     std::string line;
@@ -153,10 +156,19 @@ bool document_t::open(std::string path)
         blocks.push_back(b);
         pos = file.tellg();
         pos -= offset;
-        tmp << line << std::endl;
+
+        if (enableBuffer) {
+            tmp << line << std::endl;
+        } else {
+            b->setText(line);
+        }
     }
 
-    tmp.close();
+
+    if (enableBuffer) {
+        tmp.close();
+    }
+
     if (!blocks.size()) {
         addBlockAtLine(0);
     }
