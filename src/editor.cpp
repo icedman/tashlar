@@ -19,6 +19,7 @@ editor_t::editor_t()
     canFocus = true;
     document.editor = this;
     _scrollToCursor = true;
+    _foldedLines = 0;
 }
 
 editor_t::~editor_t()
@@ -962,8 +963,8 @@ void editor_t::ensureVisibleCursor()
         scrollY = screenY - lookAheadY;
         if (scrollY < 0)
             scrollY = 0;
-    } else if (screenY - scrollY + 1 + adjust > rows) {
-        scrollY = -(rows - screenY) + 1 + adjust;
+    } else if (screenY - scrollY + 1 + adjust > (rows + _foldedLines)) {
+        scrollY = -((rows + _foldedLines) - screenY) + 1 + adjust;
     }
 
     if (scrollY < 0)

@@ -49,6 +49,8 @@ void editor_t::render()
         it += editor->scrollY;
     }
 
+    _foldedLines = 0;
+
     bool hlMainCursor = document.cursors.size() == 1 && !mainCursor.hasSelection();
     bool firstLine = true;
     while (it != editor->document.blocks.end()) {
@@ -77,6 +79,7 @@ void editor_t::render()
 
             if (blockData && blockData->folded && !blockData->foldable) {
                 l--;
+                _foldedLines += b->lineCount;                
                 continue;
             }
 
