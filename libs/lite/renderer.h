@@ -31,5 +31,6 @@ int ren_get_font_height(RenFont* font);
 void ren_draw_rect(RenRect rect, RenColor color);
 void ren_draw_image(RenImage* image, RenRect* sub, int x, int y, RenColor color);
 int ren_draw_text(RenFont* font, const char* text, int x, int y, RenColor color, bool bold = false, bool italic = false);
+int ren_draw_wtext(RenFont* font, const wchar_t* text, int x, int y, RenColor color, bool bold = false, bool italic = false);
 
 #endif

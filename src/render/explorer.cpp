@@ -35,7 +35,7 @@ void explorer_t::render()
     _move(0, 0);
 
     bool isHovered = view_t::currentHovered() == this;
-    bool hasFocus = isFocused() || isHovered;
+    bool hasFocus = (isFocused() || isHovered) && !view_t::currentDragged();
 
     int idx = 0;
     int skip = (scrollY / render_t::instance()->fh);

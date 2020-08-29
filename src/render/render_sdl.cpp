@@ -11,6 +11,7 @@ static view_list contextStack;
 
 #define _draw_rect rencache_draw_rect
 #define _draw_text rencache_draw_text
+#define _draw_wtext ren_draw_wtext
 
 SDL_Window* window;
 RenFont* font;
@@ -150,7 +151,15 @@ void _addstr(const char* str)
 
 void _addwstr(const wchar_t* str)
 {
+    /*
     // unsupported
+    int fw = render_t::instance()->fw;
+    int fh = render_t::instance()->fh;
+    int cw = ren_get_font_width(font, "Z");
+    RenColor fg = drawColor;
+ 
+    _draw_wtext(font, str, drawBaseX + (drawX * fw) + (fw / 2 - cw / 2), drawBaseY + (drawY * fh), fg, drawBold, drawItalic);
+    */
     drawX++;
 }
 

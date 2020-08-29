@@ -1,0 +1,11 @@
+option(
+  'curses_root',
+  type: 'string', value: '',
+  description: 'curses root dir'
+)
+
+option(
+  'build_sdl',
+  type: 'boolean', value: true,
+  description: 'build sdl-based app'
+)

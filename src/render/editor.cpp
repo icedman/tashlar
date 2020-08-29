@@ -75,7 +75,7 @@ void editor_t::render()
                 continue;
             }
 
-            if (blockData->folded && !blockData->foldable) {
+            if (blockData && blockData->folded && !blockData->foldable) {
                 l--;
                 continue;
             }

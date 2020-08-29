@@ -435,6 +435,30 @@ void ren_draw_image(RenImage* image, RenRect* sub, int x, int y, RenColor color)
     }
 }
 
+int ren_draw_wtext(RenFont* font, const wchar_t* text, int x, int y, RenColor color, bool bold, bool italic)
+{
+    SDL_Color fg = { 255, 255, 255, 255 };
+    #ifdef USE_SDL_TTF
+        SDL_Surface *surf = TTF_RenderUTF8_Blended(font->font, (const char*)text, fg);   
+        SDL_Surface* wsurf = SDL_GetWindowSurface(window);
+        if(surf) {
+            SDL_Rect rect;
+            rect.x = x;
+            rect.y = y;
+            rect.w = surf->w;
+            rect.h = surf->h;
+            SDL_Rect srect;
+            rect.x = 0;
+            rect.y = 0;
+            rect.w = surf->w;
+            rect.h = surf->h;
+            SDL_BlitSurface(surf, &srect, wsurf, &rect); 
+            SDL_FreeSurface(surf);
+        }
+    #endif
+    return 1;
+}
+
 int ren_draw_text(RenFont* font, const char* text, int x, int y, RenColor color, bool bold, bool italic)
 {
     RenRect rect;
