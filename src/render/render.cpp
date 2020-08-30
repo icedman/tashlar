@@ -208,3 +208,8 @@ void render_t::updateColors()
 void render_t::delay(int ms)
 {
 }
+
+int _keyMods()
+{
+    return 0;
+}

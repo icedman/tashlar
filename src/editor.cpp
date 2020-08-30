@@ -865,7 +865,7 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
                 ss << (b->lineNumber + 1);
                 ss << ":";
                 ss << col + (i * cols);
-                if (clicks == 0) {
+                if (clicks == 0 || _keyMods()) {
                     pushOp(MOVE_CURSOR_ANCHORED, ss.str());
                 } else if (clicks == 1) {
                     pushOp(MOVE_CURSOR, ss.str());

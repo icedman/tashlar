@@ -111,4 +111,12 @@ operation_e operationFromName(std::string name);
 operation_e operationFromKeys(std::string keys);
 std::string nameFromOperation(operation_e op);
 
+struct keybinding_t {
+
+    keybinding_t();
+    ~keybinding_t();
+
+    static keybinding_t* instance();
+}
+
 #endif // KEYBINDING_H

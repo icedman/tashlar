@@ -663,3 +663,8 @@ void render_t::delay(int ms)
 {
     SDL_Delay(ms);
 }
+
+int _keyMods()
+{
+    return keyMods;
+}

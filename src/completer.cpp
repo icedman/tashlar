@@ -62,7 +62,8 @@ void* completeThread(void* arg)
 
     completer_t tmp;
 
-    std::ifstream file = std::ifstream(editor->document.tmpPaths[0], std::ifstream::in);
+    // std::ifstream file = std::ifstream(editor->document.tmpPaths[0], std::ifstream::in);
+    std::ifstream file = std::ifstream(editor->document.filePath, std::ifstream::in);
     std::string line;
 
     while (std::getline(file, line)) {

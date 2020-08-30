@@ -134,3 +134,18 @@ std::string nameFromOperation(operation_e op)
     }
     return "unknown";
 }
+
+static struct keybinding_t* keybindingInstance = 0;
+
+struct keybinding_t* keybinding_t::instance()
+{
+    return keybindingInstance;
+}
+
+keybinding_t::keybinding_t()
+{
+}
+
+keybinding_t::~keybinding_t()
+{
+}

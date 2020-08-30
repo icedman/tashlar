@@ -24,6 +24,8 @@ bool _drawdots(int dots, int* colors);
 void _begin(view_t* view);
 void _end();
 
+int _keyMods();
+
 struct render_t {
 
     render_t();
