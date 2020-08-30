@@ -26,7 +26,7 @@ minimap_t::~minimap_t()
 {
 }
 
-void buildUpDotsForBlock(block_ptr block, float textCompress, int bufferWidth)
+void minimap_t::buildUpDotsForBlock(block_ptr block, float textCompress, int bufferWidth)
 {
     if (!block->data) {
         block->data = std::make_shared<blockdata_t>();
@@ -67,6 +67,88 @@ void buildUpDotsForBlock(block_ptr block, float textCompress, int bufferWidth)
         (char*)line4.c_str(),
         textCompress,
         bufferWidth);
+
+    /*
+    block_list &snapBlocks = editor->snapshots[0].snapshot;
+
+    int *targetColors = (int*)malloc(bufferWidth * 8 * sizeof(int));
+    blockData->dotColors = targetColors;
+
+    if (render_t::instance()->fh > 10) {
+    for(int i=0;i<bufferWidth;i++) {
+        int colors[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        blockdata_t *blockData = block->data.get();
+        if (!blockData || !blockData->spans.size()) {
+            if (block->lineNumber < snapBlocks.size()) {
+                blockData = snapBlocks[block->lineNumber-1]->data.get();
+            }
+        }
+        if (blockData) {
+            span_info_t si = spanAtBlock(blockData, x * textCompress);
+            colors[0] = pairForColor(si.colorIndex,false);
+            si = spanAtBlock(blockData, (x + 1) * textCompress);
+            colors[1] = pairForColor(si.colorIndex,false);
+
+            colors[2] = colors[0]; colors[3] = colors[1];
+            colors[4] = colors[0]; colors[5] = colors[1];
+            colors[6] = colors[0]; colors[7] = colors[1];
+
+            block_ptr bNext = block->next();
+            if (bNext) {
+                blockData = bNext->data.get();
+                if (!blockData || !blockData->spans.size()) {
+                    if (bNext->lineNumber < snapBlocks.size()) {
+                        blockData = snapBlocks[bNext->lineNumber-1]->data.get();
+                    }
+                }
+                if (blockData) {
+                    si = spanAtBlock(blockData, x * textCompress);
+                    colors[2] = pairForColor(si.colorIndex,false);
+                    si = spanAtBlock(blockData, (x + 1) * textCompress);
+                    colors[3] = pairForColor(si.colorIndex,false);
+                }
+
+                bNext = bNext->next();
+                if (bNext) {
+                    blockData = bNext->data.get();
+                    if (!blockData || !blockData->spans.size()) {
+                        if (bNext->lineNumber < snapBlocks.size()) {
+                            blockData = snapBlocks[bNext->lineNumber-1]->data.get();
+                        }
+                    }
+                    if (blockData) {
+                        si = spanAtBlock(blockData, x * textCompress);
+                        colors[4] = pairForColor(si.colorIndex,false);
+                        si = spanAtBlock(blockData, (x + 1) * textCompress);
+                        colors[5] = pairForColor(si.colorIndex,false);
+                    }
+
+                    bNext = bNext->next();
+                    if (bNext) {
+                        blockData = bNext->data.get();
+                        if (!blockData || !blockData->spans.size()) {
+                            if (bNext->lineNumber < snapBlocks.size()) {
+                                blockData = snapBlocks[bNext->lineNumber-1]->data.get();
+                            }
+                        }
+                        if (blockData) {
+                            si = spanAtBlock(blockData, x * textCompress);
+                            colors[6] = pairForColor(si.colorIndex,false);
+                            si = spanAtBlock(blockData, (x + 1) * textCompress);
+                            colors[7] = pairForColor(si.colorIndex,false);
+                        }
+                    }
+                }
+            }
+        }
+
+        int *t = targetColors;
+        t += (i * 8);
+        memcpy(t, colors, sizeof(int) * 8);
+    }
+    }
+    */
 }
 
 void minimap_t::update(int delta)

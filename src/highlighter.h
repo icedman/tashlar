@@ -25,8 +25,6 @@ struct highlighter_t {
 
     editor_t* editor;
     pthread_t threadId;
-
-    int runLine;
 };
 
 span_info_t spanAtBlock(struct blockdata_t* blockData, int pos);

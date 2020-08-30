@@ -4,6 +4,7 @@
 #include "parse.h"
 
 #include <cstring>
+#include <unistd.h>
 
 highlighter_t::highlighter_t()
     : threadId(0)
@@ -83,7 +84,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         return;
     }
 
-    // app_t::instance()->log("highlight %d", block->lineNumber);
+    app_t::instance()->log("highlight %d", block->lineNumber);
 
     struct blockdata_t* blockData = block->data.get();
 
@@ -332,12 +333,6 @@ void highlighter_t::gatherBrackets(block_ptr block, char* first, char* last)
             }
         }
 
-        // format brackets with scope
-        // style_t s = theme->styles_for_scope("bracket");
-        // for (auto b : blockData->brackets) {
-        // setFormatFromStyle(b.position, 1, s, first, blockData, "bracket");
-        // }
-
         if (blockData->foldingBrackets.size()) {
             auto l = blockData->foldingBrackets.back();
             blockData->foldable = l.open;
@@ -352,14 +347,25 @@ void* highlightThread(void* arg)
     highlighter_t* threadHl = (highlighter_t*)arg;
     editor_t* editor = threadHl->editor;
 
-    /*
-    threadHl->runLine = 500;
-    while (threadHl->runLine < editor->document.blocks.size()) {
-        block_ptr b = editor->document.blocks[threadHl->runLine];
-        editor->highlighter.highlightBlock(b);
-        threadHl->runLine++;
+    editor_t tmp;
+    tmp.document.open(editor->document.filePath, false);
+    tmp.highlighter.lang = threadHl->lang;
+    tmp.highlighter.theme = threadHl->theme;
+
+    usleep(200000);
+
+    int runLine = 0;
+    while (runLine < tmp.document.blocks.size()) {
+        block_ptr b = tmp.document.blocks[runLine];
+        tmp.highlighter.highlightBlock(b);
+        runLine++;
     }
-    */
+
+    int idx = 0;
+    for (auto& b : editor->snapshots[0].snapshot) {
+        b->data = tmp.document.blocks[idx++]->data;
+    }
+
     threadHl->threadId = 0;
     return NULL;
 }

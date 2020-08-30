@@ -4,6 +4,7 @@
 #include "render.h"
 
 #define MINIMAP_TEXT_COMPRESS 5
+#define MINIMAP_TEXT_BUFFER 25
 
 void minimap_t::render()
 {
@@ -21,8 +22,6 @@ void minimap_t::render()
 
     // int fh = render_t::instance()->fh;
     // int sy = editor->scrollY / fh;
-
-    // block_list::iterator it = editor->snapshots[0].snapshot.begin();
 
     int sy = offsetY;
     int y = 0;
@@ -54,56 +53,88 @@ void minimap_t::render()
             _addch(' ');
         }
 
-        buildUpDotsForBlock(b, MINIMAP_TEXT_COMPRESS, 25);
-        for (int x = 0; x < 25; x++) {
+        buildUpDotsForBlock(b, MINIMAP_TEXT_COMPRESS, MINIMAP_TEXT_BUFFER);
 
+        int textCompress = MINIMAP_TEXT_COMPRESS;
+        block_list& snapBlocks = editor->snapshots[0].snapshot;
+
+        for (int x = 0; x < MINIMAP_TEXT_BUFFER; x++) {
+            int x1 = x + 1;
+            int x2 = x1 + 1;
             _attron(_color_pair(pair));
 
             int colors[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-            /*
-            blockdata_t *blockData = b->data.get();
-            if (blockData) {
-                span_info_t si = spanAtBlock(blockData, x * MINIMAP_TEXT_COMPRESS);
-                colors[0] = pairForColor(si.colorIndex,false);
-                si = spanAtBlock(blockData, (x + 1) * MINIMAP_TEXT_COMPRESS);
-                colors[1] = pairForColor(si.colorIndex,false);
 
-                colors[2] = colors[0]; colors[3] = colors[1];
-                colors[4] = colors[0]; colors[5] = colors[1];
-                colors[6] = colors[0]; colors[7] = colors[1];
+            if (render_t::instance()->fh > 10 && snapBlocks.size() && b->lineNumber > 0) {
 
-                block_ptr bNext = b->next();
-                if (bNext) {
-                    blockData = bNext->data.get();
-                    if (blockData) {
-                        si = spanAtBlock(blockData, x * MINIMAP_TEXT_COMPRESS);
-                        colors[2] = pairForColor(si.colorIndex,false);
-                        si = spanAtBlock(blockData, (x + 1) * MINIMAP_TEXT_COMPRESS);
-                        colors[3] = pairForColor(si.colorIndex,false);
+                blockdata_t* blockData = b->data.get();
+                if (!blockData || !blockData->spans.size()) {
+                    if (b->lineNumber <= snapBlocks.size()) {
+                        blockData = snapBlocks[b->lineNumber - 1]->data.get();
                     }
+                }
+                if (blockData) {
+                    span_info_t si = spanAtBlock(blockData, x * textCompress);
+                    colors[0] = pairForColor(si.colorIndex, false);
+                    si = spanAtBlock(blockData, (x1 + 1) * textCompress);
+                    colors[1] = pairForColor(si.colorIndex, false);
+
+                    colors[2] = colors[0];
+                    colors[3] = colors[1];
+                    colors[4] = colors[0];
+                    colors[5] = colors[1];
+                    colors[6] = colors[0];
+                    colors[7] = colors[1];
+
                     block_ptr bNext = b->next();
                     if (bNext) {
                         blockData = bNext->data.get();
-                        if (blockData) {
-                            si = spanAtBlock(blockData, x * MINIMAP_TEXT_COMPRESS);
-                            colors[4] = pairForColor(si.colorIndex,false);
-                            si = spanAtBlock(blockData, (x + 1) * MINIMAP_TEXT_COMPRESS);
-                            colors[5] = pairForColor(si.colorIndex,false);
+                        if (!blockData || !blockData->spans.size()) {
+                            if (bNext->lineNumber <= snapBlocks.size()) {
+                                blockData = snapBlocks[bNext->lineNumber - 1]->data.get();
+                            }
                         }
-                        block_ptr bNext = b->next();
+                        if (blockData) {
+                            si = spanAtBlock(blockData, x1 * textCompress);
+                            colors[2] = pairForColor(si.colorIndex, false);
+                            si = spanAtBlock(blockData, (x2)*textCompress);
+                            colors[3] = pairForColor(si.colorIndex, false);
+                        }
+
+                        bNext = bNext->next();
                         if (bNext) {
                             blockData = bNext->data.get();
+                            if (!blockData || !blockData->spans.size()) {
+                                if (bNext->lineNumber <= snapBlocks.size()) {
+                                    blockData = snapBlocks[bNext->lineNumber - 1]->data.get();
+                                }
+                            }
                             if (blockData) {
-                                si = spanAtBlock(blockData, x * MINIMAP_TEXT_COMPRESS);
-                                colors[6] = pairForColor(si.colorIndex,false);
-                                si = spanAtBlock(blockData, (x + 1) * MINIMAP_TEXT_COMPRESS);
-                                colors[7] = pairForColor(si.colorIndex,false);
+                                si = spanAtBlock(blockData, x1 * textCompress);
+                                colors[4] = pairForColor(si.colorIndex, false);
+                                si = spanAtBlock(blockData, (x2)*textCompress);
+                                colors[5] = pairForColor(si.colorIndex, false);
+                            }
+
+                            bNext = bNext->next();
+                            if (bNext) {
+                                blockData = bNext->data.get();
+                                if (!blockData || !blockData->spans.size()) {
+                                    if (bNext->lineNumber <= snapBlocks.size()) {
+                                        blockData = snapBlocks[bNext->lineNumber - 1]->data.get();
+                                    }
+                                }
+                                if (blockData) {
+                                    si = spanAtBlock(blockData, x1 * textCompress);
+                                    colors[6] = pairForColor(si.colorIndex, false);
+                                    si = spanAtBlock(blockData, (x2)*textCompress);
+                                    colors[7] = pairForColor(si.colorIndex, false);
+                                }
                             }
                         }
                     }
                 }
             }
-            */
 
             if (!_drawdots(b->data->dots[x], colors)) {
 #ifdef ENABLE_UTF8

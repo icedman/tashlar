@@ -27,6 +27,8 @@ struct minimap_t : view_t {
     void mouseDrag(int x, int y, bool within) override;
     void mouseHover(int x, int y) override;
 
+    void buildUpDotsForBlock(block_ptr block, float textCompress, int bufferWidth);
+
     scrollbar_t* scrollbar;
     editor_ptr editor;
     int currentLine;
@@ -35,7 +37,5 @@ struct minimap_t : view_t {
 
     int offsetY;
 };
-
-void buildUpDotsForBlock(block_ptr block, float textCompress, int bufferWidth);
 
 #endif // MINIMAP_H

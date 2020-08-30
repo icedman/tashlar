@@ -121,7 +121,7 @@ bool _drawdots(int dots, int* colors)
     float ffh = fh / 4;
 
     for (int i = 0; i < 8; i++) {
-        // _color_pair(colors[1]);
+        _color_pair(colors[i]);
         RenColor fg = drawColor;
 
         if (dots & dm[i]) {
@@ -159,7 +159,7 @@ void _addwstr(const wchar_t* str)
 
     int dw = 4;
     int ofx = fw / 2 - dw / 2;
-    int ofy = fh / 2;
+    int ofy = fh / 2 - dw / 2;
     RenRect rect = {
         .x = ofx + drawBaseX + drawX * fw,
         .y = ofy + drawBaseY + drawY * fh,
