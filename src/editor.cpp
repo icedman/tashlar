@@ -495,7 +495,6 @@ void editor_t::update(int delta)
 
 void editor_t::matchBracketsUnderCursor()
 {
-
     cursor_t cursor = document.cursor();
     if (cursor.position() != cursorBracket1.position || cursor.block()->lineNumber != cursorBracket1.line) {
         cursorBracket1 = bracketAtCursor(cursor);
@@ -920,8 +919,12 @@ void editor_t::layout(int _x, int _y, int w, int h)
 
     maxScrollX = 0;
     maxScrollY = document.lastBlock()->lineNumber - (rows * 2 / 3);
+
     // app_t::log(">max %d", maxScrollY);
+
+    if (maxScrollY < 0) scrollY = 0;
 }
+
 
 void editor_t::ensureVisibleCursor()
 {

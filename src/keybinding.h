@@ -117,6 +117,6 @@ struct keybinding_t {
     ~keybinding_t();
 
     static keybinding_t* instance();
-}
+};
 
 #endif // KEYBINDING_H
