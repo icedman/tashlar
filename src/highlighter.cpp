@@ -357,13 +357,10 @@ void* highlightThread(void* arg)
     int runLine = 0;
     while (runLine < tmp.document.blocks.size()) {
         block_ptr b = tmp.document.blocks[runLine];
+        block_ptr sb = editor->snapshots[0].snapshot[runLine];
         tmp.highlighter.highlightBlock(b);
+        sb->data = b->data;
         runLine++;
-    }
-
-    int idx = 0;
-    for (auto& b : editor->snapshots[0].snapshot) {
-        b->data = tmp.document.blocks[idx++]->data;
     }
 
     threadHl->threadId = 0;

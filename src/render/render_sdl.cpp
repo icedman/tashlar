@@ -124,6 +124,8 @@ bool _drawdots(int dots, int* colors)
         _color_pair(colors[i]);
         RenColor fg = drawColor;
 
+        fg.a = 100;
+
         if (dots & dm[i]) {
             int ofx = offs[i * 2 + 1] * ffw;
             int ofy = offs[i * 2] * ffh;
