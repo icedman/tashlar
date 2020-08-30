@@ -8,12 +8,15 @@
 
 int main(int argc, char** argv)
 {
+    keybinding_t keybinding;
     render_t renderer;
     scripting_t scripting;
     search_t search;
     app_t app;
 
     renderer.initialize();
+    scripting.initialize();
+    keybinding.initialize();
 
     app.configure(argc, argv);
     app.setupColors();
@@ -30,9 +33,9 @@ int main(int argc, char** argv)
     app.openEditor(file);
     app.explorer.setRootFromFile(file);
 
-    scripting.initialize();
     std::string previousKeySequence;
     std::string expandedSequence;
+
     while (!app.end) {
 
         int delta = 100;

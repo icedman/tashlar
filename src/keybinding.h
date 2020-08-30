@@ -103,6 +103,8 @@ enum operation_e {
 struct operation_t {
     operation_e op;
     std::string params;
+    std::string name;
+    std::string keys;
 };
 
 typedef std::vector<operation_t> operation_list;
@@ -116,7 +118,11 @@ struct keybinding_t {
     keybinding_t();
     ~keybinding_t();
 
+    std::vector<operation_t> binding;
+
     static keybinding_t* instance();
+  
+    void initialize();
 };
 
 #endif // KEYBINDING_H

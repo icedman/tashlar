@@ -1,4 +1,6 @@
 #include "keybinding.h"
+#include "util.h"
+#include "extension.h"
 
 typedef struct {
     const char* name;
@@ -84,7 +86,7 @@ static const operation_name operation_names[] = {
     { "MOVE_FOCUS_UP", MOVE_FOCUS_UP, "ctrl+alt+up" },
     { "MOVE_FOCUS_DOWN", MOVE_FOCUS_DOWN, "ctrl+alt+down" },
 
-    { "SPLIT_VIEW", SPLIT_VIEW, "ctrl+k" },
+    { "SPLIT_VIEW", SPLIT_VIEW, "ctrl+k+ctrl+t" },
     { "TOGGLE_FOLD", TOGGLE_FOLD, "ctrl+l+ctrl+f" },
 
     { "OPEN", OPEN, "" },
@@ -107,9 +109,9 @@ static const operation_name operation_names[] = {
 
 operation_e operationFromName(std::string name)
 {
-    for (int i = 0; operation_names[i].name; i++) {
-        if (name == operation_names[i].name) {
-            return operation_names[i].op;
+    for(auto op : keybinding_t::instance()->binding) {
+        if (op.name == name) {
+            return op.op;
         }
     }
     return UNKNOWN;
@@ -117,19 +119,19 @@ operation_e operationFromName(std::string name)
 
 operation_e operationFromKeys(std::string keys)
 {
-    for (int i = 0; operation_names[i].name; i++) {
-        if (keys == operation_names[i].keys) {
-            return operation_names[i].op;
+    for(auto op : keybinding_t::instance()->binding) {
+        if (op.keys == keys) {
+            return op.op;
         }
     }
     return UNKNOWN;
 }
 
-std::string nameFromOperation(operation_e op)
+std::string nameFromOperation(operation_e _op)
 {
-    for (int i = 0; operation_names[i].name; i++) {
-        if (op == operation_names[i].op) {
-            return operation_names[i].name;
+    for(auto op : keybinding_t::instance()->binding) {
+        if (op.op == _op) {
+            return op.name;
         }
     }
     return "unknown";
@@ -144,8 +146,44 @@ struct keybinding_t* keybinding_t::instance()
 
 keybinding_t::keybinding_t()
 {
+    keybindingInstance = this;
 }
 
 keybinding_t::~keybinding_t()
 {
+}
+
+void keybinding_t::initialize()
+{
+    for (int i = 0; operation_names[i].name; i++) {
+        operation_t op;
+        op.name = operation_names[i].name;
+        op.keys = operation_names[i].keys;
+        op.op = operation_names[i].op;
+        binding.push_back(op);
+    }
+
+    // override
+    std::string _path = "~/.ashlar/keybinding.json";
+
+    char* cpath = (char*)malloc(_path.length() + 1 * sizeof(char));
+    strcpy(cpath, _path.c_str());
+    expand_path((char**)(&cpath));
+    const std::string path(cpath);
+    free(cpath);
+
+    Json::Value settings = parse::loadJson(path);
+    if (settings.isArray()) {
+        for (auto cmd : settings) {
+            if (!cmd.isObject()) continue;
+            std::string keys = cmd["keys"].asString();
+            std::string command = cmd["command"].asString();
+            for (auto& bind : binding) {
+                if (bind.name == command) {
+                    bind.keys = keys;
+                    break;
+                }  
+            }           
+        }
+    }
 }

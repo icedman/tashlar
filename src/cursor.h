@@ -65,6 +65,9 @@ struct cursor_t {
     size_t anchorPosition();
 
     void print();
+
+    bool isSelectionNormalized();
+    void normalizeSelection(bool normalize);
 };
 
 typedef std::vector<cursor_t> cursor_list;

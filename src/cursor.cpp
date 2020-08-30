@@ -820,3 +820,26 @@ int cursor_t::toggleLineComment()
     int count = _cursorToggleLineComment(&cur);
     return count;
 }
+
+bool cursor_t::isSelectionNormalized()
+{
+    if (!hasSelection()) {
+        return false;
+    }
+    
+    if (cursor.block != anchor.block) {
+        return cursor.block->lineNumber < anchor.block->lineNumber;
+    }
+
+    return cursor.position < anchor.position;
+}
+
+void cursor_t::normalizeSelection(bool normalize)
+{
+    app_t::log("normalize! %d", normalize);
+    if (isSelectionNormalized() != normalize) {
+        cursor_position_t tmp = cursor;
+        cursor = anchor;
+        anchor = tmp;
+    }
+}

@@ -170,6 +170,7 @@ void editor_t::runOp(operation_t op)
         if (mainCursor.hasSelection() && mainCursor.selectedText().length()) {
             cursor_t res = document.findNextOccurence(mainCursor, mainCursor.selectedText());
             if (!res.isNull()) {
+                res.normalizeSelection(mainCursor.isSelectionNormalized());
                 document.addCursor(mainCursor);
                 document.setCursor(res, true); // replace main cursor
                 app_t::log("found %s at %s", mainCursor.selectedText().c_str(), res.block()->text().c_str());

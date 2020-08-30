@@ -224,11 +224,15 @@ void app_t::configure(int argc, char** argv)
     if (settings.isMember("mini_map")) {
         showMinimap = settings["mini_map"].asBool();
     }
+    tabSize = 4;
     if (settings.isMember("tab_size")) {
         tabSize = settings["tab_size"].asInt();
     }
     if (tabSize < 2) {
         tabSize = 2;
+    }
+    if (tabSize > 8) {
+        tabSize = 8;
     }
 
     //---------------
