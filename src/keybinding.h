@@ -121,7 +121,7 @@ struct keybinding_t {
     std::vector<operation_t> binding;
 
     static keybinding_t* instance();
-  
+
     void initialize();
 };
 

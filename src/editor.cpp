@@ -925,9 +925,9 @@ void editor_t::layout(int _x, int _y, int w, int h)
 
     // app_t::log(">max %d", maxScrollY);
 
-    if (maxScrollY < 0) scrollY = 0;
+    if (maxScrollY < 0)
+        scrollY = 0;
 }
-
 
 void editor_t::ensureVisibleCursor()
 {

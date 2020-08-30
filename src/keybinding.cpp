@@ -1,6 +1,6 @@
 #include "keybinding.h"
-#include "util.h"
 #include "extension.h"
+#include "util.h"
 
 typedef struct {
     const char* name;
@@ -109,7 +109,7 @@ static const operation_name operation_names[] = {
 
 operation_e operationFromName(std::string name)
 {
-    for(auto op : keybinding_t::instance()->binding) {
+    for (auto op : keybinding_t::instance()->binding) {
         if (op.name == name) {
             return op.op;
         }
@@ -119,7 +119,7 @@ operation_e operationFromName(std::string name)
 
 operation_e operationFromKeys(std::string keys)
 {
-    for(auto op : keybinding_t::instance()->binding) {
+    for (auto op : keybinding_t::instance()->binding) {
         if (op.keys == keys) {
             return op.op;
         }
@@ -129,7 +129,7 @@ operation_e operationFromKeys(std::string keys)
 
 std::string nameFromOperation(operation_e _op)
 {
-    for(auto op : keybinding_t::instance()->binding) {
+    for (auto op : keybinding_t::instance()->binding) {
         if (op.op == _op) {
             return op.name;
         }
@@ -175,15 +175,16 @@ void keybinding_t::initialize()
     Json::Value settings = parse::loadJson(path);
     if (settings.isArray()) {
         for (auto cmd : settings) {
-            if (!cmd.isObject()) continue;
+            if (!cmd.isObject())
+                continue;
             std::string keys = cmd["keys"].asString();
             std::string command = cmd["command"].asString();
             for (auto& bind : binding) {
                 if (bind.name == command) {
                     bind.keys = keys;
                     break;
-                }  
-            }           
+                }
+            }
         }
     }
 }

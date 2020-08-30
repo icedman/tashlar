@@ -156,10 +156,10 @@ void _addwstr(const wchar_t* str)
     int fh = render_t::instance()->fh;
     int cw = ren_get_font_width(font, "Z");
     RenColor fg = drawColor;
- 
+
     int dw = 4;
-    int ofx = fw/2 - dw/2;
-    int ofy = fh/2;
+    int ofx = fw / 2 - dw / 2;
+    int ofy = fh / 2;
     RenRect rect = {
         .x = ofx + drawBaseX + drawX * fw,
         .y = ofy + drawBaseY + drawY * fh,

@@ -826,7 +826,7 @@ bool cursor_t::isSelectionNormalized()
     if (!hasSelection()) {
         return false;
     }
-    
+
     if (cursor.block != anchor.block) {
         return cursor.block->lineNumber < anchor.block->lineNumber;
     }

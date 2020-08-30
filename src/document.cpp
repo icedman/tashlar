@@ -346,20 +346,21 @@ void document_t::clearSelections()
 
 void document_t::clearDuplicateCursors()
 {
-    if (cursors.size() == 1) return;
+    if (cursors.size() == 1)
+        return;
     cursor_list cs;
     for (auto c : cursors) {
         bool duplicate = false;
         c.normalizeSelection(true);
-        for(auto cc : cs) {
+        for (auto cc : cs) {
             cc.normalizeSelection(true);
-            if (cc.cursor.block == c.cursor.block && cc.cursor.position == c.cursor.position &&
-                cc.anchor.block == c.anchor.block && cc.anchor.position == c.anchor.position) {
+            if (cc.cursor.block == c.cursor.block && cc.cursor.position == c.cursor.position && cc.anchor.block == c.anchor.block && cc.anchor.position == c.anchor.position) {
                 duplicate = true;
                 break;
             }
         }
-        if (duplicate) continue;
+        if (duplicate)
+            continue;
         cs.push_back(c);
     }
     cursors = cs;

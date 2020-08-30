@@ -104,7 +104,6 @@ void minimap_t::render()
                 }
             }
             */
-            
 
             if (!_drawdots(b->data->dots[x], colors)) {
 #ifdef ENABLE_UTF8
