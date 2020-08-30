@@ -76,7 +76,6 @@ struct block_t {
 
     int cachedLength;
     int lineCount;
-    size_t screenLine;
 
     std::string content;
     std::ifstream* file;

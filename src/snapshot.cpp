@@ -11,7 +11,6 @@ void snapshot_t::save(block_list& blocks)
         b->file = block->file;
         b->filePosition = block->filePosition;
         b->lineNumber = block->lineNumber;
-        b->screenLine = block->screenLine;
         b->lineCount = block->lineCount;
         b->dirty = block->dirty;
         b->content = block->content;
@@ -40,7 +39,6 @@ void snapshot_t::restore(block_list& blocks)
         b->file = block->file;
         b->filePosition = block->filePosition;
         b->lineNumber = block->lineNumber;
-        b->screenLine = block->screenLine;
         b->lineCount = block->lineCount;
         b->dirty = block->dirty;
         b->content = block->content;

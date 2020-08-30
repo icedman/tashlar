@@ -935,7 +935,6 @@ void editor_t::ensureVisibleCursor()
 
     int lookAheadX = (cols / 3);
 
-    // app_t::log(">>line:%d scroll:%d screen:%d rows:%d", cursorBlock->lineNumber, scrollY, _cursorScreenY, rows);
     int adjust = 0;
     if (app_t::instance()->lineWrap) {
         block_list::iterator it = document.blocks.begin();
@@ -986,6 +985,15 @@ void editor_t::ensureVisibleCursor()
     }
 
     document.setColumns(cols);
+
+    if (scrollY > cursorBlock->lineNumber) {
+        scrollY = cursorBlock->lineNumber - (rows * 2 / 3);
+        if (scrollY < 0) {
+            scrollY = 0;
+        }
+    }
+
+    app_t::log(">>line:%d scroll:%d rows:%d", cursorBlock->lineNumber, scrollY, rows);
 }
 
 void editor_t::preRender()

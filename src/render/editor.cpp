@@ -9,20 +9,18 @@ void editor_t::render()
     if (!isVisible())
         return;
 
-    editor_t* editor = this;
+    struct cursor_t mainCursor = document.cursor();
+    cursor_list cursors = document.cursors;
 
-    struct cursor_t mainCursor = editor->document.cursor();
-    cursor_list cursors = editor->document.cursors;
+    matchBracketsUnderCursor();
 
-    editor->matchBracketsUnderCursor();
-
-    // app_t::log("scroll %d %d", editor->scrollX, editor->scrollY);
+    // app_t::log("scroll %d %d", scrollX, scrollY);
 
     size_t cx;
     size_t cy;
 
     int l = 0;
-    block_list::iterator it = editor->document.blocks.begin();
+    block_list::iterator it = document.blocks.begin();
 
     //---------------
     // highlight
@@ -36,24 +34,23 @@ void editor_t::render()
 
     int c = 0;
     while (it != document.blocks.end()) {
-        block_ptr b = *it;
+        block_ptr b = *it++;
         highlighter.highlightBlock(b);
-        it++;
         if (c++ > rows + preceedingBlocks)
             break;
     }
 
     //---------------
     it = document.blocks.begin();
-    if (editor->scrollY > 0) {
-        it += editor->scrollY;
+    if (scrollY > 0) {
+        it += scrollY;
     }
 
     _foldedLines = 0;
 
     bool hlMainCursor = document.cursors.size() == 1 && !mainCursor.hasSelection();
     bool firstLine = true;
-    while (it != editor->document.blocks.end()) {
+    while (it != document.blocks.end()) {
         auto& b = *it++;
 
         if (l >= rows + 1)
@@ -73,13 +70,13 @@ void editor_t::render()
             _clrtoeol(cols);
             _move(l++, 0);
 
-            if (text.length() < editor->scrollX) {
+            if (text.length() < scrollX) {
                 continue;
             }
 
             if (blockData && blockData->folded && !blockData->foldable) {
                 l--;
-                _foldedLines += b->lineCount;                
+                _foldedLines += b->lineCount;
                 continue;
             }
 
@@ -88,7 +85,7 @@ void editor_t::render()
 
             // app_t::instance()->log("%s", line);
             int col = 0;
-            for (int i = editor->scrollX;; i++) {
+            for (int i = scrollX;; i++) {
                 size_t pos = i + (sl * cols);
                 if (col++ >= cols) {
                     break;

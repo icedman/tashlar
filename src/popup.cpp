@@ -91,7 +91,7 @@ void popup_t::layout(int _x, int _y, int w, int h)
     if (type == POPUP_COMPLETION && !cursor.isNull()) {
         struct editor_t* editor = app_t::instance()->currentEditor.get();
         x = (1 + cursor.position()) * fw;
-        y = cursor.block()->screenLine + 1;
+        y = cursor.block()->lineNumber + 1;
         y -= editor->scrollY;
 
         y *= fh;

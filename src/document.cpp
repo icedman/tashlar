@@ -41,7 +41,6 @@ void document_t::updateBlocks(block_list& blocks, size_t lineNumber, size_t coun
     std::vector<block_ptr>::iterator it = blocks.begin();
     it += lineNumber;
 
-    size_t screenLine = (*it)->screenLine;
     while (it != blocks.end()) {
         block_ptr block = *it;
         block->lineNumber = lineNumber++;
@@ -49,8 +48,6 @@ void document_t::updateBlocks(block_list& blocks, size_t lineNumber, size_t coun
         if (app_t::instance()->lineWrap && columns > 0) {
             block->lineCount = 1 + ((block->length() - 1) / columns);
         }
-        block->screenLine = screenLine;
-        screenLine += block->lineCount;
         it++;
 
         if (count > 0) {
@@ -123,7 +120,6 @@ bool document_t::open(std::string path, bool enableBuffer)
         tmp = std::ofstream(tmpPath, std::ofstream::out);
     }
 
-    size_t screenLine = 0;
     std::string line;
     size_t offset = 0;
     size_t pos = file.tellg();
@@ -140,12 +136,10 @@ bool document_t::open(std::string path, bool enableBuffer)
 
         //--------------------------
         b->lineNumber = b->originalLineNumber;
-        b->screenLine = screenLine;
         b->lineCount = 1;
         if (columns) {
             b->lineCount = line.length() / columns;
         }
-        screenLine += b->lineCount;
         if (line.length() && line[line.length() - 1] == '\r') {
             line.pop_back();
             offset++;
@@ -163,7 +157,6 @@ bool document_t::open(std::string path, bool enableBuffer)
             b->setText(line);
         }
     }
-
 
     if (enableBuffer) {
         tmp.close();
@@ -402,7 +395,6 @@ void document_t::insertFromBuffer(struct cursor_t& cursor, std::shared_ptr<docum
         b->file = bb->file;
         b->filePosition = bb->filePosition;
         b->lineNumber = 0;
-        b->screenLine = 0;
         b->lineCount = 1;
         b->dirty = false;
         b->content = "";
