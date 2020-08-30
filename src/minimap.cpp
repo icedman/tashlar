@@ -80,12 +80,13 @@ void minimap_t::update(int delta)
     block_ptr block = cursor.block();
 
     int fh = render_t::instance()->fh;
-    int scroll = (editor->scrollY + (-rows * 0.8)) / fh;
+    // int scroll = (editor->scrollY + (-rows * 0.8)) / fh;
+    int scroll = ((editor->scrollY * fh) + (-rows * 2 / 3)) / fh;
     offsetY = scroll;
     currentLine = block->lineNumber;
 
     // try disable scroll
-    int lastLine = doc->blocks.back()->lineNumber;
+    int lastLine = doc->blocks.size();
     if (lastLine / 4 < rows || offsetY < 0) {
         offsetY = 0;
     }
