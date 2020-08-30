@@ -836,7 +836,6 @@ bool cursor_t::isSelectionNormalized()
 
 void cursor_t::normalizeSelection(bool normalize)
 {
-    app_t::log("normalize! %d", normalize);
     if (isSelectionNormalized() != normalize) {
         cursor_position_t tmp = cursor;
         cursor = anchor;

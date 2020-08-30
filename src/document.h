@@ -42,6 +42,7 @@ struct document_t {
     void setCursor(cursor_t cur, bool mainCursor = false);
     void updateCursors(cursor_list& curs);
     void clearCursors();
+    void clearDuplicateCursors();
 
     bool hasSelections();
     void clearSelections();

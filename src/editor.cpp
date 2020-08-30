@@ -432,6 +432,8 @@ void editor_t::runOp(operation_t op)
         document.updateCursors(cursors);
     }
 
+    document.clearDuplicateCursors();
+
     _scrollToCursor = true;
 }
 

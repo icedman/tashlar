@@ -344,9 +344,30 @@ void document_t::clearSelections()
     }
 }
 
+void document_t::clearDuplicateCursors()
+{
+    if (cursors.size() == 1) return;
+    cursor_list cs;
+    for (auto c : cursors) {
+        bool duplicate = false;
+        c.normalizeSelection(true);
+        for(auto cc : cs) {
+            cc.normalizeSelection(true);
+            if (cc.cursor.block == c.cursor.block && cc.cursor.position == c.cursor.position &&
+                cc.anchor.block == c.anchor.block && cc.anchor.position == c.anchor.position) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (duplicate) continue;
+        cs.push_back(c);
+    }
+    cursors = cs;
+}
+
 cursor_t document_t::findNextOccurence(cursor_t cur, std::string word)
 {
-    app_t::log("finding %s<<", word.c_str());
+    // app_t::log("finding %s<<", word.c_str());
     block_ptr block = cur.block();
     while (block) {
         std::vector<search_result_t> search_results = search_t::instance()->find(block->text(), word);

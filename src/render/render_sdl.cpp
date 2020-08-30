@@ -503,7 +503,7 @@ static int poll_event()
 
     case SDL_TEXTINPUT:
         app_t::log("text input %c", e.text.text[0]);
-        if (keyMods == 0 || keyMods & KMOD_SHIFT) {
+        if (keyMods == 0 || keyMods & KMOD_SHIFT || keyMods & KMOD_CAPS) {
             pushKey(e.text.text[0], "");
         }
         return 0;
