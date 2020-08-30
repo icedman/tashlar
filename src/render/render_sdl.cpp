@@ -151,13 +151,24 @@ void _addstr(const char* str)
 
 void _addwstr(const wchar_t* str)
 {
-    /*
     // unsupported
     int fw = render_t::instance()->fw;
     int fh = render_t::instance()->fh;
     int cw = ren_get_font_width(font, "Z");
     RenColor fg = drawColor;
  
+    int dw = 4;
+    int ofx = fw/2 - dw/2;
+    int ofy = fh/2;
+    RenRect rect = {
+        .x = ofx + drawBaseX + drawX * fw,
+        .y = ofy + drawBaseY + drawY * fh,
+        .width = dw,
+        .height = dw
+    };
+    _draw_rect(rect, fg);
+
+    /*
     _draw_wtext(font, str, drawBaseX + (drawX * fw) + (fw / 2 - cw / 2), drawBaseY + (drawY * fh), fg, drawBold, drawItalic);
     */
     drawX++;
