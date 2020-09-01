@@ -71,7 +71,7 @@ void popup_t::layout(int _x, int _y, int w, int h)
 
     width *= fw;
     height *= fh;
-    if (fh > 10) {
+    if (!render_t::instance()->isTerminal()) {
         width += padding * 2;
         height += padding * 2;
     }
@@ -100,7 +100,7 @@ void popup_t::layout(int _x, int _y, int w, int h)
         bool reverse = false;
 
         if (y > (editor->height * 2 / 3)) {
-            if (fh > 10) {
+            if (!render_t::instance()->isTerminal()) {
                 y -= (height + fh);
             } else {
                 y -= (rows + 1);

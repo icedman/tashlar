@@ -57,7 +57,7 @@ void gem_t::update(int delta)
         editor->scrollY = scrollbar.scrollTo;
         scrollbar.scrollTo = -1;
     }
-    scrollbar.setVisible(render_t::instance()->fh > 10 && editor->maxScrollY > editor->rows);
+    scrollbar.setVisible(!render_t::instance()->isTerminal() && editor->maxScrollY > editor->rows);
     scrollbar.scrollY = editor->scrollY;
     scrollbar.maxScrollY = editor->maxScrollY;
     scrollbar.colorPrimary = minimap.colorPrimary;

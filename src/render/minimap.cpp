@@ -65,7 +65,7 @@ void minimap_t::render()
 
             int colors[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-            if (render_t::instance()->fh > 10 && snapBlocks.size() && b->lineNumber > 0) {
+            if (!render_t::instance()->isTerminal() && snapBlocks.size() && b->lineNumber > 0) {
 
                 blockdata_t* blockData = b->data.get();
                 if (!blockData || !blockData->spans.size()) {

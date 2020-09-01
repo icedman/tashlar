@@ -677,6 +677,11 @@ void render_t::delay(int ms)
     SDL_Delay(ms);
 }
 
+bool render_t::isTerminal()
+{
+    return false;
+}
+
 int _keyMods()
 {
     return keyMods;

@@ -234,7 +234,6 @@ block_ptr document_t::addBlockAtLine(size_t line)
     block_list::iterator beg = blocks.begin();
 
     block_ptr b = std::make_shared<block_t>();
-    // b->uid = blockId++;
     b->document = this;
     b->originalLineNumber = 0;
 

@@ -123,12 +123,12 @@ void view_t::layout(int x, int y, int width, int height)
     this->height = height;
 
     rows = height;
-    if (render_t::instance()->fh > 10) {
+    if (!render_t::instance()->isTerminal()) {
         rows -= padding * 2;
     }
     rows /= render_t::instance()->fh;
     cols = width;
-    if (render_t::instance()->fw > 10) {
+    if (!render_t::instance()->isTerminal()) {
         cols -= padding * 2;
     }
     cols /= render_t::instance()->fw;

@@ -256,7 +256,7 @@ void explorer_t::preLayout()
     view_t::preLayout();
 
     preferredWidth = EXPLORER_WIDTH * render_t::instance()->fw;
-    if (render_t::instance()->fw > 10) {
+    if (!render_t::instance()->isTerminal()) {
         preferredWidth += (padding * 2);
     }
 
@@ -266,7 +266,7 @@ void explorer_t::preLayout()
     }
 
     maxScrollY = (renderList.size() - rows + 1) * render_t::instance()->fh;
-    scrollbar->setVisible(maxScrollY > rows && render_t::instance()->fh > 10);
+    scrollbar->setVisible(maxScrollY > rows && !render_t::instance()->isTerminal());
     scrollbar->scrollY = scrollY;
     scrollbar->maxScrollY = maxScrollY;
     scrollbar->colorPrimary = colorPrimary;
@@ -276,7 +276,7 @@ void explorer_t::preLayout()
         scrollbar->thumbSize = 2;
     }
 
-    if (!scrollbar->isVisible() && render_t::instance()->fh > 10) {
+    if (!scrollbar->isVisible() && !render_t::instance()->isTerminal()) {
         scrollY = 0;
     }
 }

@@ -65,7 +65,7 @@ bool statusbar_t::isVisible()
 void statusbar_t::preLayout()
 {
     preferredHeight = render_t::instance()->fh;
-    if (render_t::instance()->fh > 10) {
+    if (!render_t::instance()->isTerminal()) {
         preferredHeight += (padding * 2);
     }
 }

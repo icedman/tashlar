@@ -209,7 +209,13 @@ void render_t::delay(int ms)
 {
 }
 
+bool render_t::isTerminal()
+{
+    return true;
+}
+
 int _keyMods()
 {
     return 0;
 }
+

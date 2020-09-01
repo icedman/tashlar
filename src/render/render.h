@@ -38,6 +38,7 @@ struct render_t {
     void updateColors();
     void input();
     void delay(int ms);
+    bool isTerminal();
 
     static render_t* instance();
 
