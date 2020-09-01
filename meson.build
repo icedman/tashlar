@@ -35,14 +35,7 @@ tashlar_files = [
     'src/statusbar.cpp',
     'src/util.cpp',
     'src/view.cpp',
-    'src/keybinding.cpp',
-    'src/render/editor.cpp',
-    'src/render/explorer.cpp',
-    'src/render/gutter.cpp',
-    'src/render/minimap.cpp',
-    'src/render/popup.cpp',
-    'src/render/tabbar.cpp',
-    'src/render/statusbar.cpp',
+    'src/keybinding.cpp'
 ]
 
 tashlar_sdl_files = [
