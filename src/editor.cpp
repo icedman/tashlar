@@ -857,12 +857,13 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
         it += scrollY;
     }
     int l = 0;
+    bool rowHit = false;
     while (it != document.blocks.end()) {
         block_ptr b = *it++;
         for (int i = 0; i < b->lineCount; i++) {
             if (l == row) {
+                rowHit = true;
                 // app_t::log(">%d %d", b->lineNumber, 0);
-
                 std::ostringstream ss;
                 ss << (b->lineNumber + 1);
                 ss << ":";
@@ -880,6 +881,15 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
         }
         if (l > rows)
             break;
+    }
+
+    // app_t::log("click %d %d %d", rowHit, clicks, l);
+    if (!rowHit && clicks == 1) {
+        if (_keyMods()) {
+            pushOp(MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED, "");
+        } else {
+            pushOp(MOVE_CURSOR_END_OF_DOCUMENT, "");
+        }
     }
 
     if (clicks > 0) {
@@ -999,7 +1009,7 @@ void editor_t::ensureVisibleCursor()
         }
     }
 
-    app_t::log(">>line:%d scroll:%d rows:%d", cursorBlock->lineNumber, scrollY, rows);
+    // app_t::log(">>line:%d scroll:%d rows:%d", cursorBlock->lineNumber, scrollY, rows);
 }
 
 void editor_t::preRender()
