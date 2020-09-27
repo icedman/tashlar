@@ -35,27 +35,20 @@ tashlar_files = [
     'src/statusbar.cpp',
     'src/util.cpp',
     'src/view.cpp',
-    'src/keybinding.cpp',
-    'src/render/editor.cpp',
-    'src/render/explorer.cpp',
-    'src/render/gutter.cpp',
-    'src/render/minimap.cpp',
-    'src/render/popup.cpp',
-    'src/render/tabbar.cpp',
-    'src/render/statusbar.cpp',
+    'src/keybinding.cpp'
 ]
 
 tashlar_sdl_files = [
-    'src/render/render_sdl.cpp',
-    'src/render/keyinput_sdl.cpp',
+    'src/platform/render_sdl.cpp',
+    'src/platform/keyinput_sdl.cpp',
     'libs/lite/rencache.cpp',
     'libs/lite/renderer.cpp',
     'libs/lite/stb_truetype.cpp'
 ]
 
 tashlar_curses_files = [
-    'src/render/render.cpp',
-    'src/render/keyinput.cpp'
+    'src/platform/render.cpp',
+    'src/platform/keyinput.cpp'
 ]
 
 textmate_inc = include_directories(
@@ -106,7 +99,7 @@ executable('ashlr',
     tashlar_files,
     tashlar_curses_files,
     textmate_files,
-    include_directories: [ './src', './src/render', textmate_inc ],
+    include_directories: [ './src', textmate_inc ],
     dependencies: [ quickjs_dep, pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )
@@ -116,7 +109,7 @@ executable('ashlar',
     tashlar_files,
     tashlar_sdl_files,
     textmate_files,
-    include_directories: [ './src', './src/render', './libs/lite', textmate_inc ],
+    include_directories: [ './src', './libs/lite', textmate_inc ],
     dependencies: [ quickjs_dep, sdl2_dep, sdl2ttf_dep, pthread_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )
