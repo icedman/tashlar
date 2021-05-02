@@ -271,7 +271,9 @@ void explorer_t::preLayout()
     scrollbar->maxScrollY = maxScrollY;
     scrollbar->colorPrimary = colorPrimary;
 
-    scrollbar->thumbSize = rows / renderList.size();
+    int sz = renderList.size();
+    if (sz == 0) sz = 1;
+    scrollbar->thumbSize = rows / sz;
     if (scrollbar->thumbSize < 2) {
         scrollbar->thumbSize = 2;
     }

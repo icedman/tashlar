@@ -23,7 +23,7 @@ int main(int argc, char** argv)
     app.applyTheme();
 
     // editor
-    std::string file = "./";
+    std::string file = "";
     if (argc > 1) {
         file = argv[argc - 1];
     }
