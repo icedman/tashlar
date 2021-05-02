@@ -255,8 +255,8 @@ void explorer_t::preLayout()
 
     view_t::preLayout();
 
-    preferredWidth = EXPLORER_WIDTH * render_t::instance()->fw;
-    if (!render_t::instance()->isTerminal()) {
+    preferredWidth = EXPLORER_WIDTH * getRenderer()->fw;
+    if (!getRenderer()->isTerminal()) {
         preferredWidth += (padding * 2);
     }
 
@@ -265,8 +265,8 @@ void explorer_t::preLayout()
         scrollbar->scrollTo = -1;
     }
 
-    maxScrollY = (renderList.size() - rows + 1) * render_t::instance()->fh;
-    scrollbar->setVisible(maxScrollY > rows && !render_t::instance()->isTerminal());
+    maxScrollY = (renderList.size() - rows + 1) * getRenderer()->fh;
+    scrollbar->setVisible(maxScrollY > rows && !getRenderer()->isTerminal());
     scrollbar->scrollY = scrollY;
     scrollbar->maxScrollY = maxScrollY;
     scrollbar->colorPrimary = colorPrimary;
@@ -276,7 +276,7 @@ void explorer_t::preLayout()
         scrollbar->thumbSize = 2;
     }
 
-    if (!scrollbar->isVisible() && !render_t::instance()->isTerminal()) {
+    if (!scrollbar->isVisible() && !getRenderer()->isTerminal()) {
         scrollY = 0;
     }
 }
@@ -407,7 +407,7 @@ bool explorer_t::input(char ch, std::string keys)
 void explorer_t::mouseDown(int x, int y, int button, int clicks)
 {
     int prevItem = currentItem;
-    int fh = render_t::instance()->fh;
+    int fh = getRenderer()->fh;
     currentItem = ((y - this->y - padding) / fh) + (scrollY / fh);
     if (currentItem < 0 || currentItem >= renderList.size()) {
         currentItem = -1;
@@ -439,7 +439,7 @@ void explorer_t::onFocusChanged(bool focused)
 
 void explorer_t::ensureVisibleCursor()
 {
-    int fh = render_t::instance()->fh;
+    int fh = getRenderer()->fh;
 
     if (renderList.size()) {
         int current = currentItem;
@@ -502,8 +502,8 @@ void explorer_t::render()
     bool hasFocus = (isFocused() || isHovered) && !view_t::currentDragged();
 
     int idx = 0;
-    int skip = (scrollY / render_t::instance()->fh);
-    // app_t::log("??%d %d %d", scrollY, skip, render_t::instance()->fh);
+    int skip = (scrollY / getRenderer()->fh);
+    // app_t::log("??%d %d %d", scrollY, skip, getRenderer()->fh);
 
     int y = 0;
     for (auto file : renderList) {

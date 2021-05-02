@@ -829,8 +829,8 @@ bool editor_t::input(char ch, std::string keySequence)
 
 void editor_t::mouseDown(int x, int y, int button, int clicks)
 {
-    int fw = render_t::instance()->fw;
-    int fh = render_t::instance()->fh;
+    int fw = getRenderer()->fw;
+    int fh = getRenderer()->fh;
 
     int col = (x - this->x - padding) / fw;
     int row = (y - this->y - padding) / fh;
@@ -927,8 +927,8 @@ void editor_t::layout(int _x, int _y, int w, int h)
     width = w;
     height = h;
 
-    rows = height / render_t::instance()->fh;
-    cols = width / render_t::instance()->fw;
+    rows = height / getRenderer()->fh;
+    cols = width / getRenderer()->fw;
 
     maxScrollX = 0;
     maxScrollY = document.lastBlock()->lineNumber - (rows * 2 / 3);

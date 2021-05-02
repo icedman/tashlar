@@ -1,3 +1,4 @@
+
 #include "app.h"
 #include "render.h"
 #include "search.h"
@@ -98,7 +99,7 @@ void app_t::refresh()
 
 void app_t::preLayout()
 {
-    bottomBar.preferredHeight = render_t::instance()->fh;
+    bottomBar.preferredHeight = getRenderer()->fh;
     view_t::preLayout();
 }
 
@@ -347,7 +348,7 @@ void app_t::setupColors()
     // theme->theme_color("statusBar.foreground", clr);
 
     app_t::instance()->log("%d registered colors", theme->colorIndices.size());
-    render_t::instance()->updateColors();
+    getRenderer()->updateColors();
 
     applyTheme();
 }

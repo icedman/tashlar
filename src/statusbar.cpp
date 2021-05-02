@@ -66,14 +66,15 @@ bool statusbar_t::isVisible()
 
 void statusbar_t::preLayout()
 {
-    preferredHeight = render_t::instance()->fh;
-    if (!render_t::instance()->isTerminal()) {
+    preferredHeight = getRenderer()->fh;
+    if (!getRenderer()->isTerminal()) {
         preferredHeight += (padding * 2);
     }
 }
 
 static void renderLine(const char* line, int offsetY, int offsetX, int size, int width)
 {
+    // TODO
     int row = offsetY / render_t::instance()->fh;
 
     // app_t::instance()->log("%s %d", line, size);
@@ -107,9 +108,9 @@ void statusbar_t::render()
     cursor_t cursor = doc->cursor();
     block_ptr block = cursor.block();
 
-    int cols = width / render_t::instance()->fw;
-    int row = y / render_t::instance()->fh;
-    int col = x / render_t::instance()->fw;
+    int cols = width / getRenderer()->fw;
+    int row = y / getRenderer()->fh;
+    int col = x / getRenderer()->fw;
 
     _move(0, col);
 

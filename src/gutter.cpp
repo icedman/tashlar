@@ -26,8 +26,8 @@ void gutter_t::preLayout()
 
     block_ptr block = editor->document.lastBlock();
     std::string lineNo = std::to_string(1 + block->lineNumber);
-    preferredWidth = (lineNo.length() + 3) * render_t::instance()->fw;
-    if (!render_t::instance()->isTerminal()) {
+    preferredWidth = (lineNo.length() + 3) * getRenderer()->fw;
+    if (!getRenderer()->isTerminal()) {
         preferredWidth += padding * 2;
     }
 }

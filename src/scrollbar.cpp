@@ -30,7 +30,7 @@ void scrollbar_t::render()
     _attron(_color_pair(pair));
     _reverse(true);
 
-    int fh = render_t::instance()->fh;
+    int fh = getRenderer()->fh;
 
     int th = thumbSize;
     int sy = scrollY;
@@ -53,8 +53,8 @@ void scrollbar_t::update(int delta)
 
 void scrollbar_t::preLayout()
 {
-    preferredHeight = 1 * render_t::instance()->fh;
-    if (render_t::instance()->fh > 10) {
+    preferredHeight = 1 * getRenderer()->fh;
+    if (getRenderer()->fh > 10) {
         preferredHeight += padding * 2;
     }
 }

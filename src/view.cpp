@@ -32,6 +32,12 @@ view_t::~view_t()
 {
 }
 
+render_t* view_t::getRenderer()
+{
+    // should have been initiaed somewhere
+    return render_t::instance();
+}
+
 void view_t::setFocus(view_t* w)
 {
     if (focused != w) {
@@ -123,15 +129,15 @@ void view_t::layout(int x, int y, int width, int height)
     this->height = height;
 
     rows = height;
-    if (!render_t::instance()->isTerminal()) {
+    if (!getRenderer()->isTerminal()) {
         rows -= padding * 2;
     }
-    rows /= render_t::instance()->fh;
+    rows /= getRenderer()->fh;
     cols = width;
-    if (!render_t::instance()->isTerminal()) {
+    if (!getRenderer()->isTerminal()) {
         cols -= padding * 2;
     }
-    cols /= render_t::instance()->fw;
+    cols /= getRenderer()->fw;
 
     switch (viewLayout) {
     case LAYOUT_HORIZONTAL:

@@ -43,7 +43,7 @@ void minimap_t::render()
 
     _move(0, 0);
 
-    // int fh = render_t::instance()->fh;
+    // int fh = getRenderer()->fh;
     // int sy = editor->scrollY / fh;
 
     int sy = offsetY;
@@ -88,7 +88,7 @@ void minimap_t::render()
 
             int colors[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-            if (render_t::instance()->fh > 10 && snapBlocks.size() && b->lineNumber > 0) {
+            if (getRenderer()->fh > 10 && snapBlocks.size() && b->lineNumber > 0) {
 
                 blockdata_t* blockData = b->data.get();
                 if (!blockData || !blockData->spans.size()) {
@@ -238,7 +238,7 @@ void minimap_t::update(int delta)
     struct cursor_t cursor = doc->cursor();
     block_ptr block = cursor.block();
 
-    int fh = render_t::instance()->fh;
+    int fh = getRenderer()->fh;
     // int scroll = (editor->scrollY + (-rows * 0.8)) / fh;
     int scroll = ((editor->scrollY * fh) + (-rows * 2 / 3)) / fh;
     offsetY = scroll;
@@ -268,7 +268,7 @@ bool minimap_t::isVisible()
 
 void minimap_t::preLayout()
 {
-    preferredWidth = (padding * 2) + (MINIMAP_WIDTH * render_t::instance()->fw);
+    preferredWidth = (padding * 2) + (MINIMAP_WIDTH * getRenderer()->fw);
 }
 
 void minimap_t::scroll(int s)

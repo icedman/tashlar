@@ -36,8 +36,8 @@ void item_view_t::update(int delta)
 
 void item_view_t::preLayout()
 {
-    preferredHeight = 1 * render_t::instance()->fh;
-    if (render_t::instance()->fh > 10) {
+    preferredHeight = 1 * getRenderer()->fh;
+    if (getRenderer()->fh > 10) {
         preferredHeight += padding * 2;
     }
 }

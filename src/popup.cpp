@@ -66,12 +66,12 @@ void popup_t::layout(int _x, int _y, int w, int h)
         height = POPUP_MAX_HEIGHT;
     }
 
-    int fw = render_t::instance()->fw;
-    int fh = render_t::instance()->fh;
+    int fw = getRenderer()->fw;
+    int fh = getRenderer()->fh;
 
     width *= fw;
     height *= fh;
-    if (!render_t::instance()->isTerminal()) {
+    if (!getRenderer()->isTerminal()) {
         width += padding * 2;
         height += padding * 2;
     }
@@ -100,7 +100,7 @@ void popup_t::layout(int _x, int _y, int w, int h)
         bool reverse = false;
 
         if (y > (editor->height * 2 / 3)) {
-            if (!render_t::instance()->isTerminal()) {
+            if (!getRenderer()->isTerminal()) {
                 y -= (height + fh);
             } else {
                 y -= (rows + 1);
@@ -126,13 +126,13 @@ void popup_t::preLayout()
     }
     maxScrollY = 0;
     if (items.size() > 1) {
-        maxScrollY = (items.size() - rows + inputOffset) * render_t::instance()->fh;
+        maxScrollY = (items.size() - rows + inputOffset) * getRenderer()->fh;
     }
 }
 
 void popup_t::mouseDown(int x, int y, int button, int clicks)
 {
-    int fh = render_t::instance()->fh;
+    int fh = getRenderer()->fh;
     currentItem = ((y - this->y - padding) / fh) + (scrollY / fh);
     if (type != POPUP_COMPLETION) {
         currentItem -= 1;
@@ -275,7 +275,7 @@ void popup_t::ensureVisibleCursor()
         inputOffset -= 1;
     }
 
-    int fh = render_t::instance()->fh;
+    int fh = getRenderer()->fh;
 
     if (items.size()) {
         if (currentItem < 0)
@@ -783,7 +783,7 @@ void popup_t::render()
     _attroff(_color_pair(colorIndicator));
     _attron(_color_pair(colorPrimary));
 
-    int skip = (scrollY / render_t::instance()->fh);
+    int skip = (scrollY / getRenderer()->fh);
     int idx = 0;
     int y = (inputOffset - 1);
     for (auto& item : items) {

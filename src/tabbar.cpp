@@ -103,7 +103,7 @@ bool tabbar_t::input(char ch, std::string keys)
 
 void tabbar_t::mouseDown(int x, int y, int button, int clicks)
 {
-    int fw = render_t::instance()->fw;
+    int fw = getRenderer()->fw;
     int col = (x - this->x - padding) / fw;
     for (auto& t : tabs) {
         if (col >= t.x && col < t.x + t.width) {
@@ -126,8 +126,8 @@ bool tabbar_t::isVisible()
 
 void tabbar_t::preLayout()
 {
-    preferredHeight = render_t::instance()->fh;
-    if (render_t::instance()->fh > 10) {
+    preferredHeight = getRenderer()->fh;
+    if (getRenderer()->fh > 10) {
         preferredHeight += (padding * 2);
     }
 }
