@@ -23,11 +23,9 @@ int main(int argc, char** argv)
     app.applyTheme();
 
     // editor
-    char* file = 0;
+    std::string file = "./";
     if (argc > 1) {
         file = argv[argc - 1];
-    } else {
-        file = "";
     }
 
     app.openEditor(file);

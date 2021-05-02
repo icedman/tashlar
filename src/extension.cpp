@@ -22,12 +22,14 @@ void load_extensions(const std::string _path, std::vector<struct extension_t>& e
 
     for (const auto& extensionPath : enumerate_dir(path)) {
         std::string package = extensionPath + "/package.json";
+        std::string packageNLS = extensionPath + "/package.nls.json";
 
         // qDebug() << package;
         struct extension_t ex = {
-            .path = extensionPath,
+            .path = extensionPath
         };
 
+        ex.nls = parse::loadJson(packageNLS);
         ex.package = parse::loadJson(package);
         if (!ex.package.isObject()) {
             continue;
@@ -75,6 +77,7 @@ void load_extensions(const std::string _path, std::vector<struct extension_t>& e
 
         if (append) {
             // std::cout << ex.package["name"].asString() << std::endl;
+            // app_t::instance()->log(ex.nls["themeLabel"].asString().c_str());
             // qDebug() << package;
             extensions.emplace_back(ex);
         }

@@ -379,19 +379,44 @@ void popup_t::commands()
                 continue;
             }
 
+            // app_t::log("ext: %s", ext.path.c_str());
+
             Json::Value themes = contribs["themes"];
             for (int i = 0; i < themes.size(); i++) {
                 Json::Value theme = themes[i];
+
+                // todo
+                std::string label = theme["label"].asString();
+                if (label[0] == '%') {
+                    label = ext.nls["themeLabel"].asString();
+                }
+
+                if (label.size() == 0) continue;
+
                 struct item_t item = {
-                    .name = "Theme: " + theme["label"].asString(),
+                    .name = "Theme: " + label,
                     .description = "",
                     .fullPath = theme["path"].asString(),
                     .score = 0,
                     .depth = 0,
-                    .script = "app.theme(\"" + theme["label"].asString() + "\")"
+                    .script = "app.theme(\"" + label + "\")"
                 };
 
+                bool exists = false;
+                for (auto cmd : commandItems) {
+                    if (cmd.name == item.name) {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (exists) {
+                    continue;
+                }
+                
                 commandItems.push_back(item);
+                // app_t::log("theme: %s", item.name.c_str());
+
             }
         }
     }
