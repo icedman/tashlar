@@ -10,6 +10,14 @@
 
 typedef std::vector<operation_t> operation_list;
 
+struct config_t {
+    config_t();
+    
+    static config_t* instance();
+
+    bool lineWrap;
+};
+
 struct editor_t : view_t {
     editor_t();
     ~editor_t();

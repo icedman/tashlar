@@ -56,10 +56,10 @@ void fileitem_t::setPath(std::string p)
     fullPath = std::string(cpath);
     free(cpath);
 
-    // app_t::instance()->log("--------------------");
-    // app_t::instance()->log("name: %s", name.c_str());
-    // app_t::instance()->log("path: %s", path.c_str());
-    // app_t::instance()->log("fullPath: %s", fullPath.c_str());
+    // log("--------------------");
+    // log("name: %s", name.c_str());
+    // log("path: %s", path.c_str());
+    // log("fullPath: %s", fullPath.c_str());
 }
 
 void fileitem_t::load(std::string p)
@@ -68,7 +68,7 @@ void fileitem_t::load(std::string p)
         setPath(p);
     }
 
-    // app_t::instance()->log("load %s", fullPath.c_str());
+    // log("load %s", fullPath.c_str());
     std::vector<std::string>& excludeFiles = app_t::instance()->excludeFiles;
     std::vector<std::string>& excludeFolders = app_t::instance()->excludeFolders;
 
@@ -104,7 +104,7 @@ void fileitem_t::load(std::string p)
                 std::set<char> delims = { '.' };
                 std::vector<std::string> spath = split_path(filePath, delims);
                 std::string suffix = "*." + spath.back();
-                // app_t::instance()->log("%s", suffix)
+                // log("%s", suffix)
                 for (auto pat : excludeFiles) {
                     if (suffix == pat) {
                         exclude = true;
@@ -211,7 +211,7 @@ void explorer_t::preloadFolders()
         if (item->isDirectory && item->canLoadMore && item->depth == loadDepth) {
             item->load();
 
-            // app_t::instance()->log("load more %d", item->depth);
+            // log("load more %d", item->depth);
 
             item->canLoadMore = false;
             if (loaded++ >= PRELOAD_LOOP) {
@@ -336,7 +336,7 @@ bool explorer_t::input(char ch, std::string keys)
     case ENTER:
         if (item && item->isDirectory) {
             item->expanded = !item->expanded || cmd == MOVE_CURSOR_RIGHT;
-            app->log("expand/collapse folder %s", item->fullPath.c_str());
+            log("expand/collapse folder %s", item->fullPath.c_str());
             if (item->canLoadMore) {
                 item->load();
                 item->canLoadMore = false;
@@ -345,7 +345,7 @@ bool explorer_t::input(char ch, std::string keys)
             return true;
         }
         if (item && cmd == ENTER) {
-            app->log("open file %s", item->fullPath.c_str());
+            log("open file %s", item->fullPath.c_str());
             app->openEditor(item->fullPath);
         }
         return true;
@@ -455,7 +455,7 @@ void explorer_t::ensureVisibleCursor()
             int blockVirtualLine = current;
             int blockScreenLine = blockVirtualLine - (scrollY / fh);
 
-            app_t::instance()->log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, current);
+            log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, current);
 
             if (blockScreenLine >= viewportHeight) {
                 scrollY += fh;
@@ -505,7 +505,7 @@ void explorer_t::render()
 
     int idx = 0;
     int skip = (scrollY / getRenderer()->fh);
-    // app_t::log("??%d %d %d", scrollY, skip, getRenderer()->fh);
+    // log("??%d %d %d", scrollY, skip, getRenderer()->fh);
 
     int y = 0;
     for (auto file : renderList) {

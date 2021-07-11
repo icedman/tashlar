@@ -77,7 +77,7 @@ static void renderLine(const char* line, int offsetY, int offsetX, int size, int
     // TODO
     int row = offsetY / render_t::instance()->fh;
 
-    // app_t::instance()->log("%s %d", line, size);
+    // log("%s %d", line, size);
     _move(0, offsetX);
 
     char c;
@@ -99,7 +99,7 @@ void statusbar_t::render()
         return;
     }
 
-    // app_t::log("statusbar h:%d %d", height, preferredHeight);
+    // log("statusbar h:%d %d", height, preferredHeight);
 
     app_t* app = app_t::instance();
 

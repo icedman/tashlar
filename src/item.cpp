@@ -1,6 +1,7 @@
 #include "item.h"
 #include "app.h"
 #include "render.h"
+#include "util.h"
 
 item_view_t::item_view_t()
     : view_t("item")
@@ -19,7 +20,7 @@ void item_view_t::render()
         return;
     }
 
-    app_t::log("%s %d %d %d %d", text.c_str(), x, y, width, preferredHeight);
+    log("%s %d %d %d %d", text.c_str(), x, y, width, preferredHeight);
 
     if (!text.length())
         return;

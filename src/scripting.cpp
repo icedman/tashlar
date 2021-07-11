@@ -12,6 +12,7 @@ extern "C" {
 #include "keybinding.h"
 #include "scripting.h"
 #include "theme.h"
+#include "util.h"
 
 #include <cstring>
 #include <fstream>
@@ -56,7 +57,7 @@ static JSValue js_log(JSContext* ctx, JSValueConst this_val,
         str = JS_ToCString(ctx, argv[i]);
         if (!str)
             return JS_EXCEPTION;
-        app_t::instance()->log("log: %s", str);
+        log("log: %s", str);
         JS_FreeCString(ctx, str);
     }
     return JS_UNDEFINED;
@@ -104,7 +105,7 @@ static JSValue js_command(JSContext* ctx, JSValueConst this_val,
         if (!command_script_map[i].name)
             break;
         if (strcmp(command_script_map[i].name, cmdName.c_str()) == 0) {
-            app_t::instance()->log("editor: %s %d", cmdName.c_str(), command_script_map[i].cmd);
+            log("editor: %s %d", cmdName.c_str(), command_script_map[i].cmd);
             app_t::instance()->commandBuffer.push_back(command_t((command_e)command_script_map[i].cmd, cmdArgs));
             break;
         }
@@ -126,7 +127,7 @@ static JSValue js_theme(JSContext* ctx, JSValueConst this_val,
             return JS_EXCEPTION;
 
         struct app_t* app = app_t::instance();
-        // app->log("theme %s", themeName);
+        // log("theme %s", themeName);
         theme_ptr tmpTheme = theme_from_name(themeName, app->extensions);
         if (tmpTheme) {
             app->theme = tmpTheme;

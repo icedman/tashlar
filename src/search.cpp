@@ -70,7 +70,7 @@ std::vector<search_result_t> search_t::findWords(std::string str, regexp::patter
             break;
         }
 
-        // app_t::instance()->log("%d %d", m.begin(), m.end());
+        // log("%d %d", m.begin(), m.end());
 
         std::string o(start + m.begin(), m.end() - m.begin());
 

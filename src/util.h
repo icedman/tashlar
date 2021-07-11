@@ -11,4 +11,7 @@ std::vector<std::string> enumerate_dir(const std::string path);
 
 bool expand_path(char** path);
 
+void initLog();
+void log(const char* format, ...);
+
 #endif // UTIL_H

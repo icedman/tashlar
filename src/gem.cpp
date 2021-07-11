@@ -36,7 +36,7 @@ bool gem_t::input(char ch, std::string keys)
     switch (op) {
     case SPLIT_VIEW:
         split = true;
-        //        app_t::log("split!");
+        //        log("split!");
         return true;
     default:
         break;

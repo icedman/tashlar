@@ -22,7 +22,6 @@ struct app_t : view_t {
     ~app_t();
 
     static app_t* instance();
-    static void log(const char* format, ...);
 
     void setClipboard(std::string text);
     std::string clipboard();
@@ -43,7 +42,6 @@ struct app_t : view_t {
 
     // settings
     int tabSize;
-    bool lineWrap;
     bool showStatusBar;
     bool showGutter;
     bool showTabbar;

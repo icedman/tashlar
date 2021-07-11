@@ -1,5 +1,5 @@
 #include "keyinput.h"
-#include "app.h"
+#include "util.h"
 
 #include <curses.h>
 #include <stdio.h>
@@ -54,7 +54,7 @@ static int readMoreEscapeSequence(int c, std::string& keySequence)
         return K_CTRL_ALT_;
     }
 
-    app_t::log("escape+%d a:%d A:%d 0:%d 9:%d\n", c, 'a', 'A', '0', '9');
+    log("escape+%d a:%d A:%d 0:%d 9:%d\n", c, 'a', 'A', '0', '9');
 
     return K_ESC;
 }
@@ -113,7 +113,7 @@ static int readEscapeSequence(std::string& keySequence)
 
                 sequence = "shift+";
                 if (seq[0] == '2') {
-                    // app_t::log("shift+%d\n", seq[1]);
+                    // log("shift+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -138,7 +138,7 @@ static int readEscapeSequence(std::string& keySequence)
 
                 sequence = "ctrl+";
                 if (seq[0] == '5') {
-                    // app_t::log("ctrl+%d\n", seq[1]);
+                    // log("ctrl+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -163,7 +163,7 @@ static int readEscapeSequence(std::string& keySequence)
 
                 sequence = "ctrl+shift+";
                 if (seq[0] == '6') {
-                    // app_t::log("ctrl+shift+%d\n", seq[1]);
+                    // log("ctrl+shift+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -188,7 +188,7 @@ static int readEscapeSequence(std::string& keySequence)
 
                 sequence = "ctrl+alt+";
                 if (seq[0] == '7') {
-                    // app_t::log("ctrl+alt+%d\n", seq[1]);
+                    // log("ctrl+alt+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -213,7 +213,7 @@ static int readEscapeSequence(std::string& keySequence)
 
                 sequence = "ctrl+shift+alt+";
                 if (seq[0] == '8') {
-                    // app_t::log("ctrl+shift+alt+%d\n", seq[1]);
+                    // log("ctrl+shift+alt+%d\n", seq[1]);
                     switch (seq[1]) {
                     case 'A':
                         keySequence = sequence + "up";
@@ -240,7 +240,7 @@ static int readEscapeSequence(std::string& keySequence)
             }
 
         } else {
-            // app_t::log("escape+[+%d\n", seq[1]);
+            // log("escape+[+%d\n", seq[1]);
             switch (seq[1]) {
             case 'A':
                 keySequence = "up";
@@ -268,7 +268,7 @@ static int readEscapeSequence(std::string& keySequence)
 
     /* ESC O sequences. */
     else if (seq[0] == 'O') {
-        // app_t::log("escape+O+%d\n", seq[1]);
+        // log("escape+O+%d\n", seq[1]);
         switch (seq[1]) {
         case 'H':
             return K_HOME_KEY;
@@ -317,7 +317,7 @@ int readKey(std::string& keySequence)
                     keySequence += '?';
                 }
 
-                app_t::log("ctrl+%d\n", c);
+                log("ctrl+%d\n", c);
                 return c;
             }
 

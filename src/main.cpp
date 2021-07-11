@@ -39,7 +39,7 @@ int main(int argc, char** argv)
         int delta = 100;
         renderer.update(delta);
 
-        // app_t::log("h:%d", renderer.height);
+        // log("h:%d", renderer.height);
         app.update(delta);
         app.preLayout();
         app.layout(0, 0, renderer.width, renderer.height);
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
             expandedSequence = "";
         }
 
-        // app_t::log("k: %d %s", ch, keySequence.c_str());
+        // log("k: %d %s", ch, keySequence.c_str());
         statusbar_t::instance()->setStatus(keySequence);
         app.input(ch, keySequence);
     }

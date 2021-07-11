@@ -1,5 +1,5 @@
 #include "document.h"
-#include "app.h"
+#include "editor.h"
 #include "cursor.h"
 #include "search.h"
 #include "util.h"
@@ -45,7 +45,7 @@ void document_t::updateBlocks(block_list& blocks, size_t lineNumber, size_t coun
         block_ptr block = *it;
         block->lineNumber = lineNumber++;
         block->lineCount = 1;
-        if (app_t::instance()->lineWrap && columns > 0) {
+        if (config_t::instance()->lineWrap && columns > 0) {
             block->lineCount = 1 + ((block->length() - 1) / columns);
         }
         it++;
@@ -367,7 +367,7 @@ void document_t::clearDuplicateCursors()
 
 cursor_t document_t::findNextOccurence(cursor_t cur, std::string word)
 {
-    // app_t::log("finding %s<<", word.c_str());
+    // log("finding %s<<", word.c_str());
     block_ptr block = cur.block();
     while (block) {
         std::vector<search_result_t> search_results = search_t::instance()->find(block->text(), word);
@@ -377,7 +377,7 @@ cursor_t document_t::findNextOccurence(cursor_t cur, std::string word)
             cursor_t res;
             res.setPosition(block, i.end - 1);
             res.setAnchor(block, i.begin);
-            // app_t::log("found! %s %d %d %d ", block->text().c_str(), i.begin, i.end, cur.cursor.position);
+            // log("found! %s %d %d %d ", block->text().c_str(), i.begin, i.end, cur.cursor.position);
             return res;
         }
         block = block->next();
@@ -390,7 +390,7 @@ void document_t::addBufferDocument(const std::string& largeText)
     std::string tmpPath = TMP_PASTE;
     mkstemp((char*)tmpPath.c_str());
 
-    app_t::instance()->log(tmpPath.c_str());
+    log(tmpPath.c_str());
 
     std::ofstream tmp(tmpPath, std::ofstream::out);
     tmp << largeText;

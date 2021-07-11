@@ -1,4 +1,3 @@
-
 #include "app.h"
 #include "render.h"
 #include "search.h"
@@ -7,8 +6,6 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
-
-#define LOG_FILE "/tmp/ashlar.log"
 
 static struct app_t* appInstance = 0;
 
@@ -51,19 +48,12 @@ struct app_t* app_t::instance()
     return appInstance;
 }
 
-static void initLog()
-{
-    FILE* log_file = fopen(LOG_FILE, "w");
-    fclose(log_file);
-}
-
 app_t::app_t()
     : view_t("app")
     , end(false)
     , refreshCount(0)
 {
     appInstance = this;
-    initLog();
 
     viewLayout = LAYOUT_VERTICAL;
     addView(&mainView);
@@ -111,28 +101,6 @@ void app_t::setClipboard(std::string text)
 std::string app_t::clipboard()
 {
     return clipText;
-}
-
-void app_t::log(const char* format, ...)
-{
-    static char string[1024] = "";
-
-    va_list args;
-    va_start(args, format);
-    vsnprintf(string, 1024, format, args);
-    va_end(args);
-
-    FILE* log_file = fopen(LOG_FILE, "a");
-    if (!log_file) {
-        return;
-    }
-    char* token = strtok(string, "\n");
-    while (token != NULL) {
-        fprintf(log_file, token);
-        fprintf(log_file, "\n");
-        token = strtok(NULL, "\n");
-    }
-    fclose(log_file);
 }
 
 void app_t::configure(int argc, char** argv)
@@ -208,7 +176,7 @@ void app_t::configure(int argc, char** argv)
     // editor settings
     //-------------------
     if (settings.isMember("word_wrap")) {
-        lineWrap = settings["word_wrap"].asBool();
+        config_t::instance()->lineWrap = settings["word_wrap"].asBool();
     }
     if (settings.isMember("statusbar")) {
         showStatusBar = settings["statusbar"].asBool();
@@ -347,7 +315,7 @@ void app_t::setupColors()
     // theme->theme_color("statusBar.background", clr);
     // theme->theme_color("statusBar.foreground", clr);
 
-    app_t::instance()->log("%d registered colors", theme->colorIndices.size());
+    log("%d registered colors", theme->colorIndices.size());
     getRenderer()->updateColors();
 
     applyTheme();

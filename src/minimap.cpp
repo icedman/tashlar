@@ -197,7 +197,7 @@ void minimap_t::buildUpDotsForBlock(block_ptr block, float textCompress, int buf
         return;
     }
 
-    // app_t::instance()->log("minimap %d", block->lineNumber);
+    // log("minimap %d", block->lineNumber);
 
     std::string line1;
     std::string line2;

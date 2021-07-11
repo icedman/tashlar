@@ -89,7 +89,7 @@ void _addch(char c)
     RenRect rect = { .x = drawBaseX + drawX * fw, .y = drawBaseY + drawY * fh, .width = fw, .height = fh };
     if (bg.r != bgColor.r || bg.g != bgColor.g || bg.b != bgColor.b) {
         _draw_rect(rect, bg);
-        // app_t::log("bg: %d %d %d (%d %d %d)", bg.r, bg.g, bg.b, bgColor.r, bgColor.g, bgColor.b);
+        // log("bg: %d %d %d (%d %d %d)", bg.r, bg.g, bg.b, bgColor.r, bgColor.g, bgColor.b);
     }
 
     _draw_text(font, (char*)txt, drawBaseX + (drawX * fw) + (fw / 2 - cw / 2), drawBaseY + (drawY * fh), fg, drawBold, drawItalic);
@@ -503,7 +503,7 @@ static int poll_event()
             }
             if (keySequence.length() > 1) {
                 pushKey(0, keySequence);
-                app_t::log("keydown %s", keySequence.c_str());
+                log("keydown %s", keySequence.c_str());
             }
         }
 
@@ -515,7 +515,7 @@ static int poll_event()
         return 0;
 
     case SDL_TEXTINPUT:
-        app_t::log("text input %c", e.text.text[0]);
+        log("text input %c", e.text.text[0]);
         if (keyMods == 0 || keyMods & KMOD_SHIFT || keyMods & KMOD_CAPS) {
             pushKey(e.text.text[0], "");
         }
@@ -544,11 +544,11 @@ static int poll_event()
         view_t::setHovered(app_t::instance()->viewFromPointer(e.motion.x, e.motion.y));
         if (view_t::currentDragged()) {
             view_t::currentDragged()->mouseDrag(e.motion.x, e.motion.y, (view_t::currentHovered() == view_t::currentDragged()));
-            // app_t::log("drag %d %d", e.motion.x, e.motion.y);
+            // log("drag %d %d", e.motion.x, e.motion.y);
             pushKey(0, "mousedrag");
         } else {
             view_t::currentHovered()->mouseHover(e.motion.x, e.motion.y);
-            // app_t::log("hover %d %d", e.motion.x, e.motion.y);
+            // log("hover %d %d", e.motion.x, e.motion.y);
             pushKey(0, "mousehover");
         }
         return 0;
@@ -589,7 +589,7 @@ void render_t::update(int delta)
 
 void render_t::input()
 {
-    // app_t::log("event!");
+    // log("event!");
     SDL_WaitEventTimeout(NULL, 50);
     poll_event();
 }

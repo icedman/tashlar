@@ -12,6 +12,7 @@
 #include "scripting.h"
 #include "search.h"
 #include "statusbar.h"
+#include "util.h"
 
 #define POPUP_SEARCH_WIDTH 24
 #define POPUP_PALETTE_WIDTH 40
@@ -288,7 +289,7 @@ void popup_t::ensureVisibleCursor()
             int blockVirtualLine = currentItem;
             int blockScreenLine = blockVirtualLine - (scrollY / fh);
 
-            // app_t::instance()->log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, currentItem);
+            // log("b:%d v:%d s:%d %d", blockScreenLine, viewportHeight, scrollY / fh, currentItem);
 
             if (blockScreenLine > viewportHeight) {
                 scrollY += fh;
@@ -379,7 +380,7 @@ void popup_t::commands()
                 continue;
             }
 
-            // app_t::log("ext: %s", ext.path.c_str());
+            // log("ext: %s", ext.path.c_str());
 
             Json::Value themes = contribs["themes"];
             for (int i = 0; i < themes.size(); i++) {
@@ -415,7 +416,7 @@ void popup_t::commands()
                 }
                 
                 commandItems.push_back(item);
-                // app_t::log("theme: %s", item.name.c_str());
+                // log("theme: %s", item.name.c_str());
 
             }
         }
@@ -431,7 +432,7 @@ void popup_t::commands()
 void popup_t::update(int delta)
 {
     if (request > 0) {
-        // app_t::log(">%d" ,request);
+        // log(">%d" ,request);
         if ((request -= delta) <= 0) {
             showCompletion();
             app_t::instance()->refresh();
@@ -491,7 +492,7 @@ void popup_t::showCompletion()
     items.clear();
     currentItem = 0;
 
-    app_t::log("prefix: %s", prefix.c_str());
+    log("prefix: %s", prefix.c_str());
 
     std::vector<std::string> res = editor->completer.findWords(prefix);
     for (auto s : res) {
@@ -684,7 +685,7 @@ void popup_t::onSubmit()
 
         if (items.size() && currentItem >= 0 && currentItem < items.size()) {
             struct item_t& item = items[currentItem];
-            // app->log("open file %s", item.fullPath.c_str());
+            // log("open file %s", item.fullPath.c_str());
             app->openEditor(item.fullPath);
             hide();
         }
@@ -722,7 +723,7 @@ void popup_t::onSubmit()
     }
 
     if (type == POPUP_PROMPT) {
-        app_t::log("on prompt");
+        log("on prompt");
         doc->fileName = text;
         doc->filePath += text;
         editor->highlighter.lang = language_from_file(text, app_t::instance()->extensions);
@@ -761,7 +762,7 @@ void popup_t::render()
     }
 
     app_t* app = app_t::instance();
-    // app_t::log("%d %d %d %d ", x, y, width, height);
+    // log("%d %d %d %d ", x, y, width, height);
 
     _attron(_color_pair(colorPrimary));
 

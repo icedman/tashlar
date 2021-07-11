@@ -1,11 +1,24 @@
 #include "editor.h"
-#include "app.h"
 #include "keyinput.h"
+#include "app.h"
+#include "util.h"
 
 #include "render.h" // rows & cols
 
 #include <iostream>
 #include <sstream>
+
+static config_t configInstance;
+
+struct config_t* config_t::instance()
+{
+    return &configInstance;
+}
+
+config_t::config_t()
+{
+    lineWrap = false;
+}
 
 // 20K
 // beyond this threshold, paste will use an additional file buffer
@@ -94,7 +107,7 @@ void editor_t::runOp(operation_t op)
     cursor_util::sortCursors(cursors);
 
     if (mainCursor.block()) {
-        app_t::log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
+        log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
     }
 
     switch (_op) {
@@ -112,7 +125,7 @@ void editor_t::runOp(operation_t op)
             popup_t::instance()->prompt("filename");
             return;
         }
-        app_t::log("saving %s", document.fileName.c_str());
+        log("saving %s", document.fileName.c_str());
         document.save();
         std::ostringstream ss;
         ss << "saved ";
@@ -132,7 +145,7 @@ void editor_t::runOp(operation_t op)
         return;
 
     case PASTE:
-        // app_t::log("paste %s", app_t::instance()->clipboard().c_str());
+        // log("paste %s", app_t::instance()->clipboard().c_str());
         if (!app_t::instance()->clipboard().length()) {
             return;
         }
@@ -173,7 +186,7 @@ void editor_t::runOp(operation_t op)
                 res.normalizeSelection(mainCursor.isSelectionNormalized());
                 document.addCursor(mainCursor);
                 document.setCursor(res, true); // replace main cursor
-                app_t::log("found %s at %s", mainCursor.selectedText().c_str(), res.block()->text().c_str());
+                log("found %s at %s", mainCursor.selectedText().c_str(), res.block()->text().c_str());
                 return;
             }
         } else {
@@ -668,7 +681,7 @@ void editor_t::toggleFold(size_t line)
 
     cursor_t openBracket = findLastOpenBracketCursor(folder);
     if (openBracket.isNull()) {
-        // app_t::log("> %d", folder->lineNumber);
+        // log("> %d", folder->lineNumber);
         return;
     }
 
@@ -863,7 +876,7 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
         for (int i = 0; i < b->lineCount; i++) {
             if (l == row) {
                 rowHit = true;
-                // app_t::log(">%d %d", b->lineNumber, 0);
+                // log(">%d %d", b->lineNumber, 0);
                 std::ostringstream ss;
                 ss << (b->lineNumber + 1);
                 ss << ":";
@@ -883,7 +896,7 @@ void editor_t::mouseDown(int x, int y, int button, int clicks)
             break;
     }
 
-    // app_t::log("click %d %d %d", rowHit, clicks, l);
+    // log("click %d %d %d", rowHit, clicks, l);
     if (!rowHit && clicks == 1) {
         if (_keyMods()) {
             pushOp(MOVE_CURSOR_END_OF_DOCUMENT_ANCHORED, "");
@@ -933,7 +946,7 @@ void editor_t::layout(int _x, int _y, int w, int h)
     maxScrollX = 0;
     maxScrollY = document.lastBlock()->lineNumber - (rows * 2 / 3);
 
-    // app_t::log(">max %d", maxScrollY);
+    // log(">max %d", maxScrollY);
 
     if (maxScrollY < 0)
         scrollY = 0;
@@ -952,7 +965,7 @@ void editor_t::ensureVisibleCursor()
     int lookAheadX = (cols / 3);
 
     int adjust = 0;
-    if (app_t::instance()->lineWrap) {
+    if (config_t::instance()->lineWrap) {
         block_list::iterator it = document.blocks.begin();
         if (scrollY > document.blocks.size()) scrollY = document.blocks.size() - 1;
         if (scrollY > 0) {
@@ -997,7 +1010,7 @@ void editor_t::ensureVisibleCursor()
         scrollX = -(cols - screenX) + 2;
     }
 
-    if (app_t::instance()->lineWrap) {
+    if (config_t::instance()->lineWrap) {
         scrollX = 0;
     }
 
@@ -1010,7 +1023,7 @@ void editor_t::ensureVisibleCursor()
         }
     }
 
-    // app_t::log(">>line:%d scroll:%d rows:%d", cursorBlock->lineNumber, scrollY, rows);
+    // log(">>line:%d scroll:%d rows:%d", cursorBlock->lineNumber, scrollY, rows);
 }
 
 void editor_t::preRender()
@@ -1031,7 +1044,7 @@ void editor_t::render()
 
     matchBracketsUnderCursor();
 
-    // app_t::log("scroll %d %d", scrollX, scrollY);
+    // log("scroll %d %d", scrollX, scrollY);
 
     size_t cx;
     size_t cy;
@@ -1100,7 +1113,7 @@ void editor_t::render()
             if (l >= rows + 1)
                 break;
 
-            // app_t::instance()->log("%s", line);
+            // log("%s", line);
             int col = 0;
             for (int i = scrollX;; i++) {
                 size_t pos = i + (sl * cols);

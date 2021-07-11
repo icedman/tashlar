@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <string.h>
 
-#include "app.h"
 #include "theme.h"
 #include "util.h"
 
@@ -77,7 +76,7 @@ void load_extensions(const std::string _path, std::vector<struct extension_t>& e
 
         if (append) {
             // std::cout << ex.package["name"].asString() << std::endl;
-            // app_t::instance()->log(ex.nls["themeLabel"].asString().c_str());
+            // log(ex.nls["themeLabel"].asString().c_str());
             // qDebug() << package;
             extensions.emplace_back(ex);
         }
@@ -257,7 +256,7 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
 
                 load_language_configuration(path, lang);
 
-                // app_t::instance()->log("language configuration: %s", path.c_str());
+                // log("language configuration: %s", path.c_str());
                 // std::cout << "langauge matched" << lang->id << std::endl;
                 // std::cout << path << std::endl;
 

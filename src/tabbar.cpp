@@ -107,7 +107,7 @@ void tabbar_t::mouseDown(int x, int y, int button, int clicks)
     int col = (x - this->x - padding) / fw;
     for (auto& t : tabs) {
         if (col >= t.x && col < t.x + t.width) {
-            // app_t::log("tab %s", t.name.c_str());
+            // log("tab %s", t.name.c_str());
             app_t::instance()->openEditor(t.editor->document.fullPath);
             return;
         }
@@ -158,7 +158,7 @@ void tabbar_t::render()
         return;
     }
 
-    // app_t::log("tabbar h:%d %d", height, preferredHeight);
+    // log("tabbar h:%d %d", height, preferredHeight);
 
     app_t* app = app_t::instance();
     _move(0, 0);

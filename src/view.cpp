@@ -1,6 +1,7 @@
 #include "view.h"
 #include "app.h"
 #include "render.h"
+#include "util.h"
 
 static view_t* focused = 0;
 static view_t* hovered = 0;
@@ -335,7 +336,7 @@ static view_t* findShiftFocus(view_t* view, int x, int y)
     view_t* next = view_t::getViewAt(view->x + x, view->y + y);
     if (next) {
         if (next->canFocus) {
-            app_t::log("shift %s %d", next->name.c_str(), next->canFocus);
+            log("shift %s %d", next->name.c_str(), next->canFocus);
             return next;
         }
         return findShiftFocus(next, x, y);
@@ -346,10 +347,10 @@ static view_t* findShiftFocus(view_t* view, int x, int y)
 view_t* view_t::shiftFocus(int x, int y)
 {
     view_t* view = currentFocus();
-    app_t::log("current: %s", view->name.c_str());
+    log("current: %s", view->name.c_str());
     view_t* next = findShiftFocus(view, x, y);
     if (next) {
-        app_t::log("next: %s", next->name.c_str());
+        log("next: %s", next->name.c_str());
         setFocus(next);
     }
     return NULL;

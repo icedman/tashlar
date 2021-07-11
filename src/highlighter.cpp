@@ -1,7 +1,8 @@
 #include "highlighter.h"
-#include "app.h"
 #include "document.h"
+#include "editor.h"
 #include "parse.h"
+#include "util.h"
 
 #include <cstring>
 #include <unistd.h>
@@ -84,7 +85,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         return;
     }
 
-    app_t::instance()->log("highlight %d", block->lineNumber);
+    log("highlight %d", block->lineNumber);
 
     struct blockdata_t* blockData = block->data.get();
 
@@ -338,7 +339,7 @@ void highlighter_t::gatherBrackets(block_ptr block, char* first, char* last)
             blockData->foldable = l.open;
         }
 
-        // app_t::instance()->log("brackets %d %d", blockData->brackets.size(), blockData->foldingBrackets.size());
+        // log("brackets %d %d", blockData->brackets.size(), blockData->foldingBrackets.size());
     }
 }
 

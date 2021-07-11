@@ -72,7 +72,7 @@ void scrollbar_t::applyTheme()
 void scrollbar_t::mouseDown(int x, int y, int button, int clicks)
 {
     scrollTo = maxScrollY * (y - this->y) / height;
-    // app_t::log(">y:%d t:%d h:%d %d", y, this->y, height, scrollTo);
+    // log(">y:%d t:%d h:%d %d", y, this->y, height, scrollTo);
 }
 
 void scrollbar_t::mouseDrag(int x, int y, bool within)
