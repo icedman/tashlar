@@ -48,6 +48,8 @@ struct editor_t : view_t {
     void mouseDown(int x, int y, int button, int clicks) override;
     void mouseDrag(int x, int y, bool within) override;
 
+    void toMarkup();
+
     document_t document;
     operation_list operations;
 

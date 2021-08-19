@@ -142,6 +142,12 @@ void render_t::initialize()
     use_default_colors();
     start_color();
 
+    if (has_colors() && can_change_color()) {
+        color_info_t::set_term_color_count(256);
+    } else {
+        color_info_t::set_term_color_count(8);
+    }
+
     curs_set(0);
     clear();
 }

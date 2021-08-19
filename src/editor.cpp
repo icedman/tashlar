@@ -948,8 +948,9 @@ void editor_t::layout(int _x, int _y, int w, int h)
 
     // log(">max %d", maxScrollY);
 
-    if (maxScrollY < 0)
+    if (maxScrollY < 0) {
         scrollY = 0;
+    }
 }
 
 void editor_t::ensureVisibleCursor()
@@ -1202,4 +1203,9 @@ void editor_t::render()
         _move(l++, 0);
         // addch('~');
     }
+}
+
+void editor_t::toMarkup()
+{
+    log("%d %d %d %d %d", rows, maxScrollY, scrollY, getRenderer()->fh, padding);
 }

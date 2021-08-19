@@ -51,6 +51,14 @@ tashlar_curses_files = [
     'src/platform/keyinput.cpp'
 ]
 
+tashlar_null_files = [
+    'src/platform/render_null.cpp',
+    'src/platform/keyinput_sdl.cpp',
+    'libs/lite/rencache.cpp',
+    'libs/lite/renderer.cpp',
+    'libs/lite/stb_truetype.cpp'
+]
+
 textmate_inc = include_directories(
     'libs/tm-parser/textmate/parser',
     'libs/tm-parser/textmate/theme',
@@ -101,6 +109,15 @@ executable('ashlr',
     textmate_files,
     include_directories: [ './src', textmate_inc ],
     dependencies: [ quickjs_dep, pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
+    install : true
+)
+
+executable('ashl_',
+    tashlar_files,
+    tashlar_null_files,
+    textmate_files,
+    include_directories: [ './src', './libs/lite', textmate_inc ],
+    dependencies: [ quickjs_dep, sdl2_dep, sdl2ttf_dep, pthread_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )
 

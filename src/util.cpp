@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <strings.h>
+#include <stdarg.h>
 #include <wordexp.h>
 
 #include "util.h"

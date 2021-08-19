@@ -29,6 +29,7 @@ struct app_t : view_t {
 
     void configure(int argc, char** argv);
     void setupColors();
+    void setupView();
 
     // view
     void layout(int x, int y, int width, int height) override;
@@ -47,6 +48,9 @@ struct app_t : view_t {
     bool showTabbar;
     bool showSidebar;
     bool showMinimap;
+    bool enablePopup;
+    
+    std::string markup;
 
     bool debug;
 

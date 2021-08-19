@@ -54,7 +54,10 @@ app_t::app_t()
     , refreshCount(0)
 {
     appInstance = this;
+}
 
+void app_t::setupView()
+{
     viewLayout = LAYOUT_VERTICAL;
     addView(&mainView);
     /*
@@ -108,6 +111,9 @@ void app_t::configure(int argc, char** argv)
     //-------------------
     // defaults
     //-------------------
+    enablePopup = true;
+    markup = "";
+
     const char* argTheme = 0;
     const char* argScript = 0;
     const char* defaultTheme = "Monokai";
@@ -116,8 +122,11 @@ void app_t::configure(int argc, char** argv)
         if (strcmp(argv[i], "-t") == 0) {
             argTheme = argv[i + 1];
         }
-        if (strcmp(argv[i], "-s") == 0) {
-            argScript = argv[i + 1];
+        // if (strcmp(argv[i], "-s") == 0) {
+        //     argScript = argv[i + 1];
+        // }
+        if (strcmp(argv[i], "-m") == 0) {
+            markup = argv[i + 1];
         }
     }
 
@@ -366,8 +375,12 @@ editor_ptr app_t::openEditor(std::string path)
 }
 
 void app_t::layout(int x, int y, int width, int height)
-{
-    views.pop_back();
+{   
+    // remove popup
+    if (views.size()) {
+        views.pop_back();
+    }
+
     view_t::layout(x, y, width, height);
 
     // popup is handled separately
@@ -378,6 +391,16 @@ void app_t::layout(int x, int y, int width, int height)
 bool app_t::input(char ch, std::string keys)
 {
     operation_e cmd = operationFromKeys(keys);
+
+    if (!enablePopup) {
+        switch(cmd) {
+        case POPUP_SEARCH:
+        case POPUP_SEARCH_LINE:
+        case POPUP_COMMANDS:
+        case POPUP_FILES:
+            return true;
+        }
+    }
 
     switch (cmd) {
     case QUIT:

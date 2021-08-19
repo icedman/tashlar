@@ -8,12 +8,15 @@
 static theme_t *current_parsed_theme = 0;
 static std::map<int, color_info_t> trueColors;
 
+static int termColorCount = 256;
+static color_t *termColors = (color_t*)termColors256;
+
 int nearest_color(int r, int g, int b)
 {
     int idx = -1;
     long d = 0;
     
-    for(int i=0; i<256; i++) {
+    for(int i=0; i<termColorCount; i++) {
         const color_t clr = termColors[i];
         int rr = r - clr.r; 
         int gg = g - clr.g; 
@@ -28,6 +31,13 @@ int nearest_color(int r, int g, int b)
     color_info_t c(r, g, b, 255);
     trueColors[idx] = c;
     return idx;
+}
+
+int color_info_t::set_term_color_count(int count)
+{
+    termColorCount = count == 8 ? 8 : 256;
+    termColors = count == 8 ? (color_t*)termColors8 : (color_t*)termColors256;
+    return termColorCount;
 }
 
 color_info_t color_info_t::true_color(int idx)
