@@ -69,6 +69,8 @@ struct app_t {
     editor_ptr openEditor(std::string path);
     editor_ptr currentEditor;
 
+    editor_list editors;
+
     bool end;
     int refreshCount;
 };

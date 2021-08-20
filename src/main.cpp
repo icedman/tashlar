@@ -11,6 +11,8 @@
 #include "view.h"
 #include "app_view.h"
 #include "editor_view.h"
+#include "gem_view.h"
+#include "explorer_view.h"
 #include "statusbar_view.h"
 #include "render.h"
 
@@ -37,18 +39,22 @@ int main(int argc, char **argv)
         file = argv[argc - 1];
     }
 
-    app.openEditor(file);    	
+    app.openEditor(file);
     explorer_t::instance()->setRootFromFile(file);
 
-
     app_view_t root;
-    editor_view_t ev;
-    statusbar_view_t sbv;
+    explorer_view_t explr;
+    statusbar_view_t sttbr;
 
-    root.addView(&ev);
-    root.addView(&sbv);
+    view_t main;
+    main.viewLayout = LAYOUT_HORIZONTAL;
+    main.addView(&explr);
 
-    view_t::setFocus(&ev);
+    view_t::setMainContainer(&main);
+
+    root.addView(&main);
+    root.addView(&sttbr);
+    root.applyTheme();
 
     std::string previousKeySequence;
     std::string expandedSequence;

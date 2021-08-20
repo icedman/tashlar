@@ -144,15 +144,17 @@ void editor_view_t::render()
     while (l < rows) {
         _move(l, 0);
         _clrtoeol(cols);
-        _move(l++, 0);
-        _addch('~');
+        // _move(l, 0);
+        // _addch('~');
         l++;
     }
 }
 
-editor_view_t::editor_view_t()
+editor_view_t::editor_view_t(editor_ptr editor)
     : view_t("editor")
+    , editor(editor)
 {
+    editor->view = this;
 }
 
 editor_view_t::~editor_view_t()
@@ -160,7 +162,6 @@ editor_view_t::~editor_view_t()
 
 void editor_view_t::update(int delta)
 {
-	editor = app_t::instance()->currentEditor;
 }
 
 void editor_view_t::layout(int _x, int _y, int _w, int _h)
@@ -281,7 +282,8 @@ bool editor_view_t::input(char ch, std::string keys)
 }
 
 void editor_view_t::applyTheme()
-{}
+{
+}
 
 void editor_view_t::mouseDown(int x, int y, int button, int clicks)
 {
@@ -361,4 +363,11 @@ void editor_view_t::mouseDrag(int x, int y, bool within)
     if (!within)
         return;
     mouseDown(x, y, 1, 0);
+}
+
+void editor_view_t::onFocusChanged(bool focused)
+{
+    if (focused) {
+        app_t::instance()->currentEditor = editor;
+    }
 }

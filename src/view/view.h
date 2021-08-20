@@ -91,9 +91,14 @@ struct view_t {
     view_list views;
 
     void addView(view_t* view);
+    void removeView(view_t* view);
 
     static void setRoot(view_t *root);
     static view_t* getRoot();
+
+    static void setMainContainer(view_t *main);
+    static view_t* getMainContainer();
+    
     static view_t* getViewAt(int x, int y);
 };
 

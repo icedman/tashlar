@@ -1,3 +1,6 @@
+#ifndef STATUSBAR_VIEW_H
+#define STATUSBAR_VIEW_H
+
 #include "view.h"
 #include "statusbar.h"
 
@@ -10,3 +13,5 @@ struct statusbar_view_t : view_t {
     void render() override;
     void applyTheme() override;
 };
+
+#endif // STATUSBAR_VIEW_H

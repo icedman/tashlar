@@ -307,40 +307,35 @@ editor_ptr app_t::openEditor(std::string path)
     //         gem->setVisible(false);
     // }
 
-    // for (auto gem : editors) {
-    //     editor_ptr e = gem->editor;
-    //     if (e->document.fullPath == path) {
-    //         log("reopening existing tab");
-    //         currentEditor = e;
-    //         view_t::setFocus(currentEditor.get());
-    //         gem->setVisible(true);
-    //         // focused = currentEditor.get();
-    //         return e;
-    //     }
-    // }
+    for (auto e : editors) {
+        if (e->document.fullPath == path) {
+            log("reopening existing tab");
+            currentEditor = e;
+            // view_t::setFocus(currentEditor.get());
+            // gem->setVisible(true);
+            // focused = currentEditor.get();
+            return e;
+        }
+    }
 
     const char* filename = path.c_str();
 
-    // gem_ptr gem = std::make_shared<gem_t>();
-
-    // editor_ptr editor = gem->editor;
     editor_ptr editor = std::make_shared<editor_t>();
     editor->highlighter.lang = language_from_file(filename, extensions);
     editor->highlighter.theme = theme;
-    // editors.emplace_back(gem);
 
     editor->pushOp("OPEN", filename);
     editor->runAllOps();
-
-    // tabContent.addView(gem.get());
 
     currentEditor = editor;
     editor->name = "editor:";
     editor->name += path;
 
+    editors.emplace_back(editor);
+    log(">%d", editors.size());
+
     // gem->applyTheme();
     // view_t::setFocus(currentEditor.get());
-
     // editor->highlighter.run(editor.get());
     return editor;
 }

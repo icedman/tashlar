@@ -32,6 +32,9 @@ ashlar_view_files = [
     'src/view/view.cpp',
     'src/view/app_view.cpp',
     'src/view/editor_view.cpp',
+    'src/view/explorer_view.cpp',
+    'src/view/gem_view.cpp',
+    'src/view/gutter_view.cpp',
     'src/view/statusbar_view.cpp'
 ]
 

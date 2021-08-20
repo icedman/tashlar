@@ -27,13 +27,15 @@ struct fileitem_t {
     void load(std::string path = "");
 };
 
+struct fileitem_t* parentItem(struct fileitem_t* item, std::vector<struct fileitem_t*>& list);
+
 struct explorer_t {
 
     explorer_t();
 
     static explorer_t* instance();
 
-    void update();
+    void update(int delta);
     void setRootFromFile(std::string path);
 
     void preloadFolders();

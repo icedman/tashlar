@@ -14,7 +14,6 @@
 
 #define PRELOAD_LOOP 8
 #define MAX_PRELOAD_DEPTH 3
-#define EXPLORER_WIDTH 20
 
 static bool compareFile(std::shared_ptr<struct fileitem_t> f1, std::shared_ptr<struct fileitem_t> f2)
 {
@@ -25,6 +24,22 @@ static bool compareFile(std::shared_ptr<struct fileitem_t> f1, std::shared_ptr<s
         return false;
     }
     return f1->name < f2->name;
+}
+
+struct fileitem_t* parentItem(struct fileitem_t* item, std::vector<struct fileitem_t*>& list)
+{
+    int depth = item->depth;
+    int i = item->lineNumber;
+    while (i-- > 0) {
+        struct fileitem_t* res = list[i];
+        if (!res) {
+            break;
+        }
+        if (res->depth < depth) {
+            return res;
+        }
+    }
+    return item;
 }
 
 fileitem_t::fileitem_t()
@@ -203,7 +218,7 @@ void explorer_t::preloadFolders()
     }
 }
 
-void explorer_t::update()
+void explorer_t::update(int delta)
 {
     /*
     if (!allFilesLoaded && app_t::instance()->isIdle() == 2) {
@@ -227,20 +242,4 @@ void explorer_t::print()
         log(">%s\n", file->fullPath.c_str());
     }
 
-}
-
-static struct fileitem_t* parentItem(struct fileitem_t* item, std::vector<struct fileitem_t*>& list)
-{
-    int depth = item->depth;
-    int i = item->lineNumber;
-    while (i-- > 0) {
-        struct fileitem_t* res = list[i];
-        if (!res) {
-            break;
-        }
-        if (res->depth < depth) {
-            return res;
-        }
-    }
-    return item;
 }

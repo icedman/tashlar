@@ -8,6 +8,7 @@ static view_t* dragged = 0;
 
 static view_t dummyRoot;
 static view_t* root = &dummyRoot;
+static view_t* mainContainer = &dummyRoot;
 
 void view_t::setRoot(view_t *r)
 {
@@ -19,6 +20,15 @@ view_t* view_t::getRoot()
     return root;
 }
 
+void view_t::setMainContainer(view_t *m)
+{
+    mainContainer = m;
+}
+
+view_t* view_t::getMainContainer()
+{
+    return mainContainer;
+}
 
 view_t::view_t(std::string name)
     : name(name)
@@ -313,6 +323,18 @@ bool view_t::input(char ch, std::string keys)
 void view_t::addView(view_t* view)
 {
     views.push_back(view);
+}
+
+void view_t::removeView(view_t* view)
+{
+    view_list::iterator it = views.begin();
+    while(it != views.end()) {
+        if (*it == view) {
+            views.erase(it);
+            return;
+        }
+        it++;
+    }
 }
 
 static void visibleViews(view_list& views, view_list& visibles)
