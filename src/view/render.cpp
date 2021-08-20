@@ -157,7 +157,7 @@ void render_t::shutdown()
     endwin();
 }
 
-void render_t::update(int delta)
+void render_t::update()
 {
     static struct winsize ws;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);

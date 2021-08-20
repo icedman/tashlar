@@ -1,11 +1,24 @@
 #include "view.h"
-#include "app.h"
 #include "render.h"
 #include "util.h"
 
 static view_t* focused = 0;
 static view_t* hovered = 0;
 static view_t* dragged = 0;
+
+static view_t dummyRoot;
+static view_t* root = &dummyRoot;
+
+void view_t::setRoot(view_t *r)
+{
+    root = r;
+}
+
+view_t* view_t::getRoot()
+{
+    return root;
+}
+
 
 view_t::view_t(std::string name)
     : name(name)
@@ -262,6 +275,7 @@ void view_t::render()
         view->render();
         _end();
     }
+    
 }
 
 void view_t::preLayout()
@@ -314,9 +328,10 @@ static void visibleViews(view_list& views, view_list& visibles)
 view_t* view_t::getViewAt(int x, int y)
 {
     view_t* res = NULL;
-    app_t* app = app_t::instance();
+    view_list rootList;
+    rootList.push_back(view_t::getRoot());
     view_list visibles;
-    visibleViews(app->views, visibles);
+    visibleViews(rootList, visibles);
     for (auto v : visibles) {
         if (x >= v->x && x < v->x + v->width && y >= v->y && y < v->y + v->height) {
             res = v;

@@ -92,6 +92,8 @@ struct view_t {
 
     void addView(view_t* view);
 
+    static void setRoot(view_t *root);
+    static view_t* getRoot();
     static view_t* getViewAt(int x, int y);
 };
 

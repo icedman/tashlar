@@ -1,5 +1,5 @@
-#ifndef KEYBINDING_H
-#define KEYBINDING_H
+#ifndef OPERATION_H
+#define OPERATION_H
 
 #include <string>
 #include <vector>
@@ -125,4 +125,4 @@ struct keybinding_t {
     void initialize();
 };
 
-#endif // KEYBINDING_H
+#endif // OPERATION_H

@@ -1,5 +1,4 @@
 #include "document.h"
-#include "editor.h"
 #include "cursor.h"
 #include "search.h"
 #include "util.h"
@@ -13,10 +12,24 @@
 #define WINDOWS_LINE_END "\r\n"
 #define LINUX_LINE_END "\n"
 
+static config_t configInstance;
+
+struct config_t* config_t::instance()
+{
+    return &configInstance;
+}
+
+config_t::config_t()
+{
+    lineWrap = false;
+    tabSize = 4;
+}
+
 document_t::document_t()
     : cursorId(1)
     , blockId(1)
     , columns(0)
+    , rows(32)
     , windowsLineEnd(false)
 {
 }
@@ -434,4 +447,9 @@ void document_t::setColumns(int c)
     if (update) {
         updateBlocks(blocks, 0);
     }
+}
+
+void document_t::setRows(int r)
+{
+    rows = r;
 }

@@ -1,4 +1,4 @@
-#include "keybinding.h"
+#include "operation.h"
 #include "extension.h"
 #include "util.h"
 
@@ -147,6 +147,7 @@ struct keybinding_t* keybinding_t::instance()
 keybinding_t::keybinding_t()
 {
     keybindingInstance = this;
+    initialize();
 }
 
 keybinding_t::~keybinding_t()

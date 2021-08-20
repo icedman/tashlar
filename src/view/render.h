@@ -3,7 +3,7 @@
 
 #include "view.h"
 #define SELECTED_OFFSET 500
-
+   
 int _color_pair(int pair);
 
 void _underline(bool);
@@ -23,7 +23,6 @@ bool _drawdots(int dots, int* colors);
 
 void _begin(view_t* view);
 void _end();
-
 int _keyMods();
 
 struct render_t {
@@ -33,7 +32,7 @@ struct render_t {
 
     void initialize();
     void shutdown();
-    void update(int delta);
+    void update();
     void render();
     void updateColors();
     void input();

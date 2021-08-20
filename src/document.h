@@ -7,6 +7,15 @@
 #include "block.h"
 #include "cursor.h"
 
+struct config_t {
+    config_t();
+    
+    static config_t* instance();
+
+    int tabSize;
+    bool lineWrap;
+};
+
 struct editor_t;
 struct document_t {
     document_t();
@@ -54,6 +63,7 @@ struct document_t {
     size_t cursorId;
     size_t blockId;
     int columns;
+    int rows;
 
     bool windowsLineEnd;
 
@@ -63,6 +73,7 @@ struct document_t {
 
     void updateBlocks(block_list& blocks, size_t lineNumber = 0, size_t count = 0);
     void setColumns(int cols);
+    void setRows(int rows);
 };
 
 #endif // DOCUMENT_H

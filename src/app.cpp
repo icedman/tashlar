@@ -1,7 +1,7 @@
 #include "app.h"
-#include "render.h"
 #include "search.h"
 #include "util.h"
+#include "explorer.h"
 
 #include <cstdarg>
 #include <cstdio>
@@ -49,36 +49,10 @@ struct app_t* app_t::instance()
 }
 
 app_t::app_t()
-    : view_t("app")
-    , end(false)
+    : end(false)
     , refreshCount(0)
 {
     appInstance = this;
-}
-
-void app_t::setupView()
-{
-    viewLayout = LAYOUT_VERTICAL;
-    addView(&mainView);
-    /*
-    addView(&bottomBar);
-    bottomBar.name = "bottom";
-    bottomBar.preferredHeight = 1;
-    bottomBar.addView(&statusBar);
-    */
-    addView(&statusBar);
-
-    mainView.addView(&explorer);
-    mainView.addView(&explorerScrollbar);
-    explorer.scrollbar = &explorerScrollbar;
-    mainView.addView(&tabView);
-
-    tabView.viewLayout = LAYOUT_VERTICAL;
-    tabView.addView(&tabBar);
-    tabView.addView(&tabContent);
-
-    addView(&popup);
-    refresh();
 }
 
 app_t::~app_t()
@@ -88,12 +62,6 @@ app_t::~app_t()
 void app_t::refresh()
 {
     refreshCount = 8;
-}
-
-void app_t::preLayout()
-{
-    bottomBar.preferredHeight = getRenderer()->fh;
-    view_t::preLayout();
 }
 
 void app_t::setClipboard(std::string text)
@@ -325,155 +293,54 @@ void app_t::setupColors()
     // theme->theme_color("statusBar.foreground", clr);
 
     log("%d registered colors", theme->colorIndices.size());
-    getRenderer()->updateColors();
+    // getRenderer()->updateColors();
 
-    applyTheme();
+    // applyTheme();
 }
 
 editor_ptr app_t::openEditor(std::string path)
 {
     log("open: %s", path.c_str());
-    for (auto gem : editors) {
-        if (!gem->split)
-            gem->setVisible(false);
-    }
 
-    for (auto gem : editors) {
-        editor_ptr e = gem->editor;
-        if (e->document.fullPath == path) {
-            log("reopening existing tab");
-            currentEditor = e;
-            view_t::setFocus(currentEditor.get());
-            gem->setVisible(true);
-            // focused = currentEditor.get();
-            return e;
-        }
-    }
+    // for (auto gem : editors) {
+    //     if (!gem->split)
+    //         gem->setVisible(false);
+    // }
+
+    // for (auto gem : editors) {
+    //     editor_ptr e = gem->editor;
+    //     if (e->document.fullPath == path) {
+    //         log("reopening existing tab");
+    //         currentEditor = e;
+    //         view_t::setFocus(currentEditor.get());
+    //         gem->setVisible(true);
+    //         // focused = currentEditor.get();
+    //         return e;
+    //     }
+    // }
 
     const char* filename = path.c_str();
 
-    gem_ptr gem = std::make_shared<gem_t>();
-    editor_ptr editor = gem->editor;
+    // gem_ptr gem = std::make_shared<gem_t>();
+
+    // editor_ptr editor = gem->editor;
+    editor_ptr editor = std::make_shared<editor_t>();
     editor->highlighter.lang = language_from_file(filename, extensions);
     editor->highlighter.theme = theme;
-    editors.emplace_back(gem);
+    // editors.emplace_back(gem);
 
     editor->pushOp("OPEN", filename);
-    editor->update(0);
+    editor->runAllOps();
 
-    tabContent.addView(gem.get());
+    // tabContent.addView(gem.get());
 
     currentEditor = editor;
     editor->name = "editor:";
     editor->name += path;
 
-    gem->applyTheme();
-    view_t::setFocus(currentEditor.get());
+    // gem->applyTheme();
+    // view_t::setFocus(currentEditor.get());
 
     // editor->highlighter.run(editor.get());
     return editor;
-}
-
-void app_t::layout(int x, int y, int width, int height)
-{   
-    // remove popup
-    if (views.size()) {
-        views.pop_back();
-    }
-
-    view_t::layout(x, y, width, height);
-
-    // popup is handled separately
-    views.push_back(&popup);
-    popup.layout(x, y, width, height);
-}
-
-bool app_t::input(char ch, std::string keys)
-{
-    operation_e cmd = operationFromKeys(keys);
-
-    if (!enablePopup) {
-        switch(cmd) {
-        case POPUP_SEARCH:
-        case POPUP_SEARCH_LINE:
-        case POPUP_COMMANDS:
-        case POPUP_FILES:
-            return true;
-        }
-    }
-
-    switch (cmd) {
-    case QUIT:
-        end = true;
-        return true;
-    case CLOSE: {
-        view_t::setFocus(NULL);
-        view_t::setHovered(NULL);
-        bool found = false;
-        view_list::iterator it = tabContent.views.begin();
-        while (it != tabContent.views.end()) {
-            gem_t* gem = (gem_t*)*it;
-            if (gem->editor == currentEditor) {
-                found = true;
-                tabContent.views.erase(it);
-                if (!tabContent.views.size()) {
-                    end = true;
-                    return true;
-                }
-                break;
-            }
-            it++;
-        }
-        gem_list::iterator it2 = editors.begin();
-        while (it2 != editors.end()) {
-            gem_ptr gem = *it2;
-            if (gem->editor == currentEditor) {
-                editors.erase(it2);
-                break;
-            }
-            it2++;
-        }
-        if (found) {
-            gem_t* gem = (gem_t*)(tabContent.views.front());
-            editor_ptr nextEditor = gem->editor;
-            app_t::instance()->openEditor(nextEditor->document.filePath);
-        }
-        return true;
-    }
-    case CANCEL:
-        popup.hide();
-        return false;
-    case POPUP_SEARCH:
-        popup.search("");
-        return true;
-    case POPUP_SEARCH_LINE:
-        popup.search(":");
-        return true;
-    case POPUP_COMMANDS:
-        popup.commands();
-        return true;
-    case POPUP_FILES:
-        popup.files();
-        return true;
-    case MOVE_FOCUS_LEFT:
-        view_t::shiftFocus(-1, 0);
-        return true;
-    case MOVE_FOCUS_RIGHT:
-        if (explorer.isFocused()) {
-            view_t::setFocus(currentEditor.get());
-        } else {
-            view_t::shiftFocus(1, 0);
-        }
-        return true;
-    case MOVE_FOCUS_UP:
-        view_t::shiftFocus(0, -1);
-        return true;
-    case MOVE_FOCUS_DOWN:
-        view_t::shiftFocus(0, 1);
-        return true;
-    default:
-        break;
-    }
-
-    return view_t::input(ch, keys);
 }

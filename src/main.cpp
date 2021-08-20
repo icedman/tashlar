@@ -1,90 +1,69 @@
+#include <stdio.h>
 #include "app.h"
-#include "editor.h"
-#include "explorer.h"
-#include "keyinput.h"
-#include "render.h"
-#include "scripting.h"
 #include "search.h"
+#include "statusbar.h"
+#include "explorer.h"
+#include "editor.h"
+#include "operation.h"
+#include "keyinput.h"
+#include "util.h"
 
-static bool minimal = false;
+#include "view.h"
+#include "app_view.h"
+#include "editor_view.h"
+#include "statusbar_view.h"
+#include "render.h"
 
-int editor(int argc, char** argv)
+int main(int argc, char **argv)
 {
     const int delta = 100;
 
-    keybinding_t keybinding;
-    render_t renderer;
-    scripting_t scripting;
-    search_t search;
     app_t app;
+    keybinding_t keybinding;
+    explorer_t explorer;
+    statusbar_t statusbar;
+    search_t search;
 
+    render_t renderer;
     renderer.initialize();
-    scripting.initialize();
-    keybinding.initialize();
 
     app.configure(argc, argv);
-
-    bool markup = app.markup != "";
-    if (minimal || markup) {
-        app.showStatusBar = false;
-        app.showGutter = false;
-        app.showTabbar = false;
-        app.showSidebar = false;
-        app.showMinimap = false;
-        app.enablePopup = false;
-    }
-
-    app.setupView();
     app.setupColors();
-    app.applyTheme();
 
-    // editor
-    std::string file = "";
+    renderer.updateColors();
+    
+    std::string file = "./src/main.cpp";
     if (argc > 1) {
         file = argv[argc - 1];
     }
 
-    app.openEditor(file);
+    app.openEditor(file);    	
+    explorer_t::instance()->setRootFromFile(file);
 
-    if (markup) {
-        renderer.update(delta);
-        app.update(delta);
-        app.currentEditor->preLayout();
-        app.currentEditor->layout(0,0,999999, 32);
-        app.currentEditor->preRender();
-        app.currentEditor->toMarkup();
-        return 0;
-    }
 
-    app.explorer.setRootFromFile(file);
+    app_view_t root;
+    editor_view_t ev;
+    statusbar_view_t sbv;
+
+    root.addView(&ev);
+    root.addView(&sbv);
+
+    view_t::setFocus(&ev);
 
     std::string previousKeySequence;
     std::string expandedSequence;
-
     while (!app.end) {
-        renderer.update(delta);
+        renderer.update();
 
-        // log("h:%d", renderer.height);
-        app.update(delta);
+        root.update(delta);
+        root.preLayout();
+        root.layout(0, 0, renderer.width, renderer.height);
+        root.preRender();
+        root.render();
 
-        if (!minimal) {
-            app.preLayout();
-            app.layout(0, 0, renderer.width, renderer.height);
-            app.preRender();
-            app.render();
-        } else {
-            app.currentEditor->preLayout();
-            app.currentEditor->layout(0,0,renderer.width, renderer.height);
-            app.currentEditor->preRender();
-            app.currentEditor->render();
-        }
+        log("rows:%d", renderer.rows);
 
         renderer.render();
-
-        if (app.refreshCount > 0) {
-            app.refreshCount--;
-            continue;
-        }
 
         int ch = -1;
         std::string keySequence;
@@ -97,12 +76,6 @@ int editor(int argc, char** argv)
             }
 
             if (ch != -1) {
-                break;
-            }
-
-            app.update(delta);
-            if (app.refreshCount) {
-                ch = -1;
                 break;
             }
         }
@@ -119,17 +92,16 @@ int editor(int argc, char** argv)
             expandedSequence = "";
         }
 
-        // log("k: %d %s", ch, keySequence.c_str());
-        statusbar_t::instance()->setStatus(keySequence);
-        app.input(ch, keySequence);
+        log("k: %d %s", ch, keySequence.c_str());
+
+        // statusbar_t::instance()->setStatus(keySequence);
+        // app.input(ch, keySequence);
+
+        root.input(ch, keySequence);
     }
 
+    // renderer.delay(5000);
     renderer.shutdown();
-    return 0;
-}
-
-int main(int argc, char** argv)
-{
-    editor(argc, argv);
+    // explorer.print();
     return 0;
 }

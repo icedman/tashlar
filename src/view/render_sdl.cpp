@@ -1,5 +1,5 @@
 #include "app.h"
-#include "dots.h"
+// #include "dots.h"
 #include "rencache.h"
 #include "render.h"
 #include "renderer.h"
@@ -105,6 +105,7 @@ void _addch(char c)
 
 bool _drawdots(int dots, int* colors)
 {
+    /*
     static const int offs[] = {
         0, 0, 0, 1,
         1, 0, 1, 1,
@@ -140,6 +141,7 @@ bool _drawdots(int dots, int* colors)
     }
 
     drawX++;
+    */
     return true;
 }
 
@@ -378,7 +380,9 @@ void render_t::shutdown()
 static int poll_event()
 {
     if (scrollVelocity != 0) {
-        view_t::currentHovered()->scroll(scrollVelocity);
+        if (view_t::currentHovered()) {
+            view_t::currentHovered()->scroll(scrollVelocity);
+        }
         pushKey(0, "wheel");
         float d = -scrollVelocity / 2;
         scrollVelocity += d;
@@ -541,15 +545,17 @@ static int poll_event()
         return 0;
 
     case SDL_MOUSEMOTION: {
-        view_t::setHovered(app_t::instance()->viewFromPointer(e.motion.x, e.motion.y));
+        view_t::setHovered(view_t::getRoot()->viewFromPointer(e.motion.x, e.motion.y));
         if (view_t::currentDragged()) {
             view_t::currentDragged()->mouseDrag(e.motion.x, e.motion.y, (view_t::currentHovered() == view_t::currentDragged()));
             // log("drag %d %d", e.motion.x, e.motion.y);
             pushKey(0, "mousedrag");
         } else {
-            view_t::currentHovered()->mouseHover(e.motion.x, e.motion.y);
-            // log("hover %d %d", e.motion.x, e.motion.y);
-            pushKey(0, "mousehover");
+            if (view_t::currentHovered()) {
+                view_t::currentHovered()->mouseHover(e.motion.x, e.motion.y);
+                // log("hover %d %d", e.motion.x, e.motion.y);
+                pushKey(0, "mousehover");
+            }
         }
         return 0;
     }
@@ -565,7 +571,7 @@ static int poll_event()
     return 0;
 }
 
-void render_t::update(int delta)
+void render_t::update()
 {
     RenRect rect = { .x = 0, .y = 0, .width = width, .height = height };
     BgFg bgFg = colorPairs[color_pair_e::NORMAL];

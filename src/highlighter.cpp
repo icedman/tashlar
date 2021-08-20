@@ -1,8 +1,8 @@
 #include "highlighter.h"
 #include "document.h"
-#include "editor.h"
 #include "parse.h"
 #include "util.h"
+#include "editor.h"
 
 #include <cstring>
 #include <unistd.h>

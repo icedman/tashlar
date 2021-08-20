@@ -1,5 +1,5 @@
 #include "search.h"
-#include "editor.h"
+#include "document.h"
 
 #include <cstring>
 
@@ -104,7 +104,7 @@ std::vector<search_result_t> search_t::find(std::string str, std::string pat)
     return findWords(str, &word);
 }
 
-std::vector<search_result_t> search_t::findCompletion(editor_t* editor, std::string str)
+std::vector<search_result_t> search_t::findCompletion(document_t* document, std::string str)
 {
     std::string pat = "\\b";
     pat += str;
@@ -113,7 +113,7 @@ std::vector<search_result_t> search_t::findCompletion(editor_t* editor, std::str
     lastWord = pat;
 
     std::vector<search_result_t> result;
-    document_t* doc = &editor->document;
+    document_t* doc = document;
     cursor_t cursor = doc->cursor();
     block_ptr block = cursor.block();
 

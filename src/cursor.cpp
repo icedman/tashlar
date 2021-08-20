@@ -1,6 +1,5 @@
 #include "cursor.h"
 #include "document.h"
-#include "editor.h"
 #include "search.h"
 #include "util.h"
 
@@ -771,6 +770,8 @@ int cursor_t::unindent()
 
 static int _cursorToggleLineComment(cursor_t* cursor)
 {
+    /*
+
     // editor_ptr editor = app_t::instance()->currentEditor;
     editor_t *editor = cursor->block()->document->editor;
     if (!editor->highlighter.lang || !editor->highlighter.lang->lineComment.length()) {
@@ -795,6 +796,9 @@ static int _cursorToggleLineComment(cursor_t* cursor)
 
     cursor->insertText(singleLineComment);
     return singleLineComment.length();
+    */
+
+    return 0;
 }
 
 int cursor_t::toggleLineComment()
