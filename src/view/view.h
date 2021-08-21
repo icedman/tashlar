@@ -37,6 +37,8 @@ struct view_t {
     virtual void mouseDrag(int x, int y, bool within);
     virtual void mouseHover(int x, int y);
     virtual void onFocusChanged(bool focused);
+    virtual void onInput();
+    virtual void onSubmit();
     virtual render_t* getRenderer();
 
     void vlayout(int x, int y, int w, int h);

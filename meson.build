@@ -37,9 +37,11 @@ ashlar_view_files = [
     'src/view/gem_view.cpp',
     'src/view/gutter_view.cpp',
     'src/view/minimap_view.cpp',
+    'src/view/popup_view.cpp',
     'src/view/scrollbar_view.cpp',
     'src/view/statusbar_view.cpp',
-    'src/view/tabbar_view.cpp'
+    'src/view/tabbar_view.cpp',
+    'src/view/view_controls.cpp'
 ]
 
 ashlar_curses_files = [

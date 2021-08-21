@@ -88,6 +88,15 @@ view_t* view_t::currentFocus()
     return focused;
 }
 
+void view_t::onInput()
+{
+}
+
+void view_t::onSubmit()
+{
+}
+
+
 void view_t::onFocusChanged(bool focused)
 {
 }
@@ -188,6 +197,12 @@ void view_t::layout(int x, int y, int width, int height)
     case LAYOUT_VERTICAL:
         vlayout(x, y, width, height);
         break;
+    case LAYOUT_STACK: {
+        for(auto v : views) {
+            v->layout(x, y, width, height);
+        }
+        break;
+    }
     default:
         break;
     }

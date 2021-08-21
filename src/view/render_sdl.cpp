@@ -435,8 +435,10 @@ static int poll_event()
 
         switch (e.key.keysym.sym) {
         case SDLK_ESCAPE:
-            pushKey(27, "");
-            return 0;
+            // pushKey(27, "");
+            // return 0;
+            keySequence = "escape";
+            break;
         case SDLK_TAB:
             keySequence = "tab";
             break;

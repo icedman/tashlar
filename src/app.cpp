@@ -64,6 +64,15 @@ void app_t::refresh()
     refreshCount = 8;
 }
 
+bool app_t::isFresh()
+{
+    if (refreshCount <= 0)
+        return true;
+
+    refreshCount--;
+    return false;
+}
+
 void app_t::setClipboard(std::string text)
 {
     clipText = text;

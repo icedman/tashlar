@@ -67,14 +67,15 @@ void gutter_view_t::render()
         }
 
         if (b->data && b->data->foldable) {
-            if (b->data->folded) {
-                lineNo += "+";
-            } else {
-                lineNo += "^";
-            }
+            // if (b->data->folded) {
+            //     lineNo += "+";
+            // } else {
+            //     lineNo += "^";
+            // }
         } else {
-            lineNo += " ";
+            // lineNo += " ";
         }
+        lineNo += " ";
 
         int pair = colorPrimary;
 
@@ -93,6 +94,28 @@ void gutter_view_t::render()
         _attroff(_color_pair(pair));
         _italic(false);
         _bold(false);
+
+        if (b->data && b->data->foldable) {
+            _move(l, cols - 1);
+            _bold(true);
+            _attron(_color_pair(colorIndicator));
+        #ifdef ENABLE_UTF8
+            if (b->data->folded) {
+                _addwstr(L"\u2191");
+            } else {
+                _addwstr(L"\u2192");
+            }
+        #else
+            _addch('>');
+            if (b->data->folded) {
+                _addch('+');
+            } else {
+                _addch('^');
+            }
+        #endif
+            _attroff(_color_pair(colorIndicator));
+            _bold(false);
+        }
 
         l += b->lineCount;
     }

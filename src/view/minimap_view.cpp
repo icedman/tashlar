@@ -11,7 +11,9 @@
 #include "editor.h"
 #include "render.h"
 #include "dots.h"
+#include "util.h"
 
+#include "editor_view.h"
 #include "scrollbar_view.h"
 
 #define MINIMAP_WIDTH 10
@@ -28,8 +30,8 @@ minimap_view_t::~minimap_view_t()
 {
 }
 
-#define minimap_view_tEXT_COMPRESS 5
-#define minimap_view_tEXT_BUFFER 25
+#define TEXT_COMPRESS 5
+#define TEXT_BUFFER 25
 
 void minimap_view_t::render()
 {
@@ -38,6 +40,8 @@ void minimap_view_t::render()
     }
 
     app_t* app = app_t::instance();
+
+    editor_view_t *editor_view = (editor_view_t*)editor->view;
 
     document_t* doc = &editor->document;
     cursor_t cursor = doc->cursor();
@@ -59,6 +63,7 @@ void minimap_view_t::render()
         lastVisibleLine = b->lineNumber;
 
         int pair = colorPrimary;
+        _attron(_color_pair(pair));
         _move(y, 0);
         _clrtoeol(cols);
         _move(y++, 0);
@@ -66,24 +71,28 @@ void minimap_view_t::render()
         if (currentLine >= b->lineNumber && currentLine < b->lineNumber + 4) {
             _bold(true);
             _attron(_color_pair(colorIndicator));
-
 #ifdef ENABLE_UTF8
             _addwstr(L"\u2192");
 #else
             _addch('>');
 #endif
-
             _attroff(_color_pair(colorIndicator));
         } else {
-            _addch(' ');
+            
+            // if (b->lineNumber >= editor_view->firstVisibleBlock->lineNumber &&
+            //     b->lineNumber <= editor_view->lastVisibleBlock->lineNumber) {
+            //     _addch('>');
+            // } else {
+                _addch(' ');
+            // }
         }
 
-        buildUpDotsForBlock(b, minimap_view_tEXT_COMPRESS, minimap_view_tEXT_BUFFER);
+        buildUpDotsForBlock(b, TEXT_COMPRESS, TEXT_BUFFER);
 
-        int textCompress = minimap_view_tEXT_COMPRESS;
+        int textCompress = TEXT_COMPRESS;
         block_list& snapBlocks = editor->snapshots[0].snapshot;
 
-        for (int x = 0; x < minimap_view_tEXT_BUFFER; x++) {
+        for (int x = 0; x < TEXT_BUFFER; x++) {
             int x1 = x + 1;
             int x2 = x1 + 1;
             _attron(_color_pair(pair));
@@ -239,17 +248,23 @@ void minimap_view_t::update(int delta)
     struct document_t* doc = &editor->document;
     struct cursor_t cursor = doc->cursor();
     block_ptr block = cursor.block();
-
-    int fh = getRenderer()->fh;
-    // int scroll = (editor->scrollY + (-rows * 0.8)) / fh;
-    int scroll = ((editor->view->scrollY * fh) + (-rows * 2 / 3)) / fh;
-    offsetY = scroll;
     currentLine = block->lineNumber;
 
-    // try disable scroll
-    int lastLine = doc->blocks.size();
-    if (lastLine / 4 < rows || offsetY < 0) {
+    editor_view_t *editor_view = (editor_view_t*)editor->view;
+
+    if (!editor_view->firstVisibleBlock) {
         offsetY = 0;
+        targetOffsetY = 0;
+        return;
+    }
+
+    int firstLine = editor_view->firstVisibleBlock->lineNumber;
+    targetOffsetY = firstLine / 4;
+
+    int d = targetOffsetY - offsetY;
+    offsetY += d/3;
+    if (d * d > 4) {
+        app_t::instance()->refresh();
     }
 }
 
@@ -278,19 +293,51 @@ void minimap_view_t::scroll(int s)
     editor->view->scroll(s);
 }
 
-void minimap_view_t::mouseDown(int x, int y, int button, int clicks)
+void minimap_view_t::mouseDown(int _x, int _y, int button, int clicks)
 {
-    parentView->verticalScrollbar->mouseDown(x, y, button, clicks);
+    editor_view_t *editor_view = (editor_view_t*)editor->view;
+
+    int editorRows = editor_view->rows;
+    int clickedRow = rows * _y / height * 4;
+
+    int ahead = (editorRows / 2);
+    if (firstVisibleLine + clickedRow < editor_view->firstVisibleBlock->lineNumber) {
+        ahead *= -1;
+    }
+
+    int target = firstVisibleLine + clickedRow + ahead;
+    if (target < 0) {
+        target = 0;
+    }
+
+    log(">>%d", target);
+
+    block_ptr block = editor->document.blockAtLine(target);
+    if (!block) {
+        block = editor->document.lastBlock();
+    }
+    cursor_t cursor = editor->document.cursor();
+    cursor.setPosition(block, 0);
+
+    editor_view->scrollToCursor(cursor, true);
 }
 
 void minimap_view_t::mouseUp(int x, int y, int button)
 {
-    parentView->verticalScrollbar->mouseUp(x, y, button);
+    // mouseDown(x, y, 0, 0);
 }
 
 void minimap_view_t::mouseDrag(int x, int y, bool within)
 {
-    parentView->verticalScrollbar->mouseDrag(x, y, within);
+    // static int interval = 0;
+    // interval += 1;
+
+    // if (interval > 4) {
+    //     mouseDown(x, y, 0, 0);
+    //     interval = 0;
+    // }
+
+    // parentView->verticalScrollbar->mouseDrag(x, y, within);
 }
 
 void minimap_view_t::mouseHover(int x, int y)

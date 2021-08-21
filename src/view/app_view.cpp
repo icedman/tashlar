@@ -48,11 +48,11 @@ bool app_view_t::input(char ch, std::string keys)
                 found = true;
                 mainContainer->views.erase(it);
 
-
                 editor_list::iterator eit = app->editors.begin();
                 editor_ptr prev = 0;
                 while(eit != app->editors.end()) {
                     if (*eit == app->currentEditor) {
+                        removeGem(app->currentEditor);
                         app->editors.erase(eit);
                         break;
                     }
@@ -64,36 +64,34 @@ bool app_view_t::input(char ch, std::string keys)
                     app->end = true;
                     return true;
                 }
-
-                if (!prev) {
-                    prev = app->editors[0];
-                }
-
-                app->currentEditor = prev;
-                view_t::setFocus(prev.get()->view);
                 break;
             }
+
             it++;
+        }
+
+        if (found) {
+            gem_view_t *gem = 0;
+            for(auto g : gemList()) {
+                if (g->isVisible()) {
+                    gem = g.get();
+                    break;
+                }
+            }
+
+            if (!gem && gemList().size()) {
+                gem = gemList().back().get();
+            }
+
+            if (gem) {
+                gem->setVisible(true);
+                app_t::instance()->currentEditor = gem->editor;
+                view_t::setFocus(gem->editor->view);
+            }
         }
 
         return true;
     }
-
-    // case CANCEL:
-    //     popup.hide();
-    //     return false;
-    // case POPUP_SEARCH:
-    //     popup.search("");
-    //     return true;
-    // case POPUP_SEARCH_LINE:
-    //     popup.search(":");
-    //     return true;
-    // case POPUP_COMMANDS:
-    //     popup.commands();
-    //     return true;
-    // case POPUP_FILES:
-    //     popup.files();
-    //     return true;
 
     case MOVE_FOCUS_LEFT:
         view_t::shiftFocus(-1, 0);

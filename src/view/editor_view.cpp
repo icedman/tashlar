@@ -1,6 +1,7 @@
 #include "editor_view.h"
 #include "render.h"
 #include "app.h"
+#include "util.h"
 
 void editor_view_t::render()
 {	
@@ -21,13 +22,20 @@ void editor_view_t::render()
 
     int l = 0;
 
+    firstVisibleBlock = NULL;
+    lastVisibleBlock = NULL;
+
     bool hlMainCursor = cursors.size() == 1 && !mainCursor.hasSelection();
     bool firstLine = true;
     while (it != doc->blocks.end()) {
         auto& b = *it++;
-
         if (l >= rows + 1)
             break;
+
+        if (firstVisibleBlock == NULL) {
+            firstVisibleBlock = b;
+        }
+        lastVisibleBlock = b;
 
         int colorPair = color_pair_e::NORMAL;
         int colorPairSelected = color_pair_e::SELECTED;
@@ -153,6 +161,8 @@ void editor_view_t::render()
 editor_view_t::editor_view_t(editor_ptr editor)
     : view_t("editor")
     , editor(editor)
+    , targetX(-1)
+    , targetY(-1)
 {
     editor->view = this;
 }
@@ -162,6 +172,13 @@ editor_view_t::~editor_view_t()
 
 void editor_view_t::update(int delta)
 {
+    if (targetX != -1 && targetY != -1) {
+        int d = targetY - scrollY;
+        scrollY += d/3;
+        if (d * d > 4) {
+            app_t::instance()->refresh();
+        }
+    }
 }
 
 void editor_view_t::layout(int _x, int _y, int _w, int _h)
@@ -182,8 +199,6 @@ void editor_view_t::layout(int _x, int _y, int _w, int _h)
     maxScrollX = 0;
     maxScrollY = doc->lastBlock()->lineNumber - (rows * 2 / 3);
 
-    // log(">max %d", maxScrollY);
-
     if (maxScrollY < 0) {
         scrollY = 0;
     }
@@ -199,19 +214,18 @@ void editor_view_t::preRender()
         editor->_scrollToCursor = false;
     }	
 }
-
-void editor_view_t::ensureVisibleCursor()
+void editor_view_t::scrollToCursor(cursor_t cursor, bool animate)
 {
-    if (width == 0 || height == 0 || !isVisible())
+    if (width == 0 || height == 0 || !isVisible()) {
         return;
-
-    document_t *doc = &editor->document;
-    cursor_t mainCursor = doc->cursor();
+    }
 
     // update scroll
-    block_ptr cursorBlock = mainCursor.block();
+    block_ptr cursorBlock = cursor.block();
+    document_t *doc = cursorBlock->document;
 
-    int lookAheadX = (cols / 3);
+    int _scrollX = scrollX;
+    int _scrollY = scrollY;
 
     int adjust = 0;
     if (config_t::instance()->lineWrap) {
@@ -235,7 +249,7 @@ void editor_view_t::ensureVisibleCursor()
     }
 
     // scrollY
-    int lookAheadY = 0; // (cols/5);
+    int lookAheadY = 0;
     int screenY = cursorBlock->lineNumber;
     if (screenY - scrollY < lookAheadY) {
         scrollY = screenY - lookAheadY;
@@ -249,7 +263,8 @@ void editor_view_t::ensureVisibleCursor()
         scrollY = 0;
 
     // scrollX
-    int screenX = mainCursor.position();
+    int lookAheadX = (cols / 3);
+    int screenX = cursor.position();
     if (screenX - scrollX < lookAheadX) {
         scrollX = screenX - lookAheadX;
         if (scrollX < 0)
@@ -269,6 +284,27 @@ void editor_view_t::ensureVisibleCursor()
             scrollY = 0;
         }
     }
+
+    if (animate) {
+        targetX = scrollX;
+        targetY = scrollY;
+        scrollX = _scrollX;
+        scrollY = _scrollY;
+    } else {
+        targetX = -1;
+        targetY = -1;
+    }
+}
+
+void editor_view_t::ensureVisibleCursor()
+{
+    if (width == 0 || height == 0 || !isVisible()) {
+        return;
+    }
+
+    document_t *doc = &editor->document;
+    cursor_t mainCursor = doc->cursor();
+    scrollToCursor(mainCursor);
 }
 
 bool editor_view_t::input(char ch, std::string keys)

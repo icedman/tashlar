@@ -100,6 +100,14 @@ void explorer_view_t::render()
     cursor_t cursor = doc->cursor();
     block_t& block = *cursor.block();
 
+    std::vector<std::string> openPaths;
+
+    for(auto gem : gemList()) {
+        if (gem->isVisible()) {
+            openPaths.push_back(gem->editor->document.fullPath);
+        }
+    }
+
     explorer_t *explorer = explorer_t::instance();
 
     _move(0, 0);
@@ -134,9 +142,15 @@ void explorer_view_t::render()
             }
         }
 
-        if (file->fullPath == app_t::instance()->currentEditor->document.fullPath) {
-            pair = colorIndicator;
+        for(auto o : openPaths) {
+            if (file->fullPath == o) {
+                pair = colorIndicator;
+            }
         }
+
+        // if (file->fullPath == app_t::instance()->currentEditor->document.fullPath) {
+        //     pair = colorIndicator;
+        // }
 
         int x = 0;
         _move(y++, x);

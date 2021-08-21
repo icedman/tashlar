@@ -9,6 +9,7 @@ struct editor_view_t : view_t {
     ~editor_view_t();
 
     void ensureVisibleCursor();
+    void scrollToCursor(cursor_t c, bool animate = false);
 
     // view
     void update(int delta) override;
@@ -23,6 +24,11 @@ struct editor_view_t : view_t {
     void onFocusChanged(bool focused);
 
     editor_ptr editor;
+    block_ptr firstVisibleBlock;
+    block_ptr lastVisibleBlock;
+
+    int targetX;
+    int targetY;
 };
 
 #endif // EDITOR_VIEW_H

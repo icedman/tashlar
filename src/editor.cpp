@@ -801,19 +801,17 @@ bool editor_t::input(char ch, std::string keySequence)
     }
     */
 
+    if (op == CANCEL) {
+        editor->pushOp(CLEAR_CURSORS);
+        return true;
+    }
+
     if (op == UNDO) {
         editor->undo();
-        // popup->hide();
         return true;
     }
     if (op != UNKNOWN) {
         editor->pushOp(op);
-        // popup->hide();
-        return true;
-    }
-
-    if (ch == K_ESC) {
-        editor->pushOp(CLEAR_CURSORS);
         return true;
     }
 

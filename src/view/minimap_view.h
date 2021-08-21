@@ -35,6 +35,7 @@ struct minimap_view_t : view_t {
     size_t lastVisibleLine;
 
     int offsetY;
+    int targetOffsetY;
 };
 
 #endif // MINIMAP_H

@@ -187,7 +187,6 @@ void tabbar_view_t::render()
         sort(tabs.begin(), tabs.end(), compareFile);
     }
 
-
     // compute
     int tabX = 0;
     int totalWidth = 0;

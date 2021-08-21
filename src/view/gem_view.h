@@ -12,7 +12,7 @@ struct gem_view_t : view_t {
     ~gem_view_t();
 
     void update(int delta);
-    
+
     editor_ptr editor;
 
     std::shared_ptr<editor_view_t> editorView;
@@ -25,6 +25,8 @@ typedef std::vector<gem_view_ptr> gem_view_list;
 
 void focusGem(editor_ptr editor, bool solo);
 void gatherGems();
+void removeGem(editor_ptr editor);
+
 gem_view_list gemList();
 
 #endif // GEM_VIEW_H

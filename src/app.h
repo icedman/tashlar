@@ -31,6 +31,7 @@ struct app_t {
     // void preLayout() override;
 
     void refresh();
+    bool isFresh();
 
     int tabSize;
     bool showStatusBar;

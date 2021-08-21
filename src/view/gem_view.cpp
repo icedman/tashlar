@@ -31,10 +31,10 @@ gem_view_t::~gem_view_t()
 
 void gem_view_t::update(int delta)
 {
-    // if (editor->isFocused()) {
-    //     app_t::instance()->currentEditor = editor;
-    // }
-
+    if (!isVisible()) {
+        return;
+    }
+    
     view_t::update(delta);
 
     scrollbar_view_t *scrollbar = verticalScrollbar;
@@ -62,6 +62,19 @@ void gatherGems()
             view_t::getMainContainer()->addView(gem.get());
             view_t::setFocus(e->view);
         }
+    }
+}
+
+void removeGem(editor_ptr editor)
+{
+    gem_view_list::iterator it = gems.begin();
+    while(it != gems.end()) {
+        gem_view_ptr gem = *it;
+        if (gem->editor == editor) {
+            gems.erase(it);
+            return;
+        }
+        it++;
     }
 }
 

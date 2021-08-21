@@ -15,6 +15,7 @@
 #include "explorer_view.h"
 #include "statusbar_view.h"
 #include "tabbar_view.h"
+#include "popup_view.h"
 #include "render.h"
 
 int main(int argc, char **argv)
@@ -26,6 +27,8 @@ int main(int argc, char **argv)
     explorer_t explorer;
     statusbar_t statusbar;
     search_t search;
+
+    popup_root_view_t popups;
 
     render_t renderer;
     renderer.initialize();
@@ -67,6 +70,8 @@ int main(int argc, char **argv)
     root.addView(&sttbr);
     root.applyTheme();
 
+    popups.applyTheme();
+
     std::string previousKeySequence;
     std::string expandedSequence;
     while (!app.end) {
@@ -78,9 +83,19 @@ int main(int argc, char **argv)
         root.preRender();
         root.render();
 
+        popups.update(delta);
+        popups.preLayout();
+        popups.layout(0, 0, renderer.width, renderer.height);
+        popups.preRender();
+        popups.render();
+
         log("rows:%d", renderer.rows);
 
         renderer.render();
+
+        if (!app.isFresh()) {
+            continue;
+        }
 
         int ch = -1;
         std::string keySequence;
@@ -113,6 +128,10 @@ int main(int argc, char **argv)
 
         // statusbar_t::instance()->setStatus(keySequence);
         // app.input(ch, keySequence);
+
+        if (popups.input(ch, keySequence)) {
+            continue;
+        }
 
         root.input(ch, keySequence);
     }
