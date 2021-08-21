@@ -4,6 +4,9 @@
 #include "app.h"
 #include "util.h"
 #include "block.h"
+#include "render.h"
+
+#include "gem_view.h"
 
 #define EXPLORER_WIDTH 20
 
@@ -199,7 +202,6 @@ void explorer_view_t::applyTheme()
     }
 }
 
-
 bool explorer_view_t::input(char ch, std::string keys)
 {
     if (!isFocused()) {
@@ -219,6 +221,8 @@ bool explorer_view_t::input(char ch, std::string keys)
 
     bool _scrollToCursor = true;
 
+    int keyMods = _keyMods();
+
     switch (cmd) {
     case MOVE_CURSOR_RIGHT:
     case ENTER:
@@ -234,7 +238,8 @@ bool explorer_view_t::input(char ch, std::string keys)
         }
         if (item && cmd == ENTER) {
             log("open file %s", item->fullPath.c_str());
-            app->openEditor(item->fullPath);
+            focusGem(app->openEditor(item->fullPath), !_isShiftDown());
+
         }
         return true;
     case MOVE_CURSOR_LEFT:
@@ -309,6 +314,7 @@ void explorer_view_t::mouseDown(int x, int y, int button, int clicks)
     }
     if (clicks > 1 || (clicks == 1 && prevItem == explorer->currentItem)) {
         input(0, "enter");
+        view_t::setFocus(this);
     }
 }
 

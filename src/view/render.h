@@ -25,6 +25,8 @@ void _begin(view_t* view);
 void _end();
 int _keyMods();
 
+bool _isShiftDown();
+
 struct render_t {
 
     render_t();

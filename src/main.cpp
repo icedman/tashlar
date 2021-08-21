@@ -14,6 +14,7 @@
 #include "gem_view.h"
 #include "explorer_view.h"
 #include "statusbar_view.h"
+#include "tabbar_view.h"
 #include "render.h"
 
 int main(int argc, char **argv)
@@ -45,12 +46,22 @@ int main(int argc, char **argv)
     app_view_t root;
     explorer_view_t explr;
     statusbar_view_t sttbr;
+    tabbar_view_t tbbr;
+
+    view_t tabs;
+    tabs.viewLayout = LAYOUT_VERTICAL;
+    view_t content;
+    content.viewLayout = LAYOUT_HORIZONTAL;
+
+    tabs.addView(&tbbr);
+    tabs.addView(&content);
+    
+    view_t::setMainContainer(&content);
 
     view_t main;
     main.viewLayout = LAYOUT_HORIZONTAL;
     main.addView(&explr);
-
-    view_t::setMainContainer(&main);
+    main.addView(&tabs);
 
     root.addView(&main);
     root.addView(&sttbr);

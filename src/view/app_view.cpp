@@ -1,10 +1,7 @@
 #include "app_view.h"
 #include "render.h"
 #include "app.h"
-
 #include "gem_view.h"
-
-static gem_view_list gems;
 
 app_view_t::app_view_t()
     : view_t("app")
@@ -127,15 +124,6 @@ void app_view_t::applyTheme()
 }
 
 void app_view_t::update(int delta) {
-
-    for(auto e : app_t::instance()->editors) {
-        if (e->view == 0) {
-            gem_view_ptr gem = std::make_shared<gem_view_t>(e);
-            gems.emplace_back(gem);
-            view_t::getMainContainer()->addView(gem.get());
-            view_t::setFocus(e->view);
-        }
-    }
-
+    gatherGems();
     view_t::update(delta);
 }

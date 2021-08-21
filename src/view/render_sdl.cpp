@@ -692,3 +692,8 @@ int _keyMods()
 {
     return keyMods;
 }
+
+bool _isShiftDown()
+{
+    return keyMods & KMOD_SHIFT;
+}

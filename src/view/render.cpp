@@ -224,3 +224,8 @@ int _keyMods()
 {
     return 0;
 }
+
+bool _isShiftDown()
+{
+    return false;
+}

@@ -6,8 +6,6 @@
 #include "editor_view.h"
 #include "gutter_view.h"
 
-// #include <memory>
-
 struct gem_view_t : view_t {
     gem_view_t(editor_ptr editor);
     ~gem_view_t();
@@ -20,5 +18,9 @@ struct gem_view_t : view_t {
 
 typedef std::shared_ptr<gem_view_t> gem_view_ptr;
 typedef std::vector<gem_view_ptr> gem_view_list;
+
+void focusGem(editor_ptr editor, bool solo);
+void gatherGems();
+gem_view_list gemList();
 
 #endif // GEM_VIEW_H
