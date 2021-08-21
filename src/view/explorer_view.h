@@ -19,6 +19,8 @@ struct explorer_view_t : view_t {
     void onFocusChanged(bool focused) override;
 
     void ensureVisibleCursor();
+
+    spacer_view_t spacer;
 };
 
 #endif // EXPLORER_VIEW_H

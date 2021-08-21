@@ -16,6 +16,8 @@ enum layout_e {
 struct view_t;
 typedef std::vector<view_t*> view_list;
 
+struct scrollbar_view_t;
+
 struct view_t {
     view_t(std::string name = "");
     ~view_t();
@@ -79,10 +81,14 @@ struct view_t {
 
     bool isFocused();
 
+    void setDisabled(bool disabled);
+    bool isDisabled();
+
     void setVisible(bool visible);
     virtual bool isVisible();
 
     bool visible;
+    bool disabled;
     bool canFocus;
     bool floating;
     int backgroundColor;
@@ -100,6 +106,17 @@ struct view_t {
     static view_t* getMainContainer();
     
     static view_t* getViewAt(int x, int y);
+
+    void createScrollbars();
+
+    scrollbar_view_t *verticalScrollbar;
+    scrollbar_view_t *horizontalScrollbar;
+
+    view_t *parentView;
+};
+
+struct spacer_view_t : view_t {
+    spacer_view_t();
 };
 
 #endif // VIEW_H

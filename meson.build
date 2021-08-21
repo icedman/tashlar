@@ -17,6 +17,7 @@ ashlar_files = [
     'src/completer.cpp',
     'src/cursor.cpp',
     'src/document.cpp',
+    'src/dots.cpp',
     'src/editor.cpp',
     'src/explorer.cpp',
     'src/extension.cpp',
@@ -35,6 +36,8 @@ ashlar_view_files = [
     'src/view/explorer_view.cpp',
     'src/view/gem_view.cpp',
     'src/view/gutter_view.cpp',
+    'src/view/minimap_view.cpp',
+    'src/view/scrollbar_view.cpp',
     'src/view/statusbar_view.cpp',
     'src/view/tabbar_view.cpp'
 ]

@@ -128,7 +128,7 @@ bool tabbar_view_t::isVisible()
 void tabbar_view_t::preLayout()
 {
     preferredHeight = getRenderer()->fh;
-    if (getRenderer()->fh > 10) {
+    if (!getRenderer()->isTerminal()) {
         preferredHeight += (padding * 2);
     }
 }

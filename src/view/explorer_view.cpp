@@ -7,6 +7,7 @@
 #include "render.h"
 
 #include "gem_view.h"
+#include "scrollbar_view.h"
 
 #define EXPLORER_WIDTH 20
 
@@ -14,12 +15,15 @@ explorer_view_t::explorer_view_t()
 	: view_t("explorer")
 {
     preferredWidth = EXPLORER_WIDTH;
-    viewLayout = LAYOUT_VERTICAL;
+    viewLayout = LAYOUT_HORIZONTAL;
 
 	preferredHeight = 1;
     backgroundColor = 2;
 
     canFocus = true;
+    
+    addView(&spacer);
+    createScrollbars();
 }
 
 explorer_view_t::~explorer_view_t()
@@ -28,6 +32,7 @@ explorer_view_t::~explorer_view_t()
 void explorer_view_t::update(int delta)
 {
 	explorer_t::instance()->update(delta);
+    view_t::update(delta);
 }
 
 void explorer_view_t::preLayout()
@@ -44,27 +49,29 @@ void explorer_view_t::preLayout()
         preferredWidth += (padding * 2);
     }
 
-    // if (scrollbar->scrollTo >= 0 && scrollbar->scrollTo < scrollbar->maxScrollY && scrollbar->maxScrollY > 0) {
-    //     scrollY = scrollbar->scrollTo;
-    //     scrollbar->scrollTo = -1;
-    // }
+    scrollbar_view_t *scrollbar = verticalScrollbar;
+
+    if (scrollbar->scrollTo >= 0 && scrollbar->scrollTo < scrollbar->maxScrollY && scrollbar->maxScrollY > 0) {
+        scrollY = scrollbar->scrollTo;
+        scrollbar->scrollTo = -1;
+    }
 
     maxScrollY = (explorer->renderList.size() - rows + 1) * getRenderer()->fh;
-    // scrollbar->setVisible(maxScrollY > rows && !getRenderer()->isTerminal());
-    // scrollbar->scrollY = scrollY;
-    // scrollbar->maxScrollY = maxScrollY;
-    // scrollbar->colorPrimary = colorPrimary;
+    scrollbar->setVisible(maxScrollY > rows && !getRenderer()->isTerminal());
+    scrollbar->scrollY = scrollY;
+    scrollbar->maxScrollY = maxScrollY;
+    scrollbar->colorPrimary = colorPrimary;
 
     int sz = explorer->renderList.size();
     if (sz == 0) sz = 1;
-    // scrollbar->thumbSize = rows / sz;
-    // if (scrollbar->thumbSize < 2) {
-    //     scrollbar->thumbSize = 2;
-    // }
+    scrollbar->thumbSize = rows / sz;
+    if (scrollbar->thumbSize < 2) {
+        scrollbar->thumbSize = 2;
+    }
 
-    // if (!scrollbar->isVisible() && !getRenderer()->isTerminal()) {
-    //     scrollY = 0;
-    // }
+    if (!scrollbar->isVisible() && !getRenderer()->isTerminal()) {
+        scrollY = 0;
+    }
 }
 
 
@@ -185,6 +192,8 @@ void explorer_view_t::render()
         _move(y++, x);
         _clrtoeol(cols);
     }
+
+    view_t::render();
 }
 
 void explorer_view_t::applyTheme()
@@ -200,6 +209,8 @@ void explorer_view_t::applyTheme()
         view->colorPrimary = colorPrimary;
         view->colorIndicator = colorIndicator;
     }
+
+    view_t::applyTheme();
 }
 
 bool explorer_view_t::input(char ch, std::string keys)

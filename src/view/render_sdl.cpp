@@ -1,5 +1,5 @@
 #include "app.h"
-// #include "dots.h"
+#include "dots.h"
 #include "rencache.h"
 #include "render.h"
 #include "renderer.h"
@@ -105,7 +105,6 @@ void _addch(char c)
 
 bool _drawdots(int dots, int* colors)
 {
-    /*
     static const int offs[] = {
         0, 0, 0, 1,
         1, 0, 1, 1,
@@ -141,7 +140,6 @@ bool _drawdots(int dots, int* colors)
     }
 
     drawX++;
-    */
     return true;
 }
 

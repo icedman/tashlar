@@ -2,6 +2,8 @@
 #include "render.h"
 #include "util.h"
 
+#include "scrollbar_view.h"
+
 static view_t* focused = 0;
 static view_t* hovered = 0;
 static view_t* dragged = 0;
@@ -32,7 +34,9 @@ view_t* view_t::getMainContainer()
 
 view_t::view_t(std::string name)
     : name(name)
+    , parentView(NULL)
     , visible(true)
+    , disabled(false)
     , canFocus(false)
     , floating(true)
     , scrollX(0)
@@ -49,11 +53,15 @@ view_t::view_t(std::string name)
     , padding(2)
     , viewLayout(LAYOUT_HORIZONTAL)
     , backgroundColor(0)
+    , verticalScrollbar(0)
+    , horizontalScrollbar(0)
 {
 }
 
 view_t::~view_t()
 {
+    if (verticalScrollbar) delete verticalScrollbar;
+    if (horizontalScrollbar) delete horizontalScrollbar;
 }
 
 render_t* view_t::getRenderer()
@@ -120,6 +128,16 @@ void view_t::setVisible(bool v)
 bool view_t::isVisible()
 {
     return visible;
+}
+
+void view_t::setDisabled(bool d)
+{
+    disabled = d;
+}
+
+bool view_t::isDisabled()
+{
+    return disabled;
 }
 
 void view_t::update(int delta)
@@ -322,7 +340,13 @@ bool view_t::input(char ch, std::string keys)
 
 void view_t::addView(view_t* view)
 {
+    for(auto a : views) {
+        if (a == view) {
+            return;
+        }
+    }
     views.push_back(view);
+    view->parentView = this;
 }
 
 void view_t::removeView(view_t* view)
@@ -404,8 +428,9 @@ void view_t::scroll(int s)
 
 view_t* view_t::viewFromPointer(int x, int y)
 {
-    if (!isVisible())
+    if (!isVisible() || isDisabled())
         return NULL;
+
     view_t* view = this;
     view_t* res = NULL;
 
@@ -419,4 +444,16 @@ view_t* view_t::viewFromPointer(int x, int y)
         }
     }
     return res;
+}
+
+void view_t::createScrollbars()
+{
+    verticalScrollbar = new scrollbar_view_t;
+    addView(verticalScrollbar);
+}
+
+spacer_view_t::spacer_view_t()
+    : view_t("spacer")
+{
+    setDisabled(true);
 }

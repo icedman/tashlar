@@ -45,7 +45,7 @@ void gutter_view_t::render()
     block_t& block = *cursor.block();
 
     _move(0, 0);
-    _addch('+');
+    // _addch('+');
 
     int l = 0;
     block_list::iterator it = editor->document.blocks.begin();

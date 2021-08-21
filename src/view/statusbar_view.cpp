@@ -2,6 +2,7 @@
 #include "statusbar.h"
 #include "render.h"
 #include "app.h"
+#include "util.h"
 #include "block.h"
 
 statusbar_view_t::statusbar_view_t()
@@ -123,4 +124,11 @@ void statusbar_view_t::render()
 }
 
 void statusbar_view_t::applyTheme()
-{}
+{
+    app_t* app = app_t::instance();
+    theme_ptr theme = app->theme;
+    style_t comment = theme->styles_for_scope("comment");
+
+    colorPrimary = pairForColor(comment.foreground.index, false);
+    colorIndicator = pairForColor(app->tabActiveBorder, false);
+}
