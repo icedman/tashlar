@@ -5,6 +5,7 @@
 
 #include "render.h"
 #include "view_controls.h"
+#include "search_view.h"
 
 static struct popup_root_view_t* popupRootInstance = 0;
 
@@ -69,31 +70,9 @@ bool popup_root_view_t::input(char ch, std::string keys)
     	}
         return false;
 
-    case POPUP_FILES: {
-        log("files");
-        std::shared_ptr<list_view_t> files = std::make_shared<list_view_t> ();
-
-        for(int i=0; i<20; i++) {
-    		std::string text = "command ";
-    		text += ('a' + i);
-    		struct item_t item = {
-                .name = text,
-                .description = "",
-                .fullPath = text,
-                .score = i,
-                .depth = 0,
-                .script = text
-            };
-            files->items.push_back(item);
-        }
-
-        pushPopup(files);
-        return true;
-    }
     case POPUP_SEARCH: {
         log("search");
-        std::shared_ptr<inputtext_view_t> search = std::make_shared<inputtext_view_t> ();
-        search->placeholder = "input";
+        std::shared_ptr<search_view_t> search = std::make_shared<search_view_t> ();
         pushPopup(search);
         return true;
     }

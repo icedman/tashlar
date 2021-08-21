@@ -136,8 +136,6 @@ int main(int argc, char **argv)
         root.input(ch, keySequence);
     }
 
-    // renderer.delay(5000);
     renderer.shutdown();
-    // explorer.print();
     return 0;
 }

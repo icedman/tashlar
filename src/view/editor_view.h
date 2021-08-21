@@ -8,7 +8,7 @@ struct editor_view_t : view_t {
     editor_view_t(editor_ptr editor);
     ~editor_view_t();
 
-    void ensureVisibleCursor();
+    void ensureVisibleCursor(bool animate = false);
     void scrollToCursor(cursor_t c, bool animate = false);
 
     // view

@@ -41,6 +41,7 @@ ashlar_view_files = [
     'src/view/scrollbar_view.cpp',
     'src/view/statusbar_view.cpp',
     'src/view/tabbar_view.cpp',
+    'src/view/search_view.cpp',
     'src/view/view_controls.cpp'
 ]
 

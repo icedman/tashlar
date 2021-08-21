@@ -387,3 +387,8 @@ void explorer_view_t::ensureVisibleCursor()
         scrollY = 0;
     }
 }
+
+void explorer_view_t::scroll(int s)
+{
+    view_t::scroll(s * 8);
+}

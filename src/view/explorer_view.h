@@ -17,7 +17,7 @@ struct explorer_view_t : view_t {
     void mouseDown(int x, int y, int button, int clicks) override;
     void mouseHover(int x, int y) override;
     void onFocusChanged(bool focused) override;
-
+    void scroll(int s) override;
     void ensureVisibleCursor();
 
     spacer_view_t spacer;

@@ -21,6 +21,7 @@
 minimap_view_t::minimap_view_t(editor_ptr editor)
     : view_t("minimap")
     , offsetY(0)
+    , targetOffsetY(0)
     , editor(editor)
 {
     backgroundColor = 1;
@@ -262,8 +263,9 @@ void minimap_view_t::update(int delta)
     targetOffsetY = firstLine / 4;
 
     int d = targetOffsetY - offsetY;
-    offsetY += d/3;
     if (d * d > 4) {
+        offsetY += d/3;
+        d = targetOffsetY - offsetY;
         app_t::instance()->refresh();
     }
 }
@@ -290,6 +292,7 @@ void minimap_view_t::preLayout()
 
 void minimap_view_t::scroll(int s)
 {
+    animating = false;
     editor->view->scroll(s);
 }
 

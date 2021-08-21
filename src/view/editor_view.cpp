@@ -172,11 +172,13 @@ editor_view_t::~editor_view_t()
 
 void editor_view_t::update(int delta)
 {
-    if (targetX != -1 && targetY != -1) {
+    if (animating) {
         int d = targetY - scrollY;
         scrollY += d/3;
         if (d * d > 4) {
             app_t::instance()->refresh();
+        } else {
+            animating = false;
         }
     }
 }
@@ -290,13 +292,15 @@ void editor_view_t::scrollToCursor(cursor_t cursor, bool animate)
         targetY = scrollY;
         scrollX = _scrollX;
         scrollY = _scrollY;
+        animating = true;
     } else {
         targetX = -1;
         targetY = -1;
+        animating = false;
     }
 }
 
-void editor_view_t::ensureVisibleCursor()
+void editor_view_t::ensureVisibleCursor(bool animate)
 {
     if (width == 0 || height == 0 || !isVisible()) {
         return;

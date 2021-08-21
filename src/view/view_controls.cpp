@@ -3,24 +3,24 @@
 #include "util.h"
 #include "render.h"
 
-#define POPUP_WIDTH 24
-#define POPUP_HEIGHT 1
-#define POPUP_MAX_WIDTH 40
-#define POPUP_MAX_HEIGHT 12
-
 list_view_t::list_view_t()
 	: view_t("list")
 	, currentItem(-1)
 {
-	backgroundColor = 3;
-    canFocus = true;
+	backgroundColor = 2;
 }
 
 void list_view_t::onInput()
-{}
+{
+    if (inputListener)
+        inputListener->onInput();
+}
 
 void list_view_t::onSubmit()
-{}
+{
+    if (inputListener)
+        inputListener->onSubmit();
+}
 
 void list_view_t::update(int delta)
 {}
@@ -44,30 +44,7 @@ void list_view_t::preLayout()
 
 void list_view_t::layout(int _x, int _y, int w, int h)
 {
-    x = _x;
-    y = _y;
-	width = w > 0 ? w : POPUP_WIDTH;
-    height = (h > 0 ? h : POPUP_HEIGHT) + items.size();
-
-    if (width > POPUP_MAX_WIDTH) {
-        width = POPUP_MAX_WIDTH;
-    }
-    if (height > POPUP_MAX_HEIGHT) {
-        height = POPUP_MAX_HEIGHT;
-    }
-
-    int fw = getRenderer()->fw;
-    int fh = getRenderer()->fh;
-
-    width *= fw;
-    height *= fh;
-    if (!getRenderer()->isTerminal()) {
-        width += padding * 2;
-        height += padding * 2;
-    }
-
-    cols = width / fw;
-    rows = height / fh;
+    view_t::layout(_x, _y, w, h);
 }
 
 static void renderLine(const char* line, int offsetX, int& x, int width)
@@ -151,7 +128,7 @@ void list_view_t::render()
 
 bool list_view_t::input(char ch, std::string keys)
 {
-    if (!isVisible()) {
+    if (!isVisible() || !isFocused()) {
         return false;
     }
 
@@ -193,9 +170,10 @@ bool list_view_t::input(char ch, std::string keys)
 
     if (_scrollToCursor) {
         ensureVisibleCursor();
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 void list_view_t::ensureVisibleCursor()
@@ -245,38 +223,75 @@ void list_view_t::applyTheme()
     colorIndicator = pairForColor(app->tabActiveBorder, false);
 }
 
+text_view_t::text_view_t()
+    : view_t("text")
+{
+    backgroundColor = 3;
+}
+
+void text_view_t::preLayout()
+{
+    preferredWidth = text.length() * getRenderer()->fw;
+    preferredHeight = getRenderer()->fh;
+    if (!getRenderer()->isTerminal()) {
+        preferredHeight += (padding * 2);
+    }
+}
+
+void text_view_t::layout(int _x, int _y, int w, int h)
+{
+    int fw = getRenderer()->fw;
+    int fh = getRenderer()->fh;
+
+    int ww = w > preferredWidth * fw ? w : preferredWidth * fw;
+    view_t::layout(_x, _y, ww, preferredHeight);
+}
+
+void text_view_t::render()
+{
+    _move(0, 0);
+
+    _attron(_color_pair(colorPrimary));
+
+    int offsetX = 0;
+    int x = 0;
+
+    char* str = (char*)text.c_str();
+
+    renderLine(str, offsetX, x, cols);
+}
+
+void text_view_t::applyTheme()
+{
+    app_t* app = app_t::instance();
+    theme_ptr theme = app->theme;
+    style_t comment = theme->styles_for_scope("function");
+
+    colorPrimary = pairForColor(comment.foreground.index, false);
+    colorIndicator = pairForColor(app->tabActiveBorder, false);
+}
+
 inputtext_view_t::inputtext_view_t()
 	: view_t("inputtext")
 {
     backgroundColor = 2;
 }
 
+void inputtext_view_t::preLayout()
+{
+    preferredHeight = getRenderer()->fh;
+    if (!getRenderer()->isTerminal()) {
+        preferredHeight += (padding * 2);
+    }
+}
+
 void inputtext_view_t::layout(int _x, int _y, int w, int h)
 {
-    x = _x;
-    y = _y;
-    width = w > 0 ? w : POPUP_WIDTH;
-    height = 1; // (h > 0 ? h : POPUP_HEIGHT) + items.size();
-
-    if (width > POPUP_MAX_WIDTH) {
-        width = POPUP_MAX_WIDTH;
-    }
-    // if (height > POPUP_MAX_HEIGHT) {
-    //     height = POPUP_MAX_HEIGHT;
-    // }
-
     int fw = getRenderer()->fw;
     int fh = getRenderer()->fh;
 
-    width *= fw;
-    height *= fh;
-    if (!getRenderer()->isTerminal()) {
-        width += padding * 2;
-        height += padding * 2;
-    }
-
-    cols = width / fw;
-    rows = height / fh;
+    int ww = w > preferredWidth * fw ? w : preferredWidth * fw;
+    view_t::layout(_x, _y, ww, preferredHeight);
 }
 
 void inputtext_view_t::render()
@@ -310,7 +325,7 @@ void inputtext_view_t::render()
 
 bool inputtext_view_t::input(char ch, std::string keys)
 {
-    if (!isVisible()) {
+    if (!isVisible() || !isFocused()) {
         return false;
     }
 
@@ -335,21 +350,27 @@ bool inputtext_view_t::input(char ch, std::string keys)
     case ENTER:
         // searchDirection = 0;
         onSubmit();
+        if (inputListener)
+            inputListener->onSubmit();
         return true;
     case MOVE_CURSOR_RIGHT:
-    case MOVE_CURSOR_LEFT:
         return true;
+    case MOVE_CURSOR_LEFT:
     case DELETE:
     case BACKSPACE:
         if (text.length()) {
             text.pop_back();
             onInput();
+            if (inputListener)
+                inputListener->onInput();
         }
         return true;
     default:
         if (isprint(ch)) {
             text += s;
             onInput();
+            if (inputListener)
+                inputListener->onInput();
         }
         break;
     };
@@ -361,7 +382,7 @@ void inputtext_view_t::applyTheme()
 {
     app_t* app = app_t::instance();
     theme_ptr theme = app->theme;
-    style_t comment = theme->styles_for_scope("function");
+    style_t comment = theme->styles_for_scope("comment");
 
     colorPrimary = pairForColor(comment.foreground.index, false);
     colorIndicator = pairForColor(app->tabActiveBorder, false);

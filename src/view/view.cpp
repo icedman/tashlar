@@ -1,6 +1,7 @@
 #include "view.h"
 #include "render.h"
 #include "util.h"
+#include "app.h"
 
 #include "scrollbar_view.h"
 
@@ -35,6 +36,7 @@ view_t* view_t::getMainContainer()
 view_t::view_t(std::string name)
     : name(name)
     , parentView(NULL)
+    , inputListener(NULL)
     , visible(true)
     , disabled(false)
     , canFocus(false)
@@ -55,6 +57,7 @@ view_t::view_t(std::string name)
     , backgroundColor(0)
     , verticalScrollbar(0)
     , horizontalScrollbar(0)
+    , animating(false)
 {
 }
 

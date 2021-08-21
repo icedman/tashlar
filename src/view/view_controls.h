@@ -36,6 +36,19 @@ struct list_view_t : view_t
     std::vector<struct item_t> commandItems;
 };
 
+struct text_view_t : view_t
+{
+    text_view_t();
+
+    std::string text;
+
+    void preLayout() override;
+    void layout(int x, int y, int width, int height) override;
+    void render() override;
+
+    void applyTheme() override;
+};
+
 struct inputtext_view_t : view_t
 {
 	inputtext_view_t();
@@ -43,6 +56,7 @@ struct inputtext_view_t : view_t
     std::string placeholder;
     std::string text;
 
+    void preLayout() override;
     void layout(int x, int y, int width, int height) override;
     void render() override;
     bool input(char ch, std::string keys) override;

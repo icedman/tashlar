@@ -13,6 +13,11 @@ enum layout_e {
     LAYOUT_STACK
 };
 
+#define POPUP_WIDTH 24
+#define POPUP_HEIGHT 1
+#define POPUP_MAX_WIDTH 40
+#define POPUP_MAX_HEIGHT 12
+
 struct view_t;
 typedef std::vector<view_t*> view_list;
 
@@ -115,6 +120,9 @@ struct view_t {
     scrollbar_view_t *horizontalScrollbar;
 
     view_t *parentView;
+    view_t *inputListener;
+
+    bool animating;
 };
 
 struct spacer_view_t : view_t {
