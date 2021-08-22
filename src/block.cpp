@@ -96,3 +96,9 @@ void block_t::print()
     // std::cout << lineNumber << ": " << text() << std::endl;
     log("%d %s", lineNumber, text().c_str());
 }
+
+bool block_t::isValid()
+{
+    block_ptr b = document->blockAtLine(lineNumber+1);
+    return (b.get() == this);
+}

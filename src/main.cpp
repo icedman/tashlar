@@ -89,7 +89,7 @@ int main(int argc, char **argv)
         popups.preRender();
         popups.render();
 
-        log("rows:%d", renderer.rows);
+        // log("rows:%d", renderer.rows);
 
         renderer.render();
 
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
             expandedSequence = "";
         }
 
-        log("k: %d %s", ch, keySequence.c_str());
+        // log("k: %d %s", ch, keySequence.c_str());
 
         // statusbar_t::instance()->setStatus(keySequence);
         // app.input(ch, keySequence);

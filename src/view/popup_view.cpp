@@ -31,6 +31,12 @@ struct popup_root_view_t* popup_root_view_t::instance()
 
 void popup_root_view_t::pushPopup(std::shared_ptr<view_t> p)
 {
+    for(auto v : views) {
+        if (v->name == p->name) {
+            return;
+        }
+    }
+
 	addView(p.get());
 	popups.emplace_back(p);
 
@@ -46,6 +52,8 @@ void popup_root_view_t::popPopup()
 	std::shared_ptr<view_t> top = popups.back();
 	removeView(top.get());
 	popups.pop_back();
+
+    view_t::setFocus(app_t::instance()->currentEditor->view);
 }
 
 bool popup_root_view_t::hasPopups()
@@ -76,6 +84,10 @@ bool popup_root_view_t::input(char ch, std::string keys)
         pushPopup(search);
         return true;
     }
+
+        //     case INSERT: {
+        //     return false;
+        // }
 
     // case POPUP_SEARCH_LINE:
     //     popup.search(":");

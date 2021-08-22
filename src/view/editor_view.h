@@ -4,6 +4,7 @@
 #include "view.h"
 #include "editor.h"
 
+struct list_view_t;
 struct editor_view_t : view_t {
     editor_view_t(editor_ptr editor);
     ~editor_view_t();
@@ -21,7 +22,9 @@ struct editor_view_t : view_t {
     void mouseDown(int x, int y, int button, int clicks) override;
     void mouseDrag(int x, int y, bool within) override;
 
-    void onFocusChanged(bool focused);
+    void onInput() override;
+    void onSubmit() override;
+    void onFocusChanged(bool focused) override;
 
     editor_ptr editor;
     block_ptr firstVisibleBlock;
@@ -29,6 +32,11 @@ struct editor_view_t : view_t {
 
     int targetX;
     int targetY;
+
+    // todo move outside of editor
+    list_view_t *completerView;
+    int completerItemsWidth;
+    cursor_t completerCursor;
 };
 
 #endif // EDITOR_VIEW_H

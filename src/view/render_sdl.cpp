@@ -507,7 +507,7 @@ static int poll_event()
             }
             if (keySequence.length() > 1) {
                 pushKey(0, keySequence);
-                log("keydown %s", keySequence.c_str());
+                // log("keydown %s", keySequence.c_str());
             }
         }
 
@@ -519,7 +519,7 @@ static int poll_event()
         return 0;
 
     case SDL_TEXTINPUT:
-        log("text input %c", e.text.text[0]);
+        // log("text input %c", e.text.text[0]);
         if (keyMods == 0 || keyMods & KMOD_SHIFT || keyMods & KMOD_CAPS) {
             pushKey(e.text.text[0], "");
         }

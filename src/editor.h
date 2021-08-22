@@ -2,7 +2,7 @@
 #define EDITOR_H
 
 #include "document.h"
-#include "completer.h"
+#include "indexer.h"
 #include "highlighter.h"
 #include "operation.h"
 #include "snapshot.h"
@@ -10,6 +10,7 @@
 typedef std::vector<operation_t> operation_list;
 
 struct view_t;
+struct indexer_t;
 struct editor_t {
 
     std::string name;
@@ -37,6 +38,7 @@ struct editor_t {
     bool input(char ch, std::string keys);
 
     void highlight(int startingLine, int count);
+    void enableIndexer();
 
     void toMarkup();
 
@@ -53,7 +55,7 @@ struct editor_t {
     bracket_info_t cursorBracket1;
     bracket_info_t cursorBracket2;
 
-    completer_t completer;
+    indexer_t *indexer;
 
     bool _scrollToCursor;
     int _foldedLines;

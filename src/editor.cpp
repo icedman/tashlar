@@ -4,6 +4,7 @@
 
 // clipboard
 #include "app.h"
+#include "view/view.h"
 
 #include <iostream>
 #include <sstream>
@@ -14,16 +15,27 @@
 
 editor_t::editor_t()
     : view(0)
+    , indexer(0)
 {
     document.editor = this;
     _scrollToCursor = true;
     _foldedLines = 0;
+
+    highlighter.editor = this;
 }
 
 editor_t::~editor_t()
 {
-    completer.cancel();
     highlighter.cancel();
+
+    if (indexer) {
+        delete indexer;
+    }
+}
+
+void editor_t::enableIndexer()
+{
+    indexer = new indexer_t();
 }
 
 void editor_t::pushOp(std::string op, std::string params)
@@ -91,9 +103,9 @@ void editor_t::runOp(operation_t op)
     cursor_t mainCursor = document.cursor();
     cursor_util::sortCursors(cursors);
 
-    if (mainCursor.block()) {
-        log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
-    }
+    // if (mainCursor.block()) {
+    //     log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
+    // }
 
     switch (_op) {
     case CANCEL:
@@ -103,7 +115,6 @@ void editor_t::runOp(operation_t op)
         document.open(strParam, false);
         createSnapshot();
         highlighter.run(this);
-        completer.run(this);
         return;
     case SAVE: {
         if (document.fileName == "") {
@@ -420,7 +431,12 @@ void editor_t::runOp(operation_t op)
             cur.insertText(strParam);
             cursor_util::advanceBlockCursors(cursors, cur, strParam.length());
             cur.moveRight(strParam.length());
-            // popup_t::instance()->completion();
+
+            // todo move to editor_view
+            if (view && view->inputListener) {
+                view->inputListener->onInput();
+            }
+            
             break;
 
         default:
@@ -778,28 +794,9 @@ void editor_t::createSnapshot()
 
 bool editor_t::input(char ch, std::string keySequence)
 {
-    // if (!isFocused())
-    //     return false;
-
     operation_e op = operationFromKeys(keySequence);
 
     editor_t* editor = this;
-
-    /*
-    // popup_t* popup = popup_t::instance();
-    if (popup->isVisible() && !inputBuffer.length()) {
-        if (!popup->isCompletion()) {
-            return false;
-        }
-        if (op == MOVE_CURSOR_UP || op == MOVE_CURSOR_DOWN || op == ENTER || op == TAB) {
-            return popup->input(ch, keySequence);
-        }
-        if (ch == K_ESC) {
-            popup->hide();
-            return true;
-        }
-    }
-    */
 
     if (op == CANCEL) {
         editor->pushOp(CLEAR_CURSORS);

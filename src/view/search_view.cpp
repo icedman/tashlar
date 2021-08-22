@@ -3,9 +3,13 @@
 #include "app.h"
 #include "util.h"
 #include "editor.h"
+#include "search.h"
+#include "indexer.h"
 
 #include "popup_view.h"
 #include "editor_view.h"
+
+#include <algorithm>
 
 search_view_t::search_view_t()
 	: view_t("search")
@@ -31,25 +35,6 @@ search_view_t::search_view_t()
     addView(&list);
 
     view_t::setFocus(&inputtext);
-
-    // list.setVisible(false);
-
-    /*
-	for(int i=0; i<20; i++) {
-		std::string text = "command ";
-		text += ('a' + i);
-		struct item_t item = {
-            .name = text,
-            .description = "",
-            .fullPath = text,
-            .score = i,
-            .depth = 0,
-            .script = text
-        };
-        list.items.push_back(item);
-    }
-    list.items.push_back({ "main", "", "", 0, 0, "" });
-    */
 }
 
 search_view_t::~search_view_t()
@@ -72,16 +57,25 @@ void search_view_t::preLayout()
 void search_view_t::layout(int _x, int _y, int w, int h)
 {
     int ww = POPUP_WIDTH * getRenderer()->fw;
-    int hh = getRenderer()->fh;
+    int hh = 1;
     if (list.items.size() && list.isVisible()) {
-        hh += list.items.size() * getRenderer()->fh;
+        hh += list.items.size() + 1;
+        if (hh > 8) {
+            hh = 8;
+        }
     }
-
+    hh *= getRenderer()->fh;
     if (!getRenderer()->isTerminal()) {
-        hh += (padding * 2);
+        if (list.items.size()) {
+            hh -= (padding * 4);
+        } else {
+            hh += (padding * 2);
+        }
     }
     // view_t::layout(w / 2 - ww /2, _y, ww, hh);
     // view_t::layout(w / 2 - ww /2, getRenderer()->fh * 3, ww, hh);
+
+
     view_t::layout(w - ww, _y, ww, hh);
 }
 
@@ -104,6 +98,18 @@ void search_view_t::onInput()
     struct block_t& block = *cursor.block();
 
 	std::string text = inputtext.text;
+
+    // indexer
+    if (editor->indexer) {
+        std::vector<std::string> words = editor->indexer->findWords(text);
+        list.items.clear();
+        for(auto w : words) {
+            int score = levenshtein_distance((char*)text.c_str(), (char*)(w.c_str()));
+            list.items.push_back({ w, "", "", score, 0, "" });
+        }
+
+        sort(list.items.begin(), list.items.end(), compareListItem);
+    }
 
     // goto line
     if (inputtext.text[0] == ':') {

@@ -3,6 +3,8 @@
 #include "search.h"
 #include "util.h"
 
+#include "indexer.h"
+
 #include <cstring>
 #include <set>
 

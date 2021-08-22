@@ -12,6 +12,8 @@ struct item_t {
     std::string script;
 };
 
+bool compareListItem(struct item_t& f1, struct item_t& f2);
+
 struct list_view_t : view_t
 {
 	list_view_t();
@@ -28,9 +30,6 @@ struct list_view_t : view_t
     void ensureVisibleCursor();
 
     int currentItem;
-
-    void onInput() override;
-    void onSubmit() override;
 
     std::vector<struct item_t> items;
     std::vector<struct item_t> commandItems;

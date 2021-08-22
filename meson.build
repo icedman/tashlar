@@ -22,6 +22,7 @@ ashlar_files = [
     'src/explorer.cpp',
     'src/extension.cpp',
     'src/highlighter.cpp',
+    'src/indexer.cpp',
     'src/operation.cpp',
     'src/search.cpp',
     'src/snapshot.cpp',

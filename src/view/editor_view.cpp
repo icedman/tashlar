@@ -3,6 +3,11 @@
 #include "app.h"
 #include "util.h"
 
+#include "view_controls.h"
+#include "search.h"
+
+#include <algorithm>
+
 void editor_view_t::render()
 {	
 	if (!isVisible()) {
@@ -110,6 +115,35 @@ void editor_view_t::render()
                         hl = true;
                         ul = c.hasSelection();
                         bl = c.hasSelection();
+
+                        // the completer
+                        if (c.position() == mainCursor.position()) {
+                            int offsetCol = col - (mainCursor.position() - completerCursor.position());
+                            int ww = (3 + completerItemsWidth);
+                            if (ww > 20) {
+                                ww = 20;
+                            }
+                            int hh = completerView->items.size() + 1;
+                            if (hh > 10) {
+                                hh = 10;
+                            }
+                            int pad = (getRenderer()->isTerminal() ? 0 : (padding * 2));
+                            ww = ww * getRenderer()->fw - pad;
+                            hh = hh * getRenderer()->fh - (pad * 3);
+                            int yy = this->y + (l * getRenderer()->fh) + pad; 
+                            if (yy > this->height / 1.8) {;
+                                yy = this->y + ((l - 1) * getRenderer()->fh) - hh;
+                            }
+                            offsetCol --;
+                            if (completerView && completerView->isVisible()) {
+                                completerView->layout(
+                                    this->x + (offsetCol * getRenderer()->fw),
+                                    yy,
+                                    ww,
+                                    hh
+                                );
+                            }
+                        }
                     }
                     if (!c.hasSelection())
                         continue;
@@ -156,6 +190,8 @@ void editor_view_t::render()
         // _addch('~');
         l++;
     }
+
+    view_t::render();
 }
 
 editor_view_t::editor_view_t(editor_ptr editor)
@@ -163,12 +199,22 @@ editor_view_t::editor_view_t(editor_ptr editor)
     , editor(editor)
     , targetX(-1)
     , targetY(-1)
+    , completerView(0)
 {
     editor->view = this;
+    editor->view->inputListener = this;
+
+    completerView = new list_view_t();
+    completerView->inputListener = this;
+    addView(completerView);
 }
 
 editor_view_t::~editor_view_t()
-{}
+{
+    if (completerView) {
+        delete completerView;
+    }
+}
 
 void editor_view_t::update(int delta)
 {
@@ -316,6 +362,14 @@ bool editor_view_t::input(char ch, std::string keys)
 	if (!isVisible() || !isFocused()) {
 		return false;
 	}
+
+    if (completerView->isVisible() && completerView->items.size()) {
+        if (completerView->input(0, keys)) {
+            return true;
+        }
+    }
+
+    completerView->setVisible(false);
 	bool res = editor->input(ch, keys);
 	editor->runAllOps();
 	return res;
@@ -323,6 +377,18 @@ bool editor_view_t::input(char ch, std::string keys)
 
 void editor_view_t::applyTheme()
 {
+    app_t* app = app_t::instance();
+    theme_ptr theme = app->theme;
+    style_t comment = theme->styles_for_scope("comment");
+
+    colorPrimary = pairForColor(comment.foreground.index, false);
+    colorIndicator = pairForColor(app->tabActiveBorder, false);
+
+    for (auto view : views) {
+        view->colorPrimary = colorPrimary;
+        view->colorIndicator = colorIndicator;
+        view->backgroundColor = 2;
+    }
 }
 
 void editor_view_t::mouseDown(int x, int y, int button, int clicks)
@@ -410,4 +476,86 @@ void editor_view_t::onFocusChanged(bool focused)
     if (focused) {
         app_t::instance()->currentEditor = editor;
     }
+}
+
+void editor_view_t::onInput()
+{
+    if (!editor->indexer || !completerView) {
+        return;
+    }
+
+    completerView->items.clear();
+    completerView->setVisible(false);
+
+    struct document_t* doc = &editor->document;
+    if (doc->cursors.size() > 1) {
+        return;
+    }
+
+    std::string prefix;
+
+    cursor_t cursor = doc->cursor();
+    struct block_t& block = *cursor.block();
+    if (cursor.position() < 3)
+        return;
+
+    if (cursor.moveLeft(1)) {
+        cursor.selectWord();
+        prefix = cursor.selectedText();
+        cursor.cursor = cursor.anchor;
+        completerCursor = cursor;
+    }
+
+    if (prefix.length() < 2) {
+        return;
+    }
+
+    completerItemsWidth = 0;
+    std::vector<std::string> words = editor->indexer->findWords(prefix);
+    for(auto w : words) {
+        if (w.length() <= prefix.length()) {
+            continue;
+        }
+        int score = levenshtein_distance((char*)prefix.c_str(), (char*)(w.c_str()));
+        completerView->items.push_back({ w, "", "", score, 0, "" });
+        if (completerItemsWidth < w.length()) {
+            completerItemsWidth = w.length();
+        }
+    }
+    sort(completerView->items.begin(), completerView->items.end(), compareListItem);
+    completerView->setVisible(completerView->items.size());
+    
+}
+
+void editor_view_t::onSubmit()
+{
+    if (!editor->indexer || !completerView) {
+        return;
+    }
+
+    if (completerView->currentItem >= 0 && completerView->currentItem < completerView->items.size()) {
+        cursor_t cur = editor->document.cursor();
+        struct item_t item = completerView->items[completerView->currentItem];
+        std::ostringstream ss;
+            ss << (completerCursor.block()->lineNumber + 1);
+            ss << ":";
+            ss << completerCursor.position();
+            log(">>%s", ss.str().c_str());
+            editor->pushOp(MOVE_CURSOR, ss.str());
+            ss.str("");
+            ss.clear();
+            ss << (cur.block()->lineNumber + 1);
+            ss << ":";
+            ss << cur.position();
+            log(">>%s", ss.str().c_str());
+            editor->pushOp(MOVE_CURSOR_ANCHORED, ss.str());
+            editor->pushOp(INSERT, item.name);
+            editor->runAllOps();
+            ensureVisibleCursor(true);
+        // log(">>%s", item.name.c_str());
+    }
+
+    completerView->items.clear();
+    completerView->setVisible(false);
+
 }

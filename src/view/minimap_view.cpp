@@ -69,7 +69,7 @@ void minimap_view_t::render()
         _clrtoeol(cols);
         _move(y++, 0);
 
-        if (currentLine >= b->lineNumber && currentLine < b->lineNumber + 4) {
+        if ((currentLine >= b->lineNumber && currentLine < b->lineNumber + 4)) {
             _bold(true);
             _attron(_color_pair(colorIndicator));
 #ifdef ENABLE_UTF8
@@ -260,7 +260,7 @@ void minimap_view_t::update(int delta)
     }
 
     int firstLine = editor_view->firstVisibleBlock->lineNumber;
-    targetOffsetY = firstLine / 4;
+    targetOffsetY = firstLine;
 
     int d = targetOffsetY - offsetY;
     if (d * d > 4) {
@@ -308,12 +308,15 @@ void minimap_view_t::mouseDown(int _x, int _y, int button, int clicks)
         ahead *= -1;
     }
 
-    int target = firstVisibleLine + clickedRow + ahead;
+    int target = firstVisibleLine + clickedRow; //  + ahead;
     if (target < 0) {
         target = 0;
     }
+    if (target > editor_view->editor->document.lastBlock()->lineNumber) {
+        target = editor_view->editor->document.lastBlock()->lineNumber;
+    }
 
-    log(">>%d", target);
+    // log(">>%d", target);
 
     block_ptr block = editor->document.blockAtLine(target);
     if (!block) {

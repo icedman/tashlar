@@ -3,23 +3,19 @@
 #include "util.h"
 #include "render.h"
 
+bool compareListItem(struct item_t& f1, struct item_t& f2)
+{
+    if (f1.score == f2.score) {
+        return f1.name < f2.name;
+    }
+    return f1.score < f2.score;
+}
+
 list_view_t::list_view_t()
 	: view_t("list")
 	, currentItem(-1)
 {
 	backgroundColor = 2;
-}
-
-void list_view_t::onInput()
-{
-    if (inputListener)
-        inputListener->onInput();
-}
-
-void list_view_t::onSubmit()
-{
-    if (inputListener)
-        inputListener->onSubmit();
 }
 
 void list_view_t::update(int delta)
@@ -70,7 +66,7 @@ void list_view_t::render()
     }
 
     app_t* app = app_t::instance();
-    log("%d %d %d %d ", x, y, width, height);
+    // log("%d %d %d %d ", x, y, width, height);
 
     _attron(_color_pair(colorPrimary));
 
@@ -128,7 +124,7 @@ void list_view_t::render()
 
 bool list_view_t::input(char ch, std::string keys)
 {
-    if (!isVisible() || !isFocused()) {
+    if ((!isVisible() || !isFocused()) && ch != 0) {
         return false;
     }
 
@@ -143,24 +139,29 @@ bool list_view_t::input(char ch, std::string keys)
     if (currentItem < 0) {
         currentItem = 0;
     }
+    if (currentItem >= items.size()) {
+        currentItem = 0;
+    }
 
     switch (cmd) {
     case ENTER:
-        // searchDirection = 0;
         onSubmit();
+        if (inputListener)
+            inputListener->onSubmit();
+        items.clear();
+        setVisible(false);
         return true;
     case MOVE_CURSOR_UP:
-        // searchDirection = 1;
         currentItem--;
         _scrollToCursor = true;
         break;
     case MOVE_CURSOR_DOWN:
-        // searchDirection = 0;
         currentItem++;
         _scrollToCursor = true;
         break;
     case MOVE_CURSOR_RIGHT:
-        // hide();
+        items.clear();
+        setVisible(false);
         return true;
     case MOVE_CURSOR_LEFT:
         return true;
