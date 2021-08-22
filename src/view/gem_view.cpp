@@ -2,6 +2,7 @@
 #include "render.h"
 #include "app.h"
 #include "block.h"
+#include "util.h"
 
 #include "editor_view.h"
 #include "gutter_view.h"
@@ -34,7 +35,7 @@ void gem_view_t::update(int delta)
     if (!isVisible()) {
         return;
     }
-    
+
     view_t::update(delta);
 
     scrollbar_view_t *scrollbar = verticalScrollbar;
@@ -45,12 +46,25 @@ void gem_view_t::update(int delta)
     scrollbar->setVisible(!getRenderer()->isTerminal() && editor->view->maxScrollY > editor->view->rows);
     scrollbar->scrollY = editor->view->scrollY;
     scrollbar->maxScrollY = editor->view->maxScrollY;
-    scrollbar->colorPrimary = minimapView->colorPrimary;
+
+    if (minimapView) {
+        scrollbar->colorPrimary = minimapView->colorPrimary;
+    }
 
     scrollbar->thumbSize = rows / editor->document.blocks.size();
     if (scrollbar->thumbSize < 2) {
         scrollbar->thumbSize = 2;
     }
+}
+
+void gem_view_t::render()
+{
+    if (!isVisible()) {
+        return;
+    }
+
+    // log("%d %d", rows, cols);
+    view_t::render();
 }
 
 void gatherGems()

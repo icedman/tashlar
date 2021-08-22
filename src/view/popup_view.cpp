@@ -65,6 +65,10 @@ bool popup_root_view_t::input(char ch, std::string keys)
 {
     operation_e cmd = operationFromKeys(keys);
 
+    if (ch == 27) {
+        cmd = CANCEL;
+    }
+
     switch (cmd) {
 
     case QUIT:

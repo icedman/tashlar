@@ -22,8 +22,8 @@ void gutter_view_t::preLayout()
 {
     if (!isVisible()) {
         return;
-
     }
+
     block_ptr block = editor->document.lastBlock();
     std::string lineNo = std::to_string(1 + block->lineNumber);
     preferredWidth = (lineNo.length() + 3) * getRenderer()->fw;
@@ -56,8 +56,8 @@ void gutter_view_t::render()
 
     while (it != editor->document.blocks.end()) {
         auto& b = *it++;
-        // if (l >= rows + 1)
-        //     break;
+        if (l >= rows + 1)
+            break;
 
         std::string lineNo = std::to_string(1 + b->lineNumber);
         // std::string lineNo = std::to_string(1 + b->screenLine);

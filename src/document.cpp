@@ -31,7 +31,7 @@ document_t::document_t()
     : cursorId(1)
     , blockId(1)
     , columns(0)
-    , rows(32)
+    , rows(0)
     , windowsLineEnd(false)
 {
 }

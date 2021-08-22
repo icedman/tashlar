@@ -1,6 +1,7 @@
 #include "editor.h"
 #include "keyinput.h"
 #include "util.h"
+#include "indexer.h"
 
 // clipboard
 #include "app.h"
@@ -36,6 +37,7 @@ editor_t::~editor_t()
 void editor_t::enableIndexer()
 {
     indexer = new indexer_t();
+    indexer->editor = this;
 }
 
 void editor_t::pushOp(std::string op, std::string params)
@@ -103,9 +105,9 @@ void editor_t::runOp(operation_t op)
     cursor_t mainCursor = document.cursor();
     cursor_util::sortCursors(cursors);
 
-    // if (mainCursor.block()) {
-    //     log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
-    // }
+    if (mainCursor.block()) {
+        // log("%s %d %d", nameFromOperation(op.op).c_str(), mainCursor.block()->lineNumber, mainCursor.position());
+    }
 
     switch (_op) {
     case CANCEL:
@@ -867,5 +869,4 @@ void editor_t::highlight(int startingLine, int count)
 
 void editor_t::toMarkup()
 {
-    // log("%d %d %d %d %d", rows, maxScrollY, scrollY, getRenderer()->fh, padding);
 }

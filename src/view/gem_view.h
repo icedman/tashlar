@@ -11,7 +11,8 @@ struct gem_view_t : view_t {
     gem_view_t(editor_ptr editor);
     ~gem_view_t();
 
-    void update(int delta);
+    void render() override;
+    void update(int delta) override;
 
     editor_ptr editor;
 

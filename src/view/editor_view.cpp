@@ -5,6 +5,7 @@
 
 #include "view_controls.h"
 #include "search.h"
+#include "indexer.h"
 
 #include <algorithm>
 
@@ -205,6 +206,7 @@ editor_view_t::editor_view_t(editor_ptr editor)
     editor->view->inputListener = this;
 
     completerView = new list_view_t();
+    completerView->backgroundColor = 1;
     completerView->inputListener = this;
     addView(completerView);
 }
@@ -250,9 +252,6 @@ void editor_view_t::layout(int _x, int _y, int _w, int _h)
     if (maxScrollY < 0) {
         scrollY = 0;
     }
-
-	doc->setColumns(cols);
-    doc->setRows(rows);
 }
 
 void editor_view_t::preRender()
@@ -353,6 +352,9 @@ void editor_view_t::ensureVisibleCursor(bool animate)
     }
 
     document_t *doc = &editor->document;
+
+    doc->setColumns(cols);
+
     cursor_t mainCursor = doc->cursor();
     scrollToCursor(mainCursor);
 }

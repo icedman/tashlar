@@ -15,15 +15,21 @@
 #define INDEXED_LINE_LENGTH_LIMIT 200
 
 indexer_t::indexer_t()
+	: threadId(0)
+	, hasInvalidBlocks(false)
 {
+	memset(&indexingRequests, 0, sizeof(size_t) * INDEX_REQUEST_SIZE);
+	run();
 }
 
 indexer_t::~indexer_t()
 {
+	cancel();
 }
 
 void indexer_t::addEntry(block_ptr block, std::string prefix)
 {
+	// need mutex?
 	std::transform(prefix.begin(), prefix.end(), prefix.begin(), [](unsigned char c) { return std::tolower(c); });
 
 	block_list& blocks = indexMap[prefix];
@@ -34,6 +40,21 @@ void indexer_t::addEntry(block_ptr block, std::string prefix)
 }
 
 void indexer_t::updateBlock(block_ptr block)
+{
+	// request indexing service
+	if (!block->data) {
+		return;
+	}
+
+	for(int i=0; i<INDEX_REQUEST_SIZE; i++) {
+		if (indexingRequests[i] == 0) {
+			indexingRequests[i] = block->lineNumber;
+			break;
+		}
+	}
+}
+
+void indexer_t::indexBlock(block_ptr block)
 {
 	if (!block->data) {
 		return;
@@ -77,7 +98,7 @@ std::vector<std::string> indexer_t::findWords(std::string prefix)
 	block_list& blocks = indexMap[prefix.substr(0, 3)];
 	for(auto b : blocks) {
 		if (!b->isValid()) {
-			// todo erase me
+			hasInvalidBlocks = true;
 			continue;
 		}
 		std::vector<search_result_t> result = search_t::instance()->findWords(b->text());
@@ -100,4 +121,40 @@ std::vector<std::string> indexer_t::findWords(std::string prefix)
 	}
 
     return res;
+}
+
+
+void* indexerThread(void* arg)
+{
+    indexer_t* indexer = (indexer_t*)arg;
+    editor_t* editor = indexer->editor;
+
+    while (true) {
+    	for(int i=0; i<INDEX_REQUEST_SIZE; i++) {
+			if (indexer->indexingRequests[i] != 0) {
+				block_ptr block = editor->document.blockAtLine(indexer->indexingRequests[i]);
+				indexer->indexBlock(block);
+				log("indexing %d", indexer->indexingRequests[i]);
+				indexer->indexingRequests[i] = 0;
+				usleep(100000);
+			}
+		}
+
+		usleep(500000);
+    }
+
+    return NULL;
+}
+
+void indexer_t::run()
+{
+    pthread_create(&threadId, NULL, &indexerThread, this);
+}
+
+void indexer_t::cancel()
+{
+    if (threadId) {
+        pthread_cancel(threadId);
+        threadId = 0;
+    }
 }

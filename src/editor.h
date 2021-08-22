@@ -2,7 +2,6 @@
 #define EDITOR_H
 
 #include "document.h"
-#include "indexer.h"
 #include "highlighter.h"
 #include "operation.h"
 #include "snapshot.h"

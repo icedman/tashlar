@@ -154,6 +154,7 @@ bool view_t::isDisabled()
 
 void view_t::update(int delta)
 {
+    // log("v:%s", name.c_str());
     for (auto view : views) {
         view->update(delta);
     }
