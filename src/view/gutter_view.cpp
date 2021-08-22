@@ -18,6 +18,11 @@ gutter_view_t::~gutter_view_t()
 void gutter_view_t::update(int delta)
 {}
 
+bool gutter_view_t::isVisible()
+{
+    return visible && app_t::instance()->showGutter;
+}
+
 void gutter_view_t::preLayout()
 {
     if (!isVisible()) {

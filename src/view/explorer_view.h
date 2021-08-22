@@ -20,6 +20,8 @@ struct explorer_view_t : view_t {
     void scroll(int s) override;
     void ensureVisibleCursor();
 
+    bool isVisible() override;
+
     spacer_view_t spacer;
 };
 

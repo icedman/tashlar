@@ -12,6 +12,8 @@ struct statusbar_view_t : view_t {
     void preLayout() override;
     void render() override;
     void applyTheme() override;
+
+    bool isVisible() override;
 };
 
 #endif // STATUSBAR_VIEW_H

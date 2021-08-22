@@ -173,8 +173,6 @@ void search_view_t::onInput()
         editor->runAllOps();
         ((editor_view_t*)editor->view)->ensureVisibleCursor(true);
         return;
-    } else {
-        // statusbar_t::instance()->setStatus("no match found", 2500);
     }
 }
 

@@ -13,6 +13,8 @@ struct gutter_view_t : view_t {
     void render() override;
     void applyTheme() override;
 
+    bool isVisible() override;
+
     editor_ptr editor;
 };
 

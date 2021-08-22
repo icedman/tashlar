@@ -312,16 +312,7 @@ void app_t::setupColors()
         tabActiveBorder = clr.index;
     }
 
-    //----------
-    // statusbar
-    //----------
-    // theme->theme_color("statusBar.background", clr);
-    // theme->theme_color("statusBar.foreground", clr);
-
     log("%d registered colors", theme->colorIndices.size());
-    // getRenderer()->updateColors();
-
-    // applyTheme();
 }
 
 editor_ptr app_t::openEditor(std::string path)

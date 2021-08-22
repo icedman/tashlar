@@ -35,6 +35,11 @@ void explorer_view_t::update(int delta)
     view_t::update(delta);
 }
 
+bool explorer_view_t::isVisible()
+{
+    return visible && app_t::instance()->showSidebar;
+}
+
 void explorer_view_t::preLayout()
 {
     if (width == 0 || height == 0 || !isVisible())
@@ -217,7 +222,7 @@ void explorer_view_t::applyTheme()
     style_t comment = theme->styles_for_scope("comment");
 
     colorPrimary = pairForColor(comment.foreground.index, false);
-    colorIndicator = pairForColor(app->tabActiveBorder, false);
+    colorIndicator = pairForColor(app->treeFg, false);
 
     for (auto view : views) {
         view->colorPrimary = colorPrimary;

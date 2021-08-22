@@ -43,7 +43,7 @@ int nearest_color(int r, int g, int b, bool trueColor = false)
     }
 
     color_info_t c(r, g, b, 255);
-    if (d != 0 && trueColor) {
+    if (d != 0 || trueColor) {
         color_info_t c(r, g, b, 255);
         c.index = termColorCount + trueColors.size();
         trueColors[c.index] = c;

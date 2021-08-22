@@ -282,7 +282,7 @@ void minimap_view_t::applyTheme()
 
 bool minimap_view_t::isVisible()
 {
-    return visible == app_t::instance()->showMinimap;
+    return visible && app_t::instance()->showMinimap;
 }
 
 void minimap_view_t::preLayout()

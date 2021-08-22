@@ -50,6 +50,11 @@ static void renderLine(const char* line, int offsetY, int offsetX, int size, int
     }
 }
 
+bool statusbar_view_t::isVisible()
+{
+    return visible && app_t::instance()->showStatusBar;
+}
+
 void statusbar_view_t::render()
 {
     if (!isVisible()) {
