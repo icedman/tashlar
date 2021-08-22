@@ -7,15 +7,6 @@
 #include "block.h"
 #include "cursor.h"
 
-struct config_t {
-    config_t();
-    
-    static config_t* instance();
-
-    int tabSize;
-    bool lineWrap;
-};
-
 struct editor_t;
 struct document_t {
     document_t();

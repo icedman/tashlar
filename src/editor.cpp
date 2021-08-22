@@ -395,7 +395,7 @@ void editor_t::runOp(operation_t op)
 
         case TAB: {
             std::string tab = "";
-            for (int i = 0; i < config_t::instance()->tabSize; i++) {
+            for (int i = 0; i < app_t::instance()->tabSize; i++) {
                 tab += " ";
             }
             cur.insertText(tab);
@@ -800,7 +800,7 @@ bool editor_t::input(char ch, std::string keySequence)
 
     editor_t* editor = this;
 
-    if (op == CANCEL) {
+    if (ch == 27 || op == CANCEL) {
         editor->pushOp(CLEAR_CURSORS);
         return true;
     }

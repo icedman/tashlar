@@ -371,7 +371,6 @@ void* highlightThread(void* arg)
         tmp.highlighter.highlightBlock(b);
         sb->data = b->data;
         runLine++;
-
         usleep(5000);
     }
 

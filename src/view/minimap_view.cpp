@@ -343,7 +343,7 @@ void minimap_view_t::mouseDrag(int x, int y, bool within)
     //     interval = 0;
     // }
 
-    // parentView->verticalScrollbar->mouseDrag(x, y, within);
+    parentView->verticalScrollbar->mouseDrag(x, y, within);
 }
 
 void minimap_view_t::mouseHover(int x, int y)

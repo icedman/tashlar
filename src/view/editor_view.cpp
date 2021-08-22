@@ -9,6 +9,9 @@
 
 #include <algorithm>
 
+#define COMPLETER_WIDTH 40
+#define COMPLETER_HEIGHT 12
+
 void editor_view_t::render()
 {	
 	if (!isVisible()) {
@@ -121,12 +124,12 @@ void editor_view_t::render()
                         if (c.position() == mainCursor.position()) {
                             int offsetCol = col - (mainCursor.position() - completerCursor.position());
                             int ww = (3 + completerItemsWidth);
-                            if (ww > 20) {
-                                ww = 20;
+                            if (ww > COMPLETER_WIDTH) {
+                                ww = COMPLETER_WIDTH;
                             }
                             int hh = completerView->items.size() + 1;
-                            if (hh > 10) {
-                                hh = 10;
+                            if (hh > COMPLETER_HEIGHT) {
+                                hh = COMPLETER_HEIGHT;
                             }
                             int pad = (getRenderer()->isTerminal() ? 0 : (padding * 2));
                             ww = ww * getRenderer()->fw - pad;
@@ -275,7 +278,7 @@ void editor_view_t::scrollToCursor(cursor_t cursor, bool animate)
     int _scrollY = scrollY;
 
     int adjust = 0;
-    if (config_t::instance()->lineWrap) {
+    if (app_t::instance()->lineWrap) {
         block_list::iterator it = doc->blocks.begin();
         if (scrollY > doc->blocks.size()) scrollY = doc->blocks.size() - 1;
         if (scrollY > 0) {
@@ -321,7 +324,7 @@ void editor_view_t::scrollToCursor(cursor_t cursor, bool animate)
         scrollX = -(cols - screenX) + 2;
     }
 
-    if (config_t::instance()->lineWrap) {
+    if (app_t::instance()->lineWrap) {
         scrollX = 0;
     }
 

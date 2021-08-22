@@ -33,13 +33,14 @@ struct app_t {
     void refresh();
     bool isFresh();
 
-    int tabSize;
     bool showStatusBar;
     bool showGutter;
     bool showTabbar;
     bool showSidebar;
     bool showMinimap;
     bool enablePopup;
+    int tabSize;
+    bool lineWrap;
 
     extension_list extensions;
     theme_ptr theme;

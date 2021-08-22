@@ -4,7 +4,19 @@
 #include "explorer.h"
 #include "editor.h"
 #include "operation.h"
-	
+
+#include "view/render.h"
+
+render_t* render_t::instance()
+{
+    return NULL;
+}
+
+bool render_t::isTerminal()
+{
+    return false;
+}
+
 int pairForColor(int colorIdx, bool selected)
 {
     return colorIdx;

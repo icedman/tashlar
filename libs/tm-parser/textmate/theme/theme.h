@@ -37,7 +37,7 @@ struct color_info_t {
     int index; // terminal color index (0-200)
 
     static int set_term_color_count(int count);
-    static int nearest_color_index(int red, int green, int blue);
+    static int nearest_color_index(int red, int green, int blue, bool trueColor = false);
     static color_info_t term_color(int idx);
     static color_info_t true_color(int idx);
     

@@ -2,6 +2,7 @@
 #include "document.h"
 #include "search.h"
 #include "util.h"
+#include "app.h"
 
 #include <algorithm>
 
@@ -304,7 +305,7 @@ bool cursor_t::moveUp(int count, bool keepAnchor)
 
     document_t* doc = block()->document;
     bool navigateWrappedLine = false;
-    if (block()->lineCount > 1 && config_t::instance()->lineWrap && doc->columns) {
+    if (block()->lineCount > 1 && app_t::instance()->lineWrap && doc->columns) {
         int line = 1 + (cursor.position / doc->columns);
         if (line > 1) {
             if (cursor.position > doc->columns) {
@@ -341,7 +342,7 @@ bool cursor_t::moveDown(int count, bool keepAnchor)
 
     document_t* doc = block()->document;
     bool navigateWrappedLine = false;
-    if (block()->lineCount > 1 && config_t::instance()->lineWrap && doc->columns) {
+    if (block()->lineCount > 1 && app_t::instance()->lineWrap && doc->columns) {
         int line = 1 + (cursor.position / doc->columns);
         if (line < block()->lineCount) {
             cursor.position += doc->columns;

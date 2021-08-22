@@ -2,6 +2,7 @@
 #include "cursor.h"
 #include "search.h"
 #include "util.h"
+#include "app.h"
 
 #include "indexer.h"
 
@@ -13,19 +14,6 @@
 
 #define WINDOWS_LINE_END "\r\n"
 #define LINUX_LINE_END "\n"
-
-static config_t configInstance;
-
-struct config_t* config_t::instance()
-{
-    return &configInstance;
-}
-
-config_t::config_t()
-{
-    lineWrap = false;
-    tabSize = 4;
-}
 
 document_t::document_t()
     : cursorId(1)
@@ -60,7 +48,7 @@ void document_t::updateBlocks(block_list& blocks, size_t lineNumber, size_t coun
         block_ptr block = *it;
         block->lineNumber = lineNumber++;
         block->lineCount = 1;
-        if (config_t::instance()->lineWrap && columns > 0) {
+        if (app_t::instance()->lineWrap && columns > 0) {
             block->lineCount = 1 + ((block->length() - 1) / columns);
         }
         it++;

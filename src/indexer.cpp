@@ -35,7 +35,7 @@ void indexer_t::addEntry(block_ptr block, std::string prefix)
 	block_list& blocks = indexMap[prefix];
 	if (std::find(blocks.begin(), blocks.end(), block) == blocks.end()) {
         blocks.push_back(block);
-        log("add %s", prefix.c_str());
+        // log("add %s", prefix.c_str());
     }
 }
 
@@ -134,9 +134,9 @@ void* indexerThread(void* arg)
 			if (indexer->indexingRequests[i] != 0) {
 				block_ptr block = editor->document.blockAtLine(indexer->indexingRequests[i]);
 				indexer->indexBlock(block);
-				log("indexing %d", indexer->indexingRequests[i]);
+				// log("indexing %d", indexer->indexingRequests[i]);
 				indexer->indexingRequests[i] = 0;
-				usleep(100000);
+				usleep(5000);
 			}
 		}
 

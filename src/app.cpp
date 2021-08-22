@@ -7,12 +7,15 @@
 #include <cstdio>
 #include <cstring>
 
+#include "view/render.h"
+
 static struct app_t* appInstance = 0;
 
 static color_info_t color(int r, int g, int b)
 {
     color_info_t c(r, g, b);
-    c.index = color_info_t::nearest_color_index(c.red, c.green, c.blue);
+    bool trueColor = render_t::instance() && !render_t::instance()->isTerminal();
+    c.index = color_info_t::nearest_color_index(c.red, c.green, c.blue, trueColor);
     return c;
 }
 
@@ -22,6 +25,7 @@ static color_info_t lighter(color_info_t p, int x)
     c.red = p.red + x;
     c.green = p.green + x;
     c.blue = p.blue + x;
+    c.alpha = 255;
     if (c.red > 255)
         c.red = 255;
     if (c.green > 255)
@@ -34,7 +38,9 @@ static color_info_t lighter(color_info_t p, int x)
         c.green = 0;
     if (c.blue < 0)
         c.blue = 0;
-    c.index = color_info_t::nearest_color_index(c.red, c.green, c.blue);
+
+    bool trueColor = render_t::instance() && !render_t::instance()->isTerminal();
+    c.index = color_info_t::nearest_color_index(c.red, c.green, c.blue, trueColor);
     return c;
 }
 
@@ -88,6 +94,8 @@ void app_t::configure(int argc, char** argv)
     //-------------------
     // defaults
     //-------------------
+    lineWrap = false;
+    tabSize = 4;
     enablePopup = true;
     markup = "";
 
@@ -162,7 +170,7 @@ void app_t::configure(int argc, char** argv)
     // editor settings
     //-------------------
     if (settings.isMember("word_wrap")) {
-        config_t::instance()->lineWrap = settings["word_wrap"].asBool();
+        lineWrap = settings["word_wrap"].asBool();
     }
     if (settings.isMember("statusbar")) {
         showStatusBar = settings["statusbar"].asBool();
@@ -232,10 +240,12 @@ void app_t::setupColors()
     selBg = colorSelBg.index;
     selFg = colorSelFg.index;
     color_info_t clr;
+    color_info_t clrBg;
     theme->theme_color("editor.background", clr);
     if (!clr.is_blank()) {
         // bg = clr.index;
         bgApp = clr.index;
+        clrBg = clr;
     }
 
     theme->theme_color("editor.foreground", clr);
@@ -250,6 +260,13 @@ void app_t::setupColors()
     if (!clr.is_blank()) {
         selBg = clr.index;
     }
+    
+    // color_info_t selBgTrueColor = color_info_t::true_color(bgApp);
+    // color_info_t selModified = darker(selBgTrueColor, 30);
+    // selBg = selModified.index;
+    // selBg = selBgTrueColor.index;
+
+    log("%d", selBg);
 
     //----------
     // tree
