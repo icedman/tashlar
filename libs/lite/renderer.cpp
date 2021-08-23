@@ -12,7 +12,7 @@
 #define MAX_GLYPHSET 256
 
 #define RENDER_MODE 2
-#define USE_SDL_TTF // better quality (doesn't support glyphsets)
+// #define USE_SDL_TTF // better quality (doesn't support glyphsets)
 
 void cache_glyphs(RenFont* font, int style);
 TTF_Font* load_font(char* fname, int size);

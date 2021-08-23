@@ -243,6 +243,7 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
                 std::string path = resolvedExtension.path + "/" + g["path"].asString();
 
                 // std::cout << path << std::endl;
+                log("grammar: %s", path.c_str());
 
                 lang->grammar = parse::parse_grammar(parse::loadJson(path));
                 lang->id = resolvedLanguage;
@@ -256,7 +257,7 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
 
                 load_language_configuration(path, lang);
 
-                // log("language configuration: %s", path.c_str());
+                log("language configuration: %s", path.c_str());
                 // std::cout << "langauge matched" << lang->id << std::endl;
                 // std::cout << path << std::endl;
 
