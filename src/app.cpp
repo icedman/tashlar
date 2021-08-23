@@ -193,6 +193,10 @@ void app_t::configure(int argc, char** argv)
     if (settings.isMember("tab_size")) {
         tabSize = settings["tab_size"].asInt();
     }
+    tabsToSpaces = false;
+    if (settings.isMember("tab_to_spaces")) {
+        tabsToSpaces = settings["tab_to_spaces"].asBool();
+    }
     if (tabSize < 2) {
         tabSize = 2;
     }

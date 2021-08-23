@@ -184,7 +184,7 @@ void editor_view_t::render()
                     if (colorPair != colorPairSelected) {
                         _attron(_color_pair(colorPrimary));
                     }
-                    _addch(':');
+                    _addch('>');
                     _bold(false);
                     _underline(false);
                     for(int t = 1; t<app->tabSize; t++) {
@@ -444,9 +444,14 @@ int _realPos(block_ptr b, int row, int col, int cols) {
         return row + col;
     }
 
-    std::string text = b->text().substr(row*cols, (row+1)*cols);
+    std::string text = b->text();
+
+    if (row*cols > text.length()) {
+        return text.length();
+    }
+    
+    text = text.substr(row*cols, (row+1)*cols);
     std::string t;
-    int c = col;
     for(int i=0; i<text.length(); i++) {
         if (text[i]=='\t') {
             for(int j=0; j<tabSize; j++) {
@@ -457,7 +462,11 @@ int _realPos(block_ptr b, int row, int col, int cols) {
         }
     }
 
-    col = t[col];
+    int idx = col;
+    if (idx >= t.length()) {
+        idx = t.length()-1;
+    }
+    col = t[idx];
     return row + col;
 }
 

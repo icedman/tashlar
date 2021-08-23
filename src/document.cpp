@@ -151,7 +151,9 @@ bool document_t::open(std::string path, bool enableBuffer)
         block_ptr b = std::make_shared<block_t>();
 
         // tabs to spaces
-        line = _tabsToSpaces(line);
+        if (app_t::instance()->tabsToSpaces) {
+            line = _tabsToSpaces(line);
+        }
 
         // b->uid = blockId++;
         b->document = this;

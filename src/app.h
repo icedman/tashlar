@@ -41,6 +41,7 @@ struct app_t {
     bool showMinimap;
     bool enablePopup;
     int tabSize;
+    bool tabsToSpaces;
     bool lineWrap;
 
     extension_list extensions;
