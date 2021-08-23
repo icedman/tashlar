@@ -38,7 +38,8 @@ int main(int argc, char **argv)
 
     renderer.updateColors();
     
-    std::string file = "./src/main.cpp";
+    std::string file = "./";
+    // std::string file = "./src/main.cpp";
     if (argc > 1) {
         file = argv[argc - 1];
     }
