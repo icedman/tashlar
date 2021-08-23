@@ -189,6 +189,14 @@ void app_t::configure(int argc, char** argv)
     if (settings.isMember("mini_map")) {
         showMinimap = settings["mini_map"].asBool();
     }
+    font = "FiraCode-Regular.ttf";
+    if (settings.isMember("font")) {
+        font = settings["font"].asString();
+    }
+    fontSize = 10;
+    if (settings.isMember("font_size")) {
+        fontSize = settings["font_size"].asInt();
+    }
     tabSize = 4;
     if (settings.isMember("tab_size")) {
         tabSize = settings["tab_size"].asInt();

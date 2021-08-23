@@ -44,6 +44,9 @@ struct app_t {
     bool tabsToSpaces;
     bool lineWrap;
 
+    std::string font;
+    int fontSize;
+
     extension_list extensions;
     theme_ptr theme;
     

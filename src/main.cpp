@@ -30,12 +30,11 @@ int main(int argc, char **argv)
 
     popup_root_view_t popups;
 
-    render_t renderer;
-    renderer.initialize();
-
     app.configure(argc, argv);
     app.setupColors();
 
+    render_t renderer;
+    renderer.initialize();
     renderer.updateColors();
     
     std::string file = "./";
@@ -127,7 +126,6 @@ int main(int argc, char **argv)
         }
 
         // log("k: %d %s", ch, keySequence.c_str());
-
         // statusbar_t::instance()->setStatus(keySequence);
         // app.input(ch, keySequence);
 

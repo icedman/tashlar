@@ -294,6 +294,10 @@ RenFont* find_font(std::string filename, int size)
 {
     RenFont* font = NULL; // ren_load_font(filename.c_str(), size);
 
+    if (filename.find(".ttf") == std::string::npos) {
+        filename += ".ttf";
+    }
+
     char tmp[255];
     if (!font) {
         sprintf(tmp, "/usr/share/fonts/TTF/%s", filename.c_str());
@@ -351,18 +355,22 @@ void render_t::initialize()
     ren_init(window);
     // rencache_show_debug(true);
 
+    int fontSize = app_t::instance()->fontSize;
     // read settings
-    font = find_font("FiraCode-Regular.ttf", 14);
+    font = find_font(app_t::instance()->font, fontSize);
     if (!font) {
-        // font = find_font("./fonts/font.ttf", 14);
-        font = find_font("monospace.ttf", 14);
+        font = find_font("FiraCode-Regular.ttf", fontSize);
+    }
+    if (!font) {
+        // font = find_font("./fonts/font.ttf", fontSize);
+        font = find_font("monospace.ttf", fontSize);
     }
     // fallback
     if (!font) {
-        font = find_font("DejaVuSansMono.ttf", 14);
+        font = find_font("DejaVuSansMono.ttf", fontSize);
     }
     if (!font) {
-        font = find_font("Courier New.ttf", 14);
+        font = find_font("Courier New.ttf", fontSize);
     }
 
     fw = ren_get_font_width(font, "1234567890AaBbCcDdEeFfGg") / 24;
