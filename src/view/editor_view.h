@@ -10,7 +10,7 @@ struct editor_view_t : view_t {
     ~editor_view_t();
 
     void ensureVisibleCursor(bool animate = false);
-    void scrollToCursor(cursor_t c, bool animate = false);
+    void scrollToCursor(cursor_t c, bool animate = false, bool centered = false);
 
     // view
     void update(int delta) override;
@@ -34,6 +34,8 @@ struct editor_view_t : view_t {
 
     int targetX;
     int targetY;
+    int dragStartX;
+    int dragStartY;
 
     // todo move outside of editor
     list_view_t *completerView;

@@ -13,19 +13,19 @@
 #define COMPLETER_HEIGHT 12
 
 void editor_view_t::render()
-{	
-	if (!isVisible()) {
-		return;
-	}
+{    
+    if (!isVisible()) {
+        return;
+    }
 
     app_t *app = app_t::instance();
     document_t *doc = &editor->document;
     cursor_list cursors = doc->cursors;
     cursor_t mainCursor = doc->cursor();
 
-	editor->highlight(scrollY, rows);
+    editor->highlight(scrollY, rows);
 
-	block_list::iterator it= doc->blocks.begin();
+    block_list::iterator it= doc->blocks.begin();
     if (scrollY > 0) {
         it += scrollY;
     }
@@ -57,7 +57,7 @@ void editor_view_t::render()
 
         char* line = (char*)text.c_str();
         for (int sl = 0; sl < b->lineCount; sl++) {
-        	// printf("\n"); l++;
+            // printf("\n"); l++;
             _move(l, 0);
             _clrtoeol(cols);
             _move(l++, 0);
@@ -109,7 +109,7 @@ void editor_view_t::render()
                 // bracket
                 if (editor->cursorBracket1.bracket != -1 && editor->cursorBracket2.bracket != -1) {
                     if ((pos == editor->cursorBracket1.position && lineNo == editor->cursorBracket1.line) ||
-                    	(pos == editor->cursorBracket2.position && lineNo == editor->cursorBracket2.line)) {
+                        (pos == editor->cursorBracket2.position && lineNo == editor->cursorBracket2.line)) {
                         _underline(true);
                     }
                 }
@@ -219,6 +219,8 @@ editor_view_t::editor_view_t(editor_ptr editor)
     , editor(editor)
     , targetX(-1)
     , targetY(-1)
+    , dragStartX(-1)
+    , dragStartY(-1)
     , completerView(0)
     , scrollWheel(0)
 {
@@ -278,7 +280,7 @@ void editor_view_t::update(int delta)
 
 void editor_view_t::layout(int _x, int _y, int _w, int _h)
 {
-	document_t *doc = &editor->document;
+    document_t *doc = &editor->document;
     if (!doc->blocks.size()) {
         return;
     }
@@ -304,9 +306,9 @@ void editor_view_t::preRender()
     if (editor->_scrollToCursor) {
         ensureVisibleCursor();
         editor->_scrollToCursor = false;
-    }	
+    }    
 }
-void editor_view_t::scrollToCursor(cursor_t cursor, bool animate)
+void editor_view_t::scrollToCursor(cursor_t cursor, bool animate, bool centered)
 {
     if (width == 0 || height == 0 || !isVisible()) {
         return;
@@ -353,6 +355,8 @@ void editor_view_t::scrollToCursor(cursor_t cursor, bool animate)
 
     if (scrollY < 0)
         scrollY = 0;
+
+    log("%d", scrollY - screenY);
 
     // scrollX
     int lookAheadX = (cols / 3);
@@ -406,9 +410,9 @@ void editor_view_t::ensureVisibleCursor(bool animate)
 
 bool editor_view_t::input(char ch, std::string keys)
 {
-	if (!isVisible() || !isFocused()) {
-		return false;
-	}
+    if (!isVisible() || !isFocused()) {
+        return false;
+    }
 
     if (completerView->isVisible() && completerView->items.size()) {
         if (completerView->input(0, keys)) {
@@ -417,9 +421,9 @@ bool editor_view_t::input(char ch, std::string keys)
     }
 
     completerView->setVisible(false);
-	bool res = editor->input(ch, keys);
-	editor->runAllOps();
-	return res;
+    bool res = editor->input(ch, keys);
+    editor->runAllOps();
+    return res;
 }
 
 void editor_view_t::applyTheme()
@@ -479,6 +483,9 @@ void editor_view_t::mouseDown(int x, int y, int button, int clicks)
 
     int col = (x - this->x - padding) / fw;
     int row = (y - this->y - padding) / fh;
+
+    dragStartX = x;
+    dragStartY = y;
 
     int tabSize = app_t::instance()->tabSize;
 
@@ -551,7 +558,12 @@ void editor_view_t::mouseDrag(int x, int y, bool within)
 {
     if (!within)
         return;
-    mouseDown(x, y, 1, 0);
+
+    int xx = x - dragStartX;
+    int yy = y - dragStartY;
+    if (xx * xx + yy * yy > 400) {
+        mouseDown(x, y, 1, 0);
+    }
 }
 
 void editor_view_t::onFocusChanged(bool focused)
