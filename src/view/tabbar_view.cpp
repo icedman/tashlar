@@ -201,14 +201,12 @@ void tabbar_view_t::render()
         tabX += t.width;
     }
 
-    /*
     while (currentTabX + currentTabWidth + 1 - scrollX > cols) {
         scrollX++;
     }
     while (scrollX > 0 && currentTabX - scrollX <= 0) {
         scrollX--;
     }
-    */
 
     int offsetX = scrollX;
     int x = 0;

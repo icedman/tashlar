@@ -213,7 +213,6 @@ void app_t::configure(int argc, char** argv)
     }
 
     //---------------
-
     Json::Value file_exclude_patterns = settings["file_exclude_patterns"];
     if (file_exclude_patterns.isArray() && file_exclude_patterns.size()) {
         for (int j = 0; j < file_exclude_patterns.size(); j++) {
@@ -279,8 +278,7 @@ void app_t::setupColors()
     // color_info_t selModified = darker(selBgTrueColor, 30);
     // selBg = selModified.index;
     // selBg = selBgTrueColor.index;
-
-    log("%d", selBg);
+    // log("%d", selBg);
 
     //----------
     // tree

@@ -4,6 +4,8 @@
 #include "util.h"
 
 #include "view_controls.h"
+#include "popup_view.h"
+
 #include "search.h"
 #include "indexer.h"
 
@@ -356,8 +358,6 @@ void editor_view_t::scrollToCursor(cursor_t cursor, bool animate, bool centered)
     if (scrollY < 0)
         scrollY = 0;
 
-    log("%d", scrollY - screenY);
-
     // scrollX
     int lookAheadX = (cols / 3);
     int screenX = cursor.position();
@@ -550,7 +550,7 @@ void editor_view_t::mouseDown(int x, int y, int button, int clicks)
 
     if (clicks > 0) {
         view_t::setFocus(this);
-        // popup_t::instance()->hide();
+        popup_root_view_t::instance()->clear();
     }
 }
 

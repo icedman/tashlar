@@ -6,8 +6,8 @@
 app_view_t::app_view_t()
     : view_t("app")
 {
-	viewLayout = LAYOUT_VERTICAL;
-	view_t::setRoot(this);
+    viewLayout = LAYOUT_VERTICAL;
+    view_t::setRoot(this);
 }
 
 app_view_t::~app_view_t()
@@ -98,9 +98,9 @@ bool app_view_t::input(char ch, std::string keys)
         return true;
     case MOVE_FOCUS_RIGHT:
         // if (explorer.isFocused()) {
-        //     view_t::setFocus(currentEditor.get());
+            // view_t::setFocus(currentEditor.get());
         // } else {
-        //     view_t::shiftFocus(1, 0);
+            view_t::shiftFocus(1, 0);
         // }
         return true;
     case MOVE_FOCUS_UP:

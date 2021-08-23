@@ -398,6 +398,7 @@ view_t* view_t::getViewAt(int x, int y)
     view_list visibles;
     visibleViews(rootList, visibles);
     for (auto v : visibles) {
+        if (!v->isVisible() || v->isDisabled()) continue;
         if (x >= v->x && x < v->x + v->width && y >= v->y && y < v->y + v->height) {
             res = v;
         }
@@ -413,6 +414,8 @@ static view_t* findShiftFocus(view_t* view, int x, int y)
     if (y > 0) {
         y = view->height;
     }
+    log("%s %d %d", view->name.c_str(), view->x, view->y);
+
     view_t* next = view_t::getViewAt(view->x + x, view->y + y);
     if (next) {
         if (next->canFocus) {
