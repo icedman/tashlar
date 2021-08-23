@@ -89,7 +89,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         return;
     }
 
-    // log("highlight %d", block->lineNumber);
+    // log("hl %d", block->lineNumber);
 
     struct blockdata_t* blockData = block->data.get();
 
@@ -371,7 +371,7 @@ void* highlightThread(void* arg)
         tmp.highlighter.highlightBlock(b);
         sb->data = b->data;
         runLine++;
-        usleep(5000);
+        usleep(1000);
     }
 
     threadHl->threadId = 0;

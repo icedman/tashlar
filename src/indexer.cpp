@@ -19,12 +19,10 @@ indexer_t::indexer_t()
 	, hasInvalidBlocks(false)
 {
 	memset(&indexingRequests, 0, sizeof(size_t) * INDEX_REQUEST_SIZE);
-	run();
 }
 
 indexer_t::~indexer_t()
 {
-	cancel();
 }
 
 void indexer_t::addEntry(block_ptr block, std::string prefix)
@@ -128,6 +126,8 @@ void* indexerThread(void* arg)
 {
     indexer_t* indexer = (indexer_t*)arg;
     editor_t* editor = indexer->editor;
+
+    usleep(200000);
 
     while (true) {
     	for(int i=0; i<INDEX_REQUEST_SIZE; i++) {

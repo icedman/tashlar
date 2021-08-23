@@ -108,6 +108,26 @@ block_ptr document_t::previousBlock(block_t* block)
     return *it;
 }
 
+std::string _tabsToSpaces(std::string line) {
+    int tabSize = app_t::instance()->tabSize;
+    if (tabSize < 2) {
+        return line;
+    }
+    std::string tab = " ";
+    for (int i=1; i<tabSize; i++) {
+        tab += " ";
+    }
+    std::string t;
+    for(auto c : line) {
+        if (c == '\t') {
+            t += tab;
+        } else {
+            t += c;
+        }
+    }
+    return t;
+}
+
 bool document_t::open(std::string path, bool enableBuffer)
 {
     blocks.clear();
@@ -129,6 +149,9 @@ bool document_t::open(std::string path, bool enableBuffer)
     size_t lineNo = 0;
     while (std::getline(file, line)) {
         block_ptr b = std::make_shared<block_t>();
+
+        // tabs to spaces
+        line = _tabsToSpaces(line);
 
         // b->uid = blockId++;
         b->document = this;

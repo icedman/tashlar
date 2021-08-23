@@ -26,6 +26,8 @@ struct editor_view_t : view_t {
     void onSubmit() override;
     void onFocusChanged(bool focused) override;
 
+    void scroll(int s) override;
+
     editor_ptr editor;
     block_ptr firstVisibleBlock;
     block_ptr lastVisibleBlock;
@@ -37,6 +39,8 @@ struct editor_view_t : view_t {
     list_view_t *completerView;
     int completerItemsWidth;
     cursor_t completerCursor;
+
+    float scrollWheel;
 };
 
 #endif // EDITOR_VIEW_H

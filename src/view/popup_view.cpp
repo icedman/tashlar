@@ -83,9 +83,13 @@ bool popup_root_view_t::input(char ch, std::string keys)
     	}
         return false;
 
+    case POPUP_SEARCH_LINE:
     case POPUP_SEARCH: {
         log("search");
         std::shared_ptr<search_view_t> search = std::make_shared<search_view_t> ();
+        if (cmd == POPUP_SEARCH_LINE) {
+            search->inputtext.text = ":";
+        }
         pushPopup(search);
         return true;
     }
@@ -107,4 +111,11 @@ bool popup_root_view_t::input(char ch, std::string keys)
     }
 
     return view_t::input(ch, keys);
+}
+
+void popup_root_view_t::clear()
+{
+    while(hasPopups()) {
+        popPopup();
+    }
 }

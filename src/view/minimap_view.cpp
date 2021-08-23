@@ -40,8 +40,7 @@ void minimap_view_t::render()
         return;
     }
 
-    app_t* app = app_t::instance();
-
+    app_t* app = app_t::instance();    
     editor_view_t *editor_view = (editor_view_t*)editor->view;
 
     document_t* doc = &editor->document;

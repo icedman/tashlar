@@ -5,7 +5,7 @@
 #include "editor.h"
 #include "operation.h"
 
-#include "view/render.h"
+#include "render.h"
 
 render_t* render_t::instance()
 {

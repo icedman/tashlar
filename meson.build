@@ -14,7 +14,6 @@ add_global_arguments('-w', language: 'cpp')
 ashlar_files = [
     'src/app.cpp',
     'src/block.cpp',
-    'src/completer.cpp',
     'src/cursor.cpp',
     'src/document.cpp',
     'src/dots.cpp',
@@ -134,7 +133,7 @@ executable('ashlr-test',
     'src/test.cpp',
     ashlar_files,
     textmate_files,
-    include_directories: [ './src', textmate_inc ],
+    include_directories: [ './src', './src/view', textmate_inc ],
     dependencies: [ quickjs_dep, pthread_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )

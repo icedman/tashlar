@@ -18,6 +18,7 @@ void editor_view_t::render()
 		return;
 	}
 
+    app_t *app = app_t::instance();
     document_t *doc = &editor->document;
     cursor_list cursors = doc->cursors;
     cursor_t mainCursor = doc->cursor();
@@ -178,7 +179,22 @@ void editor_view_t::render()
                 }
 
                 _attron(_color_pair(colorPair));
-                _addch(ch);
+
+                if (ch == '\t') {
+                    if (colorPair != colorPairSelected) {
+                        _attron(_color_pair(colorPrimary));
+                    }
+                    _addch(':');
+                    _bold(false);
+                    _underline(false);
+                    for(int t = 1; t<app->tabSize; t++) {
+                        _addch('.');
+                    }
+                    _attron(_color_pair(colorPair));
+                } else {
+                    _addch(ch);
+                }
+
                 _attroff(_color_pair(colorPair));
                 _bold(false);
                 _italic(false);
@@ -204,6 +220,7 @@ editor_view_t::editor_view_t(editor_ptr editor)
     , targetX(-1)
     , targetY(-1)
     , completerView(0)
+    , scrollWheel(0)
 {
     editor->view = this;
     editor->view->inputListener = this;
@@ -223,9 +240,34 @@ editor_view_t::~editor_view_t()
 
 void editor_view_t::update(int delta)
 {
+    float coef = 0.5;
+
+    for(int i=0; i<8; i++)
+    if (scrollWheel != 0) {
+    //     // animating = true;
+        targetY = scrollY - (scrollWheel * 2);
+        scrollWheel *= 0.1;
+
+        if (scrollWheel * scrollWheel < 0.2) {
+            scrollWheel = 0;
+        }
+        // log("%f", scrollWheel);
+
+        if (targetY < 0) {
+            targetY = 0;
+        }
+        if (targetY > maxScrollY) {
+            targetY = maxScrollY;
+        }
+
+        scrollY = targetY;
+        app_t::instance()->refresh();
+        return;
+    }
+
     if (animating) {
         int d = targetY - scrollY;
-        scrollY += d/3;
+        scrollY += d * coef;
         if (d * d > 4) {
             app_t::instance()->refresh();
         } else {
@@ -396,6 +438,29 @@ void editor_view_t::applyTheme()
     }
 }
 
+int _realPos(block_ptr b, int row, int col, int cols) {
+    int tabSize = app_t::instance()->tabSize;
+    if (tabSize < 2) {
+        return row + col;
+    }
+
+    std::string text = b->text().substr(row*cols, (row+1)*cols);
+    std::string t;
+    int c = col;
+    for(int i=0; i<text.length(); i++) {
+        if (text[i]=='\t') {
+            for(int j=0; j<tabSize; j++) {
+                t += i;
+            }
+        } else {
+            t += i;
+        }
+    }
+
+    col = t[col];
+    return row + col;
+}
+
 void editor_view_t::mouseDown(int x, int y, int button, int clicks)
 {
     document_t *doc = &editor->document;
@@ -405,6 +470,8 @@ void editor_view_t::mouseDown(int x, int y, int button, int clicks)
 
     int col = (x - this->x - padding) / fw;
     int row = (y - this->y - padding) / fh;
+
+    int tabSize = app_t::instance()->tabSize;
 
     // scroll
     if (clicks == 0) {
@@ -434,11 +501,13 @@ void editor_view_t::mouseDown(int x, int y, int button, int clicks)
         for (int i = 0; i < b->lineCount; i++) {
             if (l == row) {
                 rowHit = true;
-                // log(">%d %d", b->lineNumber, 0);
+
+                int realPos = _realPos(b, (i*cols), col, cols);
+
                 std::ostringstream ss;
                 ss << (b->lineNumber + 1);
                 ss << ":";
-                ss << col + (i * cols);
+                ss << realPos;
                 if (clicks == 0 || _keyMods()) {
                     editor->pushOp(MOVE_CURSOR_ANCHORED, ss.str());
                 } else if (clicks == 1) {
@@ -563,4 +632,23 @@ void editor_view_t::onSubmit()
     completerView->items.clear();
     completerView->setVisible(false);
 
+}
+
+void editor_view_t::scroll(int s)
+{
+    if (scrollWheel < 0 && s > 0) {
+        scrollWheel = 0;
+    }
+    if (scrollWheel > 0 && s < 0) {
+        scrollWheel = 0;
+    }
+    scrollWheel += (s * 0.5);
+
+    if (scrollWheel > 5) {
+        scrollWheel = 5;
+    }
+    if (scrollWheel < -5) {
+        scrollWheel = -5;
+    }
+    // log("%d %f", s, scrollWheel);
 }

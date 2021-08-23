@@ -5,6 +5,8 @@
 #include "renderer.h"
 #include "util.h"
 
+#include "popup_view.h"
+
 #include <SDL2/SDL.h>
 
 static view_list contextStack;
@@ -377,21 +379,11 @@ void render_t::shutdown()
 
 static int poll_event()
 {
-    if (scrollVelocity != 0) {
-        if (view_t::currentHovered()) {
-            view_t::currentHovered()->scroll(scrollVelocity);
-        }
-        pushKey(0, "wheel");
-        float d = -scrollVelocity / 2;
-        scrollVelocity += d;
-        if (-1 < d && d < 1) {
-            scrollVelocity = 0;
-        }
-    }
-
     char buf[16];
     int mx, my, wx, wy;
     SDL_Event e;
+
+    popup_root_view_t *popupRoot = popup_root_view_t::instance();
 
     if (!SDL_PollEvent(&e)) {
         return 0;
@@ -545,7 +537,14 @@ static int poll_event()
         return 0;
 
     case SDL_MOUSEMOTION: {
-        view_t::setHovered(view_t::getRoot()->viewFromPointer(e.motion.x, e.motion.y));
+        view_t *hovered = popupRoot->hasPopups() ? popupRoot->viewFromPointer(e.motion.x, e.motion.y) : NULL;
+        if (hovered == popupRoot) {
+            hovered = NULL;
+        }
+        if (!hovered) {
+            hovered = view_t::getRoot()->viewFromPointer(e.motion.x, e.motion.y);
+        }
+        view_t::setHovered(hovered);
         if (view_t::currentDragged()) {
             view_t::currentDragged()->mouseDrag(e.motion.x, e.motion.y, (view_t::currentHovered() == view_t::currentDragged()));
             // log("drag %d %d", e.motion.x, e.motion.y);
@@ -562,6 +561,11 @@ static int poll_event()
 
     case SDL_MOUSEWHEEL:
         scrollVelocity += (e.wheel.y * 2);
+        if (view_t::currentHovered()) {
+            view_t::currentHovered()->scroll(scrollVelocity);
+        }
+        pushKey(0, "wheel");
+        scrollVelocity = 0;
         return 0;
 
     default:

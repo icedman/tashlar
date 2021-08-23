@@ -5,7 +5,7 @@
 
 // clipboard
 #include "app.h"
-#include "view/view.h"
+#include "view.h"
 
 #include <iostream>
 #include <sstream>
@@ -28,16 +28,19 @@ editor_t::editor_t()
 editor_t::~editor_t()
 {
     highlighter.cancel();
-
     if (indexer) {
+        indexer->cancel();
         delete indexer;
     }
 }
 
 void editor_t::enableIndexer()
 {
-    indexer = new indexer_t();
-    indexer->editor = this;
+    if (!indexer) {
+        indexer = new indexer_t();
+        indexer->editor = this;
+        indexer->run();
+    }
 }
 
 void editor_t::pushOp(std::string op, std::string params)

@@ -7,7 +7,9 @@
 #include <cstdio>
 #include <cstring>
 
-#include "view/render.h"
+#include "render.h"
+#include "highlighter.h"
+#include "indexer.h"
 
 static struct app_t* appInstance = 0;
 
@@ -356,4 +358,14 @@ editor_ptr app_t::openEditor(std::string path)
     // view_t::setFocus(currentEditor.get());
     // editor->highlighter.run(editor.get());
     return editor;
+}
+
+void app_t::shutdown()
+{
+    for(auto e : editors) {
+        e->highlighter.cancel();
+        if (e->indexer) {
+            e->indexer->cancel();
+        }
+    }
 }

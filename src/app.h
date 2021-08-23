@@ -25,6 +25,7 @@ struct app_t {
 
     void configure(int argc, char** argv);
     void setupColors();
+    void shutdown();
 
     // view
     // void layout(int x, int y, int width, int height) override;

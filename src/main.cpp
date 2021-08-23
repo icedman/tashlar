@@ -95,6 +95,7 @@ int main(int argc, char **argv)
         renderer.render();
 
         if (!app.isFresh()) {
+            renderer.input();
             continue;
         }
 
@@ -137,6 +138,8 @@ int main(int argc, char **argv)
         root.input(ch, keySequence);
     }
 
+    // wait for running threads...
+    app.shutdown();
     renderer.shutdown();
     return 0;
 }
