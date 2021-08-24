@@ -13,6 +13,14 @@
 
 static struct app_t* appInstance = 0;
 
+int pairForColor(int colorIdx, bool selected)
+{
+    if (render_t::instance()) {
+        return render_t::instance()->pairForColor(colorIdx, selected);
+    }
+    return colorIdx;
+}
+
 static color_info_t color(int r, int g, int b)
 {
     color_info_t c(r, g, b);
@@ -84,12 +92,17 @@ bool app_t::isFresh()
 void app_t::setClipboard(std::string text)
 {
     clipText = text;
-    setClipboardText(text);
+    if (render_t::instance()) {
+        render_t::instance()->setClipboardText(text);
+    }
 }
 
 std::string app_t::clipboard()
 {
-    std::string res = getClipboardText();
+    std::string res;
+    if (render_t::instance()) {
+        render_t::instance()->getClipboardText();
+    }
     if (res.length()) {
         return res;
     }

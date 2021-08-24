@@ -134,6 +134,7 @@ endif
 if get_option('build_test')
 executable('ashlr-test',
     'src/test.cpp',
+    'src/view/render_null.cpp',
     ashlar_files,
     textmate_files,
     include_directories: [ './src', './src/view', textmate_inc ],

@@ -49,28 +49,6 @@ static std::map<int, BgFg> colorPairs;
 
 void pushKey(char c, std::string keySequence);
 
-std::string getClipboardText()
-{
-    if (!SDL_HasClipboardText()) {
-        return "";
-    }
-    std::string res = SDL_GetClipboardText();;
-    return res;
-}
-
-void setClipboardText(std::string text)
-{
-    SDL_SetClipboardText(text.c_str());
-}
-
-int pairForColor(int colorIdx, bool selected)
-{
-    if (selected && colorIdx == color_pair_e::NORMAL) {
-        return color_pair_e::SELECTED;
-    }
-    return colorMap[colorIdx + (selected ? SELECTED_OFFSET : 0)];
-}
-
 static view_t* context()
 {
     return contextStack.back();
@@ -712,6 +690,28 @@ void render_t::delay(int ms)
 bool render_t::isTerminal()
 {
     return false;
+}
+
+std::string render_t::getClipboardText()
+{
+    if (!SDL_HasClipboardText()) {
+        return "";
+    }
+    std::string res = SDL_GetClipboardText();;
+    return res;
+}
+
+void render_t::setClipboardText(std::string text)
+{
+    SDL_SetClipboardText(text.c_str());
+}
+
+int render_t::pairForColor(int colorIdx, bool selected)
+{
+    if (selected && colorIdx == color_pair_e::NORMAL) {
+        return color_pair_e::SELECTED;
+    }
+    return colorMap[colorIdx + (selected ? SELECTED_OFFSET : 0)];
 }
 
 int _keyMods()

@@ -12,22 +12,6 @@ static std::map<int, int> colorMap;
 static int drawBaseX = 0;
 static int drawBaseY = 0;
 
-std::string getClipboardText()
-{
-    return "";
-}
-
-void setClipboardText(std::string text)
-{}
-
-int pairForColor(int colorIdx, bool selected)
-{
-    if (selected && colorIdx == color_pair_e::NORMAL) {
-        return color_pair_e::SELECTED;
-    }
-    return colorMap[colorIdx + (selected ? SELECTED_OFFSET : 0)];
-}
-
 static view_list contextStack;
 
 static view_t* context()
@@ -226,6 +210,22 @@ void render_t::delay(int ms)
 bool render_t::isTerminal()
 {
     return true;
+}
+
+std::string render_t::getClipboardText()
+{
+    return "";
+}
+
+void render_t::setClipboardText(std::string text)
+{}
+
+int render_t::pairForColor(int colorIdx, bool selected)
+{
+    if (selected && colorIdx == color_pair_e::NORMAL) {
+        return color_pair_e::SELECTED;
+    }
+    return colorMap[colorIdx + (selected ? SELECTED_OFFSET : 0)];
 }
 
 int _keyMods()

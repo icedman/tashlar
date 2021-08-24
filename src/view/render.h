@@ -4,9 +4,6 @@
 #include "view.h"
 #define SELECTED_OFFSET 500
    
-std::string getClipboardText();
-void setClipboardText(std::string text);
-
 int _color_pair(int pair);
 
 void _underline(bool);
@@ -43,6 +40,11 @@ struct render_t {
     void input();
     void delay(int ms);
     bool isTerminal();
+
+    std::string getClipboardText();
+    void setClipboardText(std::string text);
+
+    int pairForColor(int colorIdx, bool selected);
 
     static render_t* instance();
 
