@@ -228,9 +228,14 @@ void editor_t::runOp(operation_t op)
     for (auto& cur : cursors) {
         switch (_op) {
 
-        case SELECT_WORD:
+        case SELECT_WORD: {
             cur.selectWord();
+
+            //
+            struct span_info_t span = spanAtBlock(cur.block()->data.get(), cur.position());
+            log("scope: %s", span.scope.c_str());
             break;
+        }
 
         case TOGGLE_COMMENT: {
             int count = cur.toggleLineComment();

@@ -66,7 +66,8 @@ static void setFormatFromStyle(size_t start, size_t length, style_t& style, cons
                     .colorIndex = style.foreground.index,
                     .bold = style.bold == bool_true,
                     .italic = style.italic == bool_true,
-                    .state = state
+                    .state = state,
+                    .scope = scope
                 };
                 blockData->spans.insert(blockData->spans.begin(), 1, span);
             }
@@ -128,7 +129,7 @@ void highlighter_t::highlightBlock(block_ptr block)
     bool firstLine = true;
     parse::stack_ptr parser_state = NULL;
     std::map<size_t, scope::scope_t> scopes;
-    blockData->scopes.clear();
+    // blockData->scopes.clear();
     blockData->spans.clear();
 
     const char* first = str.c_str();
@@ -164,7 +165,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         n = it->first;
         scope::scope_t scope = it->second;
 
-        blockData->scopes.emplace(n, scope);
+        // blockData->scopes.emplace(n, scope);
         std::string scopeName = to_s(scope);
 
         it++;
@@ -181,6 +182,7 @@ void highlighter_t::highlightBlock(block_ptr block)
 
     n = last - first;
     if (n > si) {
+        // blockData->scopes.emplace(n, prevScopeName);
         style_t s = theme->styles_for_scope(prevScopeName);
         setFormatFromStyle(si, n - si + 1, s, first, blockData, prevScopeName);
     }
