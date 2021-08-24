@@ -1,13 +1,18 @@
 #include "highlighter.h"
-#include "app.h"
 #include "document.h"
 #include "parse.h"
+#include "util.h"
+#include "editor.h"
+#include "indexer.h"
 
 #include <cstring>
 #include <unistd.h>
 
+#define LINE_LENGTH_LIMIT 500
+
 highlighter_t::highlighter_t()
     : threadId(0)
+    , editor(0)
 {
 }
 
@@ -84,7 +89,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         return;
     }
 
-    app_t::instance()->log("highlight %d", block->lineNumber);
+    // log("hl %d", block->lineNumber);
 
     struct blockdata_t* blockData = block->data.get();
 
@@ -142,7 +147,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         firstLine = true;
     }
 
-    if (text.length() > 500) {
+    if (text.length() > LINE_LENGTH_LIMIT) {
         // too long to parse
         blockData->dirty = false;
         return;
@@ -165,6 +170,7 @@ void highlighter_t::highlightBlock(block_ptr block)
 
         if (n > si) {
             style_t s = theme->styles_for_scope(prevScopeName);
+            // log("%s", prevScopeName.c_str());
             setFormatFromStyle(si, n - si, s, first, blockData, prevScopeName);
         }
 
@@ -239,6 +245,10 @@ void highlighter_t::highlightBlock(block_ptr block)
                 nextBlockData->dirty = true;
             }
         }
+    }
+
+    if (editor && editor->indexer) {
+        editor->indexer->updateBlock(block);
     }
 }
 
@@ -338,7 +348,7 @@ void highlighter_t::gatherBrackets(block_ptr block, char* first, char* last)
             blockData->foldable = l.open;
         }
 
-        // app_t::instance()->log("brackets %d %d", blockData->brackets.size(), blockData->foldingBrackets.size());
+        // log("brackets %d %d", blockData->brackets.size(), blockData->foldingBrackets.size());
     }
 }
 
@@ -361,6 +371,7 @@ void* highlightThread(void* arg)
         tmp.highlighter.highlightBlock(b);
         sb->data = b->data;
         runLine++;
+        usleep(1000);
     }
 
     threadHl->threadId = 0;

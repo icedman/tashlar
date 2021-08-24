@@ -4,9 +4,13 @@
 #include <stdbool.h>
 #include <string.h>
 #include <strings.h>
+#include <stdarg.h>
 #include <wordexp.h>
 
 #include "util.h"
+
+#define LOG_FILE "/tmp/ashlar.log"
+static bool log_initialized = false;
 
 std::vector<std::string> split_path(const std::string& str, const std::set<char> delimiters)
 {
@@ -106,4 +110,37 @@ bool expand_path(char** path)
     *path = join_args(p.we_wordv, p.we_wordc);
     wordfree(&p);
     return true;
+}
+
+void initLog()
+{
+    FILE* log_file = fopen(LOG_FILE, "w");
+    fclose(log_file);
+    log_initialized = true;
+}
+
+void log(const char* format, ...)
+{
+    if (!log_initialized) {
+        initLog();
+    }
+    
+    static char string[1024] = "";
+
+    va_list args;
+    va_start(args, format);
+    vsnprintf(string, 1024, format, args);
+    va_end(args);
+
+    FILE* log_file = fopen(LOG_FILE, "a");
+    if (!log_file) {
+        return;
+    }
+    char* token = strtok(string, "\n");
+    while (token != NULL) {
+        fprintf(log_file, token);
+        fprintf(log_file, "\n");
+        token = strtok(NULL, "\n");
+    }
+    fclose(log_file);
 }

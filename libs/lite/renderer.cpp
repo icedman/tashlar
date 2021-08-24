@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "stb_truetype.h"
-#include "app.h"
+#include "stb_image.h"
+#include "util.h"
 
 #include <SDL2/SDL_ttf.h>
 
@@ -12,7 +13,7 @@
 #define MAX_GLYPHSET 256
 
 #define RENDER_MODE 2
-#define USE_SDL_TTF // better quality (doesn't support glyphsets)
+// #define USE_SDL_TTF // better quality (doesn't support glyphsets)
 
 void cache_glyphs(RenFont* font, int style);
 TTF_Font* load_font(char* fname, int size);
@@ -512,36 +513,36 @@ TTF_Font* load_font(char* fname, int size)
 
     TTF_Font* font = TTF_OpenFont(fname, size);
     if (!font) {
-        app_t::log("TTF_OpenFont: %s", TTF_GetError());
+        log("TTF_OpenFont: %s", TTF_GetError());
         return NULL;
     }
 
     /* print some metrics and attributes */
-    app_t::log("size                    : %d\n", size);
-    app_t::log("TTF_FontHeight          : %d\n", TTF_FontHeight(font));
-    app_t::log("TTF_FontAscent          : %d\n", TTF_FontAscent(font));
-    app_t::log("TTF_FontDescent         : %d\n", TTF_FontDescent(font));
-    app_t::log("TTF_FontLineSkip        : %d\n", TTF_FontLineSkip(font));
-    app_t::log("TTF_FontFaceIsFixedWidth: %d\n", TTF_FontFaceIsFixedWidth(font));
+    log("size                    : %d\n", size);
+    log("TTF_FontHeight          : %d\n", TTF_FontHeight(font));
+    log("TTF_FontAscent          : %d\n", TTF_FontAscent(font));
+    log("TTF_FontDescent         : %d\n", TTF_FontDescent(font));
+    log("TTF_FontLineSkip        : %d\n", TTF_FontLineSkip(font));
+    log("TTF_FontFaceIsFixedWidth: %d\n", TTF_FontFaceIsFixedWidth(font));
     {
         char* str = TTF_FontFaceFamilyName(font);
         if (!str)
             str = "(null)";
-        app_t::log("TTF_FontFaceFamilyName  : \"%s\"\n", str);
+        log("TTF_FontFaceFamilyName  : \"%s\"\n", str);
     }
     {
         char* str = TTF_FontFaceStyleName(font);
         if (!str)
             str = "(null)";
-        app_t::log("TTF_FontFaceStyleName   : \"%s\"\n", str);
+        log("TTF_FontFaceStyleName   : \"%s\"\n", str);
     }
     if (TTF_GlyphIsProvided(font, 'g')) {
         int minx, maxx, miny, maxy, advance;
         TTF_GlyphMetrics(font, 'g', &minx, &maxx, &miny, &maxy, &advance);
-        app_t::log("TTF_GlyphMetrics('g'):\n\tminx=%d\n\tmaxx=%d\n\tminy=%d\n\tmaxy=%d\n\tadvance=%d\n",
+        log("TTF_GlyphMetrics('g'):\n\tminx=%d\n\tmaxx=%d\n\tminy=%d\n\tmaxy=%d\n\tadvance=%d\n",
             minx, maxx, miny, maxy, advance);
     } else
-        app_t::log("TTF_GlyphMetrics('g'): unavailable in font!\n");
+        log("TTF_GlyphMetrics('g'): unavailable in font!\n");
 
     /* set window title and icon name, using filename and stuff */
     p = strrchr(fname, '/');
@@ -598,7 +599,7 @@ void cache_glyphs(RenFont* renFont, int style)
 
     TTF_Font* font = renFont->font;
 
-    app_t::log("cache_glyphs");
+    log("cache_glyphs");
 
     int i;
 
@@ -652,7 +653,7 @@ void cache_glyphs(RenFont* renFont, int style)
 #endif
 
         if (!surf) {
-            app_t::log("TTF_RenderGlyph_Shaded: %d %s\n", i, TTF_GetError());
+            log("TTF_RenderGlyph_Shaded: %d %s\n", i, TTF_GetError());
             continue;
         }
 

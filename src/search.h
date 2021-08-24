@@ -7,7 +7,7 @@
 #include "pattern.h"
 
 struct cursor_t;
-struct editor_t;
+struct document_t;
 
 struct search_result_t {
     search_result_t()
@@ -41,7 +41,7 @@ struct search_t {
 
     std::vector<search_result_t> findWords(std::string str, regexp::pattern_t* pattern = NULL);
     std::vector<search_result_t> find(std::string str, std::string word);
-    std::vector<search_result_t> findCompletion(editor_t* editor, std::string str);
+    std::vector<search_result_t> findCompletion(document_t* document, std::string str);
 };
 
 int levenshtein_distance(char* s1, char* s2);

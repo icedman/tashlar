@@ -24,7 +24,8 @@ typedef struct {
 } dots_number_map_t;
 
 static const dots_number_map_t dots_map[] = {
-    { L"\u2800", "" },
+    // { L"\u2800", "" },
+    { L" ", "" },
     { L"\u2801", "1" },
     { L"\u2802", "2" },
     { L"\u2803", "12" },

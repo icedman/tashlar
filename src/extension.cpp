@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <string.h>
 
-#include "app.h"
 #include "theme.h"
 #include "util.h"
 
@@ -77,7 +76,7 @@ void load_extensions(const std::string _path, std::vector<struct extension_t>& e
 
         if (append) {
             // std::cout << ex.package["name"].asString() << std::endl;
-            // app_t::instance()->log(ex.nls["themeLabel"].asString().c_str());
+            // log(ex.nls["themeLabel"].asString().c_str());
             // qDebug() << package;
             extensions.emplace_back(ex);
         }
@@ -160,7 +159,6 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
     std::string suffix = ".";
     suffix += spath.back();
 
-    // std::string suffix = ".cpp";
     std::string fileName = "";
 
     auto it = cache.find(suffix);
@@ -232,18 +230,30 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
             break;
     }
 
+    std::string scopeName = "source.";
+    scopeName += resolvedLanguage;
+    log("scopeName: %s", scopeName.c_str());
+
     if (!resolvedLanguage.empty()) {
         // std::cout << resolvedLanguage << std::endl;
+        for (int j = 0; j<2; j++)
         for (int i = 0; i < resolvedGrammars.size(); i++) {
             Json::Value g = resolvedGrammars[i];
-            if (!g.isMember("language")) {
-                continue;
+            bool foundGrammar = false;
+
+            if (j == 0 && g.isMember("scopeName") && g["scopeName"].asString().compare(scopeName) == 0) {
+                foundGrammar = true;
             }
 
-            if (g["language"].asString().compare(resolvedLanguage) == 0) {
+            if (j == 1 && g.isMember("language") && g["language"].asString().compare(resolvedLanguage) == 0) {
+                foundGrammar = true;
+            }
+
+            if (foundGrammar) {
                 std::string path = resolvedExtension.path + "/" + g["path"].asString();
 
                 // std::cout << path << std::endl;
+                log("grammar: %s", path.c_str());
 
                 lang->grammar = parse::parse_grammar(parse::loadJson(path));
                 lang->id = resolvedLanguage;
@@ -257,7 +267,7 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
 
                 load_language_configuration(path, lang);
 
-                app_t::instance()->log("language configuration: %s", path.c_str());
+                log("language configuration: %s", path.c_str());
                 // std::cout << "langauge matched" << lang->id << std::endl;
                 // std::cout << path << std::endl;
 

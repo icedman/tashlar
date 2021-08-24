@@ -1,0 +1,6 @@
+[
+    { "command": "MOVE_FOCUS_LEFT", "keys": "ctrl+alt+j" },
+    { "command": "MOVE_FOCUS_RIGHT", "keys":"ctrl+alt+l" },
+    { "command": "MOVE_FOCUS_UP", "keys": "ctrl+alt+i" },
+    { "command": "MOVE_FOCUS_DOWN", "keys": "ctrl+alt+k" }
+]

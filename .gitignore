@@ -32,3 +32,5 @@ tests/results/*
 
 lua-*
 quickjs-*
+
+.DS_Store

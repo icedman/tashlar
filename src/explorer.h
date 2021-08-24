@@ -5,8 +5,6 @@
 #include <vector>
 
 #include "extension.h"
-#include "scrollbar.h"
-#include "view.h"
 
 struct fileitem_t {
 
@@ -29,30 +27,22 @@ struct fileitem_t {
     void load(std::string path = "");
 };
 
-struct explorer_t : view_t {
+struct fileitem_t* parentItem(struct fileitem_t* item, std::vector<struct fileitem_t*>& list);
+
+struct explorer_t {
 
     explorer_t();
 
     static explorer_t* instance();
 
-    // view
-    void update(int delta) override;
-    void render() override;
-    void applyTheme() override;
-    bool input(char ch, std::string keys) override;
-    bool isVisible() override;
-    void preLayout() override;
-    void mouseDown(int x, int y, int button, int clicks) override;
-    void mouseHover(int x, int y) override;
-    void onFocusChanged(bool focused) override;
-
-    void ensureVisibleCursor();
-
+    void update(int delta);
     void setRootFromFile(std::string path);
 
     void preloadFolders();
     void buildFileList(std::vector<struct fileitem_t*>& list, struct fileitem_t* files, int depth, bool deep = false);
 
+    void print();
+    
     std::vector<struct fileitem_t*> fileList();
 
     fileitem_t files;

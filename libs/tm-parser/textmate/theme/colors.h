@@ -7,7 +7,18 @@ typedef struct _color_t {
     int b;
 } color_t;
 
-const color_t termColors[] = { 
+const color_t termColors8[] = { 
+{ 0, 0, 0 }, // Black
+{ 255, 0, 0 }, // Red
+{ 0, 255, 0 }, // Green
+{ 255, 255, 0 }, // Yellow
+{ 0, 0, 255 }, // Blue
+{ 255, 0, 255 }, // Magenta
+{ 0, 255, 255 }, // Cyan
+{ 255, 255, 255 } // White
+};
+
+const color_t termColors256[] = { 
 
 { 0, 0, 0 }, // Black
 { 128, 0, 0 }, // Maroon

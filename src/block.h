@@ -87,7 +87,7 @@ struct block_t {
     void print();
     size_t length();
 
-    bool isValid() { return true; }
+    bool isValid();
 
     block_ptr next();
     block_ptr previous();

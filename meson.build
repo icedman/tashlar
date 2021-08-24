@@ -1,4 +1,4 @@
-project('tashlar', 'cpp',
+project('ashlar-edit', 'cpp',
   version : '0.1',
   default_options : ['warning_level=3', 'cpp_std=c++14']
 )
@@ -9,46 +9,56 @@ cc = meson.get_compiler('cpp')
 add_global_arguments('-D_XOPEN_SOURCE_EXTENDED=1', language: 'cpp')
 add_global_arguments('-DENABLE_UTF8=1', language: 'cpp')
 add_global_arguments('-DENABLE_SCRIPTING=1', language: 'cpp')
+add_global_arguments('-w', language: 'cpp')
 
-tashlar_files = [
-    'src/main.cpp',
+ashlar_files = [
     'src/app.cpp',
     'src/block.cpp',
     'src/cursor.cpp',
-    'src/completer.cpp',
     'src/document.cpp',
     'src/dots.cpp',
     'src/editor.cpp',
     'src/explorer.cpp',
     'src/extension.cpp',
-    'src/gem.cpp',
-    'src/gutter.cpp',
     'src/highlighter.cpp',
-    'src/item.cpp',
-    'src/minimap.cpp',
-    'src/popup.cpp',
+    'src/icons.cpp',
+    'src/indexer.cpp',
+    'src/operation.cpp',
     'src/search.cpp',
-    'src/scripting.cpp',
-    'src/scrollbar.cpp',
     'src/snapshot.cpp',
-    'src/tabbar.cpp',
     'src/statusbar.cpp',
-    'src/util.cpp',
-    'src/view.cpp',
-    'src/keybinding.cpp'
+    'src/util.cpp'
 ]
 
-tashlar_sdl_files = [
-    'src/platform/render_sdl.cpp',
-    'src/platform/keyinput_sdl.cpp',
+ashlar_view_files = [
+    'src/view/view.cpp',
+    'src/view/app_view.cpp',
+    'src/view/editor_view.cpp',
+    'src/view/explorer_view.cpp',
+    'src/view/gem_view.cpp',
+    'src/view/gutter_view.cpp',
+    'src/view/minimap_view.cpp',
+    'src/view/popup_view.cpp',
+    'src/view/scrollbar_view.cpp',
+    'src/view/statusbar_view.cpp',
+    'src/view/tabbar_view.cpp',
+    'src/view/search_view.cpp',
+    'src/view/view_controls.cpp'
+]
+
+ashlar_curses_files = [
+    'src/view/render.cpp',
+    'src/view/keyinput.cpp'
+]
+
+ashlar_sdl_files = [
+    'src/view/render_sdl.cpp',
+    'src/view/keyinput_sdl.cpp',
     'libs/lite/rencache.cpp',
     'libs/lite/renderer.cpp',
+    'libs/lite/sdl_stbimage.cpp',
+    'libs/lite/stb_image.cpp',
     'libs/lite/stb_truetype.cpp'
-]
-
-tashlar_curses_files = [
-    'src/platform/render.cpp',
-    'src/platform/keyinput.cpp'
 ]
 
 textmate_inc = include_directories(
@@ -59,13 +69,13 @@ textmate_inc = include_directories(
 
 textmate_files = [
     'libs/tm-parser/textmate/parser/grammar.cpp',
-    'libs/tm-parser/textmate/parser/reader.cpp',
-    'libs/tm-parser/textmate/parser/pattern.cpp',
     'libs/tm-parser/textmate/parser/parser.cpp',
+    'libs/tm-parser/textmate/parser/pattern.cpp',
+    'libs/tm-parser/textmate/parser/reader.cpp',
+    'libs/tm-parser/textmate/scopes/match.cpp',
+    'libs/tm-parser/textmate/scopes/parse.cpp',
     'libs/tm-parser/textmate/scopes/scope.cpp',
     'libs/tm-parser/textmate/scopes/types.cpp',
-    'libs/tm-parser/textmate/scopes/parse.cpp',
-    'libs/tm-parser/textmate/scopes/match.cpp',
     'libs/tm-parser/textmate/theme/theme.cpp',
     'libs/tm-parser/textmate/theme/util.cpp'
 ]
@@ -95,22 +105,39 @@ else
     quickjs_dep = declare_dependency(dependencies: [ dl_dep, quickjs_lib ], include_directories: ['/usr/include/quickjs'])
 endif
 
+if get_option('build_curses')
 executable('ashlr',
-    tashlar_files,
-    tashlar_curses_files,
+    'src/main.cpp',
+    ashlar_files,
+    ashlar_curses_files,
+    ashlar_view_files,
     textmate_files,
-    include_directories: [ './src', textmate_inc ],
-    dependencies: [ quickjs_dep, pthread_dep, curses_dep, onigmo_dep, jsoncpp_dep ],
+    include_directories: [ './src', './src/view', textmate_inc ],
+    dependencies: [ quickjs_dep, pthread_dep, onigmo_dep, jsoncpp_dep, curses_dep ],
     install : true
 )
+endif
 
 if get_option('build_sdl')
-executable('ashlar',
-    tashlar_files,
-    tashlar_sdl_files,
+executable('ashlr-sdl',
+    'src/main.cpp',
+    ashlar_files,
+    ashlar_sdl_files,
+    ashlar_view_files,
     textmate_files,
-    include_directories: [ './src', './libs/lite', textmate_inc ],
-    dependencies: [ quickjs_dep, sdl2_dep, sdl2ttf_dep, pthread_dep, onigmo_dep, jsoncpp_dep ],
+    include_directories: [ './src', './libs/lite', './src/view', textmate_inc ],
+    dependencies: [ quickjs_dep, pthread_dep, onigmo_dep, jsoncpp_dep, sdl2_dep, sdl2ttf_dep ],
+    install : true
+)
+endif
+
+if get_option('build_test')
+executable('ashlr-test',
+    'src/test.cpp',
+    ashlar_files,
+    textmate_files,
+    include_directories: [ './src', './src/view', textmate_inc ],
+    dependencies: [ quickjs_dep, pthread_dep, onigmo_dep, jsoncpp_dep ],
     install : true
 )
 endif

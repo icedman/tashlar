@@ -1,6 +1,6 @@
 #include "block.h"
 #include "document.h"
-#include "editor.h"
+#include "util.h"
 
 static size_t blocksCreated = 0;
 
@@ -66,9 +66,9 @@ void block_t::setText(std::string t)
     if (data) {
         data->dirty = true;
 
-        if (data->folded && data->foldable) {
-            document->editor->toggleFold(lineNumber);
-        }
+        // if (data->folded && data->foldable) {
+            // document->editor->toggleFold(lineNumber);
+        // }
     }
     cachedLength = 0;
 }
@@ -94,4 +94,11 @@ block_ptr block_t::previous()
 void block_t::print()
 {
     // std::cout << lineNumber << ": " << text() << std::endl;
+    log("%d %s", lineNumber, text().c_str());
+}
+
+bool block_t::isValid()
+{
+    block_ptr b = document->blockAtLine(lineNumber+1);
+    return (b.get() == this);
 }

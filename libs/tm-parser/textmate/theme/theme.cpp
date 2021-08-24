@@ -8,12 +8,29 @@
 static theme_t *current_parsed_theme = 0;
 static std::map<int, color_info_t> trueColors;
 
-int nearest_color(int r, int g, int b)
+static int termColorCount = 256;
+static color_t *termColors = (color_t*)termColors256;
+
+int nearest_color(int r, int g, int b, bool trueColor = false)
 {
     int idx = -1;
     long d = 0;
-    
-    for(int i=0; i<256; i++) {
+
+    if (trueColor) {
+        for(auto cp : trueColors) {
+            color_info_t clr = cp.second;
+            int rr = r - clr.red; 
+            int gg = g - clr.green; 
+            int bb = b - clr.blue;
+            long dd = (rr * rr) + (gg * gg) + (bb * bb);
+            if (idx == -1 || d > dd) {
+                d = dd;
+                idx = clr.index;
+            } 
+        }
+    }
+
+    for(int i=0; i<termColorCount; i++) {
         const color_t clr = termColors[i];
         int rr = r - clr.r; 
         int gg = g - clr.g; 
@@ -26,8 +43,20 @@ int nearest_color(int r, int g, int b)
     }
 
     color_info_t c(r, g, b, 255);
+    if (d != 0 && trueColor) {
+        c.index = termColorCount + trueColors.size();
+        trueColors[c.index] = c;
+        return c.index;
+    }
     trueColors[idx] = c;
     return idx;
+}
+
+int color_info_t::set_term_color_count(int count)
+{
+    termColorCount = count == 8 ? 8 : 256;
+    termColors = count == 8 ? (color_t*)termColors8 : (color_t*)termColors256;
+    return termColorCount;
 }
 
 color_info_t color_info_t::true_color(int idx)
@@ -37,14 +66,17 @@ color_info_t color_info_t::true_color(int idx)
 
 color_info_t color_info_t::term_color(int idx)
 {
+    // if (idx > 255) {
+    //     return trueColors[idx];
+    // }
     const color_t clr = termColors[idx];
     color_info_t c(clr.r, clr.g, clr.b, 255);
     return c;
 }
 
-int color_info_t::nearest_color_index(int red, int green, int blue)
+int color_info_t::nearest_color_index(int red, int green, int blue, bool trueColor)
 {
-    return nearest_color(red * 255, green * 255, blue * 255);
+    return nearest_color(red * 255, green * 255, blue * 255, trueColor);
 }
     
 /*
