@@ -30,6 +30,7 @@ struct span_info_t {
     bool bold;
     bool italic;
     block_state_e state;
+    std::string scope;
 };
 
 struct bracket_info_t {
@@ -48,7 +49,7 @@ struct blockdata_t {
     std::vector<bracket_info_t> foldingBrackets;
     std::vector<bracket_info_t> brackets;
     parse::stack_ptr parser_state;
-    std::map<size_t, scope::scope_t> scopes;
+    // std::map<size_t, scope::scope_t> scopes;
 
     int* dots;
 
