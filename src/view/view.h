@@ -5,6 +5,7 @@
 #include <vector>
 
 struct render_t;
+struct scrollbar_t;
 
 enum layout_e {
     LAYOUT_UNKNOWN = 0,
@@ -73,7 +74,7 @@ struct view_t {
     int colorSecondary;
     int colorSelected;
     int colorIndicator;
-
+    
     static void setFocus(view_t* view);
     static view_t* currentFocus();
     static view_t* shiftFocus(int x, int y);

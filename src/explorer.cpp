@@ -135,6 +135,11 @@ void fileitem_t::load(std::string p)
     }
 
     sort(files.begin(), files.end(), compareFile);
+
+    // if (!files.size()) {
+    //     explorer_t::instance()->setVisible(false);
+    //     app_t::instance()->explorerScrollbar.setVisible(false);
+    // }
 }
 
 static struct explorer_t* explorerInstance = 0;
