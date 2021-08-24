@@ -25,6 +25,7 @@ view_t::view_t(std::string name)
     , padding(2)
     , viewLayout(LAYOUT_HORIZONTAL)
     , backgroundColor(0)
+    , scrollbar(0)
 {
 }
 
@@ -91,6 +92,9 @@ bool view_t::isFocused()
 void view_t::setVisible(bool v)
 {
     visible = v;
+    if (scrollbar) {
+        scrollbar->setVisible(v);
+    }
 }
 
 bool view_t::isVisible()

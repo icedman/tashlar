@@ -257,7 +257,7 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
 
                 load_language_configuration(path, lang);
 
-                // app_t::instance()->log("language configuration: %s", path.c_str());
+                app_t::instance()->log("language configuration: %s", path.c_str());
                 // std::cout << "langauge matched" << lang->id << std::endl;
                 // std::cout << path << std::endl;
 

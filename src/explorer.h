@@ -63,8 +63,6 @@ struct explorer_t : view_t {
 
     int currentItem;
     bool regenerateList;
-
-    scrollbar_t* scrollbar;
 };
 
 #endif // EXPLORER_H

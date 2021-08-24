@@ -1,4 +1,3 @@
-
 #include "app.h"
 #include "render.h"
 #include "search.h"
