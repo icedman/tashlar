@@ -28,9 +28,10 @@ struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
         }
         if (pos >= span.start && pos < span.start + span.length) {
             res = span;
-            if (res.state != BLOCK_STATE_UNKNOWN) {
-                return res;
+            if (res.state == BLOCK_STATE_UNKNOWN) {
+                // log("unknown >>%d", span.start);
             }
+            return res;
         }
     }
 
@@ -171,7 +172,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         if (n > si) {
             style_t s = theme->styles_for_scope(prevScopeName);
             // log("%s", prevScopeName.c_str());
-            setFormatFromStyle(si, n - si, s, first, blockData, prevScopeName);
+            setFormatFromStyle(si, n - si + 1, s, first, blockData, prevScopeName);
         }
 
         prevScopeName = scopeName;
@@ -181,7 +182,7 @@ void highlighter_t::highlightBlock(block_ptr block)
     n = last - first;
     if (n > si) {
         style_t s = theme->styles_for_scope(prevScopeName);
-        setFormatFromStyle(si, n - si, s, first, blockData, prevScopeName);
+        setFormatFromStyle(si, n - si + 1, s, first, blockData, prevScopeName);
     }
 
     //----------------------
