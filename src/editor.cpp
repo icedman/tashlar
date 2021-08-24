@@ -172,14 +172,23 @@ void editor_t::runOp(operation_t op)
         _op = DELETE_SELECTION;
         break;
 
-    case ADD_CURSOR_AND_MOVE_UP:
+    // TODO!!
+    case ADD_CURSOR_AND_MOVE_UP: {
         document.addCursor(mainCursor);
-        _op = MOVE_CURSOR_UP;
-        break;
-    case ADD_CURSOR_AND_MOVE_DOWN:
+        // _op = MOVE_CURSOR_UP;
+        mainCursor.moveUp(1, false);
+        document.setCursor(mainCursor, true);
+        document.clearDuplicateCursors();
+        return;
+    }
+    case ADD_CURSOR_AND_MOVE_DOWN: {
         document.addCursor(mainCursor);
-        _op = MOVE_CURSOR_DOWN;
-        break;
+        // _op = MOVE_CURSOR_DOWN;
+        mainCursor.moveDown(1, false);
+        document.setCursor(mainCursor, true);
+        document.clearDuplicateCursors();
+        return;
+    }
     case ADD_CURSOR_FOR_SELECTED_WORD:
         if (mainCursor.hasSelection() && mainCursor.selectedText().length()) {
             cursor_t res = document.findNextOccurence(mainCursor, mainCursor.selectedText());

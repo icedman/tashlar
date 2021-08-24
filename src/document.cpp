@@ -376,8 +376,9 @@ void document_t::clearDuplicateCursors()
     if (cursors.size() == 1)
         return;
     cursor_list cs;
-    for (auto c : cursors) {
+    for (auto _c : cursors) {
         bool duplicate = false;
+        cursor_t c = _c;
         c.normalizeSelection(true);
         for (auto cc : cs) {
             cc.normalizeSelection(true);
@@ -388,7 +389,7 @@ void document_t::clearDuplicateCursors()
         }
         if (duplicate)
             continue;
-        cs.push_back(c);
+        cs.push_back(_c);
     }
     cursors = cs;
 }
