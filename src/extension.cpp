@@ -159,7 +159,6 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
     std::string suffix = ".";
     suffix += spath.back();
 
-    // std::string suffix = ".cpp";
     std::string fileName = "";
 
     auto it = cache.find(suffix);
@@ -231,15 +230,26 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
             break;
     }
 
+    std::string scopeName = "source.";
+    scopeName += resolvedLanguage;
+    log("scopeName: %s", scopeName.c_str());
+
     if (!resolvedLanguage.empty()) {
         // std::cout << resolvedLanguage << std::endl;
+        for (int j = 0; j<2; j++)
         for (int i = 0; i < resolvedGrammars.size(); i++) {
             Json::Value g = resolvedGrammars[i];
-            if (!g.isMember("language")) {
-                continue;
+            bool foundGrammar = false;
+
+            if (j == 0 && g.isMember("scopeName") && g["scopeName"].asString().compare(scopeName) == 0) {
+                foundGrammar = true;
             }
 
-            if (g["language"].asString().compare(resolvedLanguage) == 0) {
+            if (j == 1 && g.isMember("language") && g["language"].asString().compare(resolvedLanguage) == 0) {
+                foundGrammar = true;
+            }
+
+            if (foundGrammar) {
                 std::string path = resolvedExtension.path + "/" + g["path"].asString();
 
                 // std::cout << path << std::endl;

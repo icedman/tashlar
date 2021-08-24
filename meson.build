@@ -21,6 +21,7 @@ ashlar_files = [
     'src/explorer.cpp',
     'src/extension.cpp',
     'src/highlighter.cpp',
+    'src/icons.cpp',
     'src/indexer.cpp',
     'src/operation.cpp',
     'src/search.cpp',
@@ -55,6 +56,8 @@ ashlar_sdl_files = [
     'src/view/keyinput_sdl.cpp',
     'libs/lite/rencache.cpp',
     'libs/lite/renderer.cpp',
+    'libs/lite/sdl_stbimage.cpp',
+    'libs/lite/stb_image.cpp',
     'libs/lite/stb_truetype.cpp'
 ]
 

@@ -10,6 +10,7 @@ struct item_t {
     int score;
     int depth;
     std::string script;
+    std::string icon;
 };
 
 bool compareListItem(struct item_t& f1, struct item_t& f2);

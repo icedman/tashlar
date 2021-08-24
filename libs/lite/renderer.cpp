@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "stb_truetype.h"
+#include "stb_image.h"
 #include "util.h"
 
 #include <SDL2/SDL_ttf.h>

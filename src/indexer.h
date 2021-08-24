@@ -9,7 +9,7 @@
 
 #include "editor.h"
 
-#define INDEX_REQUEST_SIZE 128
+#define INDEX_REQUEST_SIZE 256
 
 struct indexer_t {
 
@@ -26,6 +26,7 @@ struct indexer_t {
     std::vector<std::string> findWords(std::string prefix);
 
     size_t indexingRequests[INDEX_REQUEST_SIZE];
+    size_t requestIdx;
 
     void run();
     void cancel();

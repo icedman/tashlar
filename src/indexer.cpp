@@ -17,6 +17,7 @@
 indexer_t::indexer_t()
 	: threadId(0)
 	, hasInvalidBlocks(false)
+	, requestIdx(0)
 {
 	memset(&indexingRequests, 0, sizeof(size_t) * INDEX_REQUEST_SIZE);
 }
@@ -44,12 +45,16 @@ void indexer_t::updateBlock(block_ptr block)
 		return;
 	}
 
-	for(int i=0; i<INDEX_REQUEST_SIZE; i++) {
-		if (indexingRequests[i] == 0) {
-			indexingRequests[i] = block->lineNumber;
-			break;
-		}
-	}
+	indexingRequests[requestIdx++] = block->lineNumber;
+	if (requestIdx >= INDEX_REQUEST_SIZE)
+		requestIdx = 0;
+
+	// for(int i=0; i<INDEX_REQUEST_SIZE; i++) {
+	// 	if (indexingRequests[i] == 0) {
+	// 		indexingRequests[i] = block->lineNumber;
+	// 		break;
+	// 	}
+	// }
 }
 
 void indexer_t::indexBlock(block_ptr block)

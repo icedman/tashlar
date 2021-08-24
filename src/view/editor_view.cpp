@@ -244,6 +244,10 @@ editor_view_t::~editor_view_t()
 
 void editor_view_t::update(int delta)
 {
+    if (popup_root_view_t::instance()->hasPopups()) {
+        completerView->setVisible(false);
+    }
+
     float coef = 0.5;
 
     for(int i=0; i<8; i++)
@@ -467,11 +471,13 @@ int _realPos(block_ptr b, int row, int col, int cols) {
     }
 
     int idx = col;
+    int endOffset = 0;
     if (idx >= t.length()) {
         idx = t.length()-1;
+        endOffset += 1;
     }
     col = t[idx];
-    return row + col;
+    return row + col + endOffset;
 }
 
 void editor_view_t::mouseDown(int x, int y, int button, int clicks)
