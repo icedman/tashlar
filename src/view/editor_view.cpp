@@ -299,6 +299,8 @@ void editor_view_t::layout(int _x, int _y, int _w, int _h)
     rows = height / getRenderer()->fh;
     cols = width / getRenderer()->fw;
 
+    doc->setRows(rows);
+
     maxScrollX = 0;
     maxScrollY = doc->lastBlock()->lineNumber - (rows * 2 / 3);
 
@@ -407,7 +409,7 @@ void editor_view_t::ensureVisibleCursor(bool animate)
     document_t *doc = &editor->document;
 
     doc->setColumns(cols);
-
+    
     cursor_t mainCursor = doc->cursor();
     scrollToCursor(mainCursor);
 }

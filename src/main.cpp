@@ -28,12 +28,13 @@ int main(int argc, char **argv)
     statusbar_t statusbar;
     search_t search;
 
+    render_t renderer;
+
     popup_root_view_t popups;
 
     app.configure(argc, argv);
     app.setupColors();
 
-    render_t renderer;
     renderer.initialize();
     renderer.updateColors();
     

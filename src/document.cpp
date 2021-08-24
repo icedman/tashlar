@@ -462,6 +462,7 @@ void document_t::setColumns(int c)
     columns = c;
     if (update) {
         updateBlocks(blocks, 0);
+        log(">updateBlocks");
     }
 }
 

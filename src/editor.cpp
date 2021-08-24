@@ -403,6 +403,7 @@ void editor_t::runOp(operation_t op)
             break;
         case MOVE_CURSOR_NEXT_PAGE:
         case MOVE_CURSOR_NEXT_PAGE_ANCHORED:
+            log(">%d", document.rows);
             cur.moveNextBlock(document.rows, _op == MOVE_CURSOR_NEXT_PAGE_ANCHORED);
             break;
         case MOVE_CURSOR_PREVIOUS_PAGE:

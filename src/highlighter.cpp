@@ -166,7 +166,8 @@ void highlighter_t::highlightBlock(block_ptr block)
         scope::scope_t scope = it->second;
 
         // blockData->scopes.emplace(n, scope);
-        std::string scopeName = to_s(scope);
+        std::string scopeName(scope);
+        // std::string scopeName = to_s(scope);
 
         it++;
 

@@ -119,6 +119,10 @@ void app_t::configure(int argc, char** argv)
     enablePopup = true;
     markup = "";
 
+    bool fullEnv = true;
+    if (render_t::instance() && render_t::instance()->isTerminal()) {
+        fullEnv = false;
+    }
     const char* argTheme = 0;
     const char* argScript = 0;
     const char* defaultTheme = "Monokai";
@@ -130,8 +134,8 @@ void app_t::configure(int argc, char** argv)
         // if (strcmp(argv[i], "-s") == 0) {
         //     argScript = argv[i + 1];
         // }
-        if (strcmp(argv[i], "-m") == 0) {
-            markup = argv[i + 1];
+        if (strcmp(argv[i], "-f") == 0) {
+            fullEnv = true;
         }
     }
 
@@ -228,6 +232,12 @@ void app_t::configure(int argc, char** argv)
     }
     if (tabSize > 8) {
         tabSize = 8;
+    }
+
+    if (!fullEnv) {
+        showMinimap = false;
+        showTabbar = false;
+        showSidebar = false;
     }
 
     //---------------
@@ -380,7 +390,6 @@ editor_ptr app_t::openEditor(std::string path)
     editor->name += path;
 
     editors.emplace_back(editor);
-    log(">%d", editors.size());
 
     // gem->applyTheme();
     // view_t::setFocus(currentEditor.get());
