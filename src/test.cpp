@@ -17,6 +17,14 @@ bool render_t::isTerminal()
     return false;
 }
 
+std::string getClipboardText()
+{
+    return "";
+}
+
+void setClipboardText(std::string text)
+{}
+
 int pairForColor(int colorIdx, bool selected)
 {
     return colorIdx;

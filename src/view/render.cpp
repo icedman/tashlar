@@ -12,6 +12,14 @@ static std::map<int, int> colorMap;
 static int drawBaseX = 0;
 static int drawBaseY = 0;
 
+std::string getClipboardText()
+{
+    return "";
+}
+
+void setClipboardText(std::string text)
+{}
+
 int pairForColor(int colorIdx, bool selected)
 {
     if (selected && colorIdx == color_pair_e::NORMAL) {

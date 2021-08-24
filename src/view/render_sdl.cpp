@@ -49,6 +49,20 @@ static std::map<int, BgFg> colorPairs;
 
 void pushKey(char c, std::string keySequence);
 
+std::string getClipboardText()
+{
+    if (!SDL_HasClipboardText()) {
+        return "";
+    }
+    std::string res = SDL_GetClipboardText();;
+    return res;
+}
+
+void setClipboardText(std::string text)
+{
+    SDL_SetClipboardText(text.c_str());
+}
+
 int pairForColor(int colorIdx, bool selected)
 {
     if (selected && colorIdx == color_pair_e::NORMAL) {

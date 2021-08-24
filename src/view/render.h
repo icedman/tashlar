@@ -4,6 +4,9 @@
 #include "view.h"
 #define SELECTED_OFFSET 500
    
+std::string getClipboardText();
+void setClipboardText(std::string text);
+
 int _color_pair(int pair);
 
 void _underline(bool);

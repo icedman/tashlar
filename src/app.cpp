@@ -84,11 +84,16 @@ bool app_t::isFresh()
 void app_t::setClipboard(std::string text)
 {
     clipText = text;
+    setClipboardText(text);
 }
 
 std::string app_t::clipboard()
 {
-    return clipText;
+    std::string res = getClipboardText();
+    if (res.length()) {
+        return res;
+    }
+    return res;
 }
 
 void app_t::configure(int argc, char** argv)
