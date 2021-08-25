@@ -75,16 +75,18 @@ int main(int argc, char **argv)
 
     std::string previousKeySequence;
     std::string expandedSequence;
+
     while (!app.end) {
+        root.update(delta);
+        popups.update(delta);
+
         renderer.update();
 
-        root.update(delta);
         root.preLayout();
         root.layout(0, 0, renderer.width, renderer.height);
         root.preRender();
         root.render();
 
-        popups.update(delta);
         popups.preLayout();
         popups.layout(0, 0, renderer.width, renderer.height);
         popups.preRender();
@@ -92,12 +94,8 @@ int main(int argc, char **argv)
 
         // log("rows:%d", renderer.rows);
 
+        // todo run ui in separate thread
         renderer.render();
-
-        if (!app.isFresh()) {
-            renderer.input();
-            continue;
-        }
 
         int ch = -1;
         std::string keySequence;

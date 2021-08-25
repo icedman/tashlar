@@ -37,7 +37,7 @@ struct render_t {
     void update();
     void render();
     void updateColors();
-    void input();
+    bool input();
     void delay(int ms);
     bool isTerminal();
 
@@ -55,5 +55,7 @@ struct render_t {
     int fw;
     int fh;
 };
+
+void pushKey(char c, std::string keySequence);
 
 #endif // RENDER_H

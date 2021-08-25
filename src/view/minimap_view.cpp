@@ -170,7 +170,7 @@ void minimap_view_t::render()
                 }
             }
 
-            if (!_drawdots(b->data->dots[x], colors)) {
+            if (b->data && b->data->dots && !_drawdots(b->data->dots[x], colors)) {
 #ifdef ENABLE_UTF8
                 _addwstr(wcharFromDots(b->data->dots[x]));
 #endif
@@ -265,7 +265,7 @@ void minimap_view_t::update(int delta)
     if (d * d > 4) {
         offsetY += d/3;
         d = targetOffsetY - offsetY;
-        app_t::instance()->refresh();
+        // app_t::instance()->refresh();
     }
 }
 

@@ -18,7 +18,7 @@ struct indexer_t {
 
     void addEntry(block_ptr block, std::string prefix);
     void updateBlock(block_ptr block);
-    void indexBlock(block_ptr block);
+    void _updateBlock(block_ptr block);
     void clear();
 
     std::map<std::string, block_list> indexMap;

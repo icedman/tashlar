@@ -166,8 +166,9 @@ void render_t::render()
     refresh();
 }
 
-void render_t::input()
+bool render_t::input()
 {
+    return true;
 }
 
 void render_t::updateColors()
@@ -237,3 +238,5 @@ bool _isShiftDown()
 {
     return false;
 }
+
+void pushKey(char c, std::string keySequence) {}

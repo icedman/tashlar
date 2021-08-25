@@ -22,3 +22,5 @@ int render_t::pairForColor(int colorIdx, bool selected)
 {
     return colorIdx;
 }
+
+void pushKey(char c, std::string keySequence) {}

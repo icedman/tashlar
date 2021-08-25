@@ -77,7 +77,7 @@ app_t::~app_t()
 
 void app_t::refresh()
 {
-    refreshCount = 8;
+    refreshCount = 4;
 }
 
 bool app_t::isFresh()

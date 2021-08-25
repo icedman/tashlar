@@ -39,6 +39,10 @@ static int keyMods = 0;
 
 static std::map<int, int> colorMap;
 
+static long startMs = 0;
+static long endMs = 0;
+static long deltaMs = 0;
+
 RenColor bgColor;
 struct BgFg {
     color_info_t bg;
@@ -46,8 +50,6 @@ struct BgFg {
 };
 
 static std::map<int, BgFg> colorPairs;
-
-void pushKey(char c, std::string keySequence);
 
 static view_t* context()
 {
@@ -392,7 +394,7 @@ static int poll_event()
     switch (e.type) {
     case SDL_QUIT:
         pushKey(0, "ctrl+q");
-        return 0;
+        return 1;
 
     case SDL_WINDOWEVENT:
         if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
@@ -402,9 +404,9 @@ static int poll_event()
                 ren_init(window);
                 pushKey(0, "resize");
             }
-            return 0;
+            return 1;
         } else if (e.window.event == SDL_WINDOWEVENT_EXPOSED) {
-            return 0;
+            return 1;
         }
         /* on some systems, when alt-tabbing to the window SDL will queue up
       ** several KEYDOWN events for the `tab` key; we flush all keydown
@@ -412,13 +414,13 @@ static int poll_event()
         if (e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
             SDL_FlushEvent(SDL_KEYDOWN);
         }
-        return 0;
+        return 1;
 
     case SDL_DROPFILE:
         SDL_GetGlobalMouseState(&mx, &my);
         SDL_GetWindowPosition(window, &wx, &wy);
         SDL_free(e.drop.file);
-        return 0;
+        return 1;
 
     case SDL_KEYDOWN: {
         std::string keySequence;
@@ -428,7 +430,7 @@ static int poll_event()
         switch (e.key.keysym.sym) {
         case SDLK_ESCAPE:
             // pushKey(27, "");
-            // return 0;
+            // return 1;
             keySequence = "escape";
             break;
         case SDLK_TAB:
@@ -503,19 +505,19 @@ static int poll_event()
             }
         }
 
-        return 0;
+        return 1;
     }
 
     case SDL_KEYUP:
         keyMods = 0;
-        return 0;
+        return 1;
 
     case SDL_TEXTINPUT:
         // log("text input %c", e.text.text[0]);
         if (keyMods == 0 || keyMods & KMOD_SHIFT || keyMods & KMOD_CAPS) {
             pushKey(e.text.text[0], "");
         }
-        return 0;
+        return 1;
 
     case SDL_MOUSEBUTTONDOWN:
         pushKey(0, "mousedown");
@@ -524,7 +526,7 @@ static int poll_event()
         }
         view_t::setDragged(view_t::currentHovered());
         view_t::currentHovered()->mouseDown(e.button.x, e.button.y, e.button.button, e.button.clicks);
-        return 0;
+        return 1;
 
     case SDL_MOUSEBUTTONUP:
         pushKey(0, "mouseup");
@@ -534,7 +536,7 @@ static int poll_event()
             view_t::currentHovered()->mouseUp(-1, -1, e.button.button);
         }
         view_t::setDragged(NULL);
-        return 0;
+        return 1;
 
     case SDL_MOUSEMOTION: {
         view_t *hovered = popupRoot->hasPopups() ? popupRoot->viewFromPointer(e.motion.x, e.motion.y) : NULL;
@@ -556,7 +558,7 @@ static int poll_event()
                 pushKey(0, "mousehover");
             }
         }
-        return 0;
+        return 1;
     }
 
     case SDL_MOUSEWHEEL:
@@ -566,7 +568,7 @@ static int poll_event()
         }
         pushKey(0, "wheel");
         scrollVelocity = 0;
-        return 0;
+        return 1;
 
     default:
         return 0;
@@ -577,6 +579,7 @@ static int poll_event()
 
 void render_t::update()
 {
+    startMs = SDL_GetTicks();
     RenRect rect = { .x = 0, .y = 0, .width = width, .height = height };
     BgFg bgFg = colorPairs[color_pair_e::NORMAL];
     bgColor = {
@@ -597,11 +600,11 @@ void render_t::update()
     rencache_begin_frame();
 }
 
-void render_t::input()
+bool render_t::input()
 {
     // log("event!");
     SDL_WaitEventTimeout(NULL, 50);
-    poll_event();
+    return poll_event() != 0;
 }
 
 static void renderView(view_t* view)
@@ -634,6 +637,11 @@ void render_t::render()
 {
     // renderView(app_t::instance());
     rencache_end_frame();
+
+    endMs = SDL_GetTicks();
+    deltaMs = (endMs - startMs);
+
+    // log(">%d", deltaMs);
 }
 
 static void addColorPair(int idx, int fg, int bg)

@@ -48,18 +48,11 @@ void indexer_t::updateBlock(block_ptr block)
 	indexingRequests[requestIdx++] = block->lineNumber;
 	if (requestIdx >= INDEX_REQUEST_SIZE)
 		requestIdx = 0;
-
-	// for(int i=0; i<INDEX_REQUEST_SIZE; i++) {
-	// 	if (indexingRequests[i] == 0) {
-	// 		indexingRequests[i] = block->lineNumber;
-	// 		break;
-	// 	}
-	// }
 }
 
-void indexer_t::indexBlock(block_ptr block)
+void indexer_t::_updateBlock(block_ptr block)
 {
-	if (!block->data) {
+	if (!block->isValid() || !block->data) {
 		return;
 	}
 
@@ -137,8 +130,13 @@ void* indexerThread(void* arg)
     while (true) {
     	for(int i=0; i<INDEX_REQUEST_SIZE; i++) {
 			if (indexer->indexingRequests[i] != 0) {
+				// todo make thread safe
 				block_ptr block = editor->document.blockAtLine(indexer->indexingRequests[i]);
-				indexer->indexBlock(block);
+				if (!block) {
+					indexer->indexingRequests[i] = 0;
+					continue;
+				}
+				indexer->_updateBlock(block);
 				// log("indexing %d", indexer->indexingRequests[i]);
 				indexer->indexingRequests[i] = 0;
 				usleep(5000);

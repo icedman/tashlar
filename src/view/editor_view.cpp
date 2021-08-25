@@ -256,7 +256,7 @@ void editor_view_t::update(int delta)
         targetY = scrollY - (scrollWheel * 2);
         scrollWheel *= 0.1;
 
-        if (scrollWheel * scrollWheel < 0.2) {
+        if (scrollWheel * scrollWheel < 0.5) {
             scrollWheel = 0;
         }
         // log("%f", scrollWheel);
@@ -269,7 +269,6 @@ void editor_view_t::update(int delta)
         }
 
         scrollY = targetY;
-        app_t::instance()->refresh();
         return;
     }
 
@@ -277,7 +276,7 @@ void editor_view_t::update(int delta)
         int d = targetY - scrollY;
         scrollY += d * coef;
         if (d * d > 4) {
-            app_t::instance()->refresh();
+            // app_t::instance()->refresh();
         } else {
             animating = false;
         }
@@ -672,12 +671,11 @@ void editor_view_t::scroll(int s)
         scrollWheel = 0;
     }
     scrollWheel += (s * 0.5);
-
-    if (scrollWheel > 5) {
-        scrollWheel = 5;
+    if (scrollWheel > 1) {
+        scrollWheel = 1;
     }
-    if (scrollWheel < -5) {
-        scrollWheel = -5;
+    if (scrollWheel < -1) {
+        scrollWheel = -1;
     }
     // log("%d %f", s, scrollWheel);
 }

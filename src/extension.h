@@ -18,7 +18,6 @@ struct extension_t {
 
 struct language_info_t {
     std::string id;
-
     std::string blockCommentStart;
     std::string blockCommentEnd;
     std::string lineComment;

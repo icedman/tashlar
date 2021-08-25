@@ -271,7 +271,8 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
                 // std::cout << "langauge matched" << lang->id << std::endl;
                 // std::cout << path << std::endl;
 
-                cache.emplace(suffix, lang);
+                // don't cache..? causes problem with highlighter thread
+                // cache.emplace(suffix, lang);
                 return lang;
             }
         }

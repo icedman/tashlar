@@ -403,7 +403,6 @@ void editor_t::runOp(operation_t op)
             break;
         case MOVE_CURSOR_NEXT_PAGE:
         case MOVE_CURSOR_NEXT_PAGE_ANCHORED:
-            log(">%d", document.rows);
             cur.moveNextBlock(document.rows, _op == MOVE_CURSOR_NEXT_PAGE_ANCHORED);
             break;
         case MOVE_CURSOR_PREVIOUS_PAGE:
@@ -868,7 +867,8 @@ void editor_t::highlight(int startingLine, int count)
     int l = 0;
     block_list::iterator it = document.blocks.begin();
 
-    int preceedingBlocks = 16;
+    int preceedingBlocks = count/2;
+    int trailingBlocks = count/3;
     int idx = startingLine - preceedingBlocks;
     if (idx < 0) {
         idx = 0;
@@ -880,7 +880,7 @@ void editor_t::highlight(int startingLine, int count)
         block_ptr b = *it++;
         highlighter.highlightBlock(b);
         // log("%d %d %d", c, mainBlock->lineNumber, preceedingBlocks, count);
-        if (c++ >= mainBlock->lineNumber + preceedingBlocks + count)
+        if (c++ >= mainBlock->lineNumber + preceedingBlocks + trailingBlocks + count)
             break;
     }
 }

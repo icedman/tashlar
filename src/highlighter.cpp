@@ -4,6 +4,8 @@
 #include "util.h"
 #include "editor.h"
 #include "indexer.h"
+#include "render.h"
+#include "app.h"
 
 #include <cstring>
 #include <unistd.h>
@@ -76,8 +78,19 @@ static void setFormatFromStyle(size_t start, size_t length, style_t& style, cons
     }
 }
 
+void highlighter_t::highlightBlocks(block_ptr block, int count)
+{
+    while(block && count-- > 0) {
+        highlightBlock(block);
+        block = block->next();
+    }
+}
+
 void highlighter_t::highlightBlock(block_ptr block)
 {
+    if (!block)
+        return;
+
     if (!block->data) {
         block->data = std::make_shared<blockdata_t>();
         block->data->dirty = true;
@@ -363,20 +376,23 @@ void* highlightThread(void* arg)
 
     editor_t tmp;
     tmp.document.open(editor->document.filePath, false);
-    tmp.highlighter.lang = threadHl->lang;
+    tmp.highlighter.lang = language_from_file(editor->document.filePath, app_t::instance()->extensions);
+    // tmp.highlighter.lang = threadHl->lang;
     tmp.highlighter.theme = threadHl->theme;
 
-    usleep(200000);
-
-    int runLine = 0;
-    while (runLine < tmp.document.blocks.size()) {
-        block_ptr b = tmp.document.blocks[runLine];
-        block_ptr sb = editor->snapshots[0].snapshot[runLine];
+    block_ptr b = tmp.document.firstBlock();
+    while (b) {
         tmp.highlighter.highlightBlock(b);
+
+        block_ptr sb = editor->snapshots[0].snapshot[b->lineNumber];
         sb->data = b->data;
-        runLine++;
-        usleep(1000);
+
+        // log("%d", runLine);
+        b = b->next();
+        usleep(10);
     }
+
+    usleep(1000);
 
     threadHl->threadId = 0;
     return NULL;
