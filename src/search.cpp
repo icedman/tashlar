@@ -93,7 +93,8 @@ std::vector<search_result_t> search_t::find(std::string str, std::string pat)
 
         // cleanup - non-regex
         for (int i = 0; i < pat.length(); i++) {
-            if (pat[i] == '(' || pat[i] == ')' || pat[i] == '[' || pat[i] == ']') {
+            if (pat[i] == '(' || pat[i] == ')' || pat[i] == '[' || pat[i] == ']' ||
+                pat[i] == '/' || pat[i] == '*' || pat[i] == '{' || pat[i] == '}') {
                 pat[i] = '.';
             }
         }

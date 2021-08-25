@@ -101,7 +101,7 @@ std::string app_t::clipboard()
 {
     std::string res;
     if (render_t::instance()) {
-        render_t::instance()->getClipboardText();
+        res = render_t::instance()->getClipboardText();
     }
     if (res.length()) {
         return res;

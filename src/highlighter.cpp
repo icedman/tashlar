@@ -11,7 +11,6 @@
 #include <unistd.h>
 
 #define LINE_LENGTH_LIMIT 500
-#define USE_SET_FORMAT_FOR_STYLE 0
 
 highlighter_t::highlighter_t()
     : threadId(0)
@@ -40,46 +39,6 @@ struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
 
     return res;
 }
-
-#if USE_SET_FORMAT_FOR_STYLE
-static void setFormatFromStyle(size_t start, size_t length, style_t& style, const char* line, struct blockdata_t* blockData, std::string scope)
-{
-    int s = -1;
-
-    block_state_e state;
-    if (scope.find("comment") != std::string::npos) {
-        state = BLOCK_STATE_COMMENT;
-    } else if (scope.find("string") != std::string::npos) {
-        state = BLOCK_STATE_STRING;
-    } else {
-        state = BLOCK_STATE_UNKNOWN;
-    }
-
-    for (int i = start; i < start + length; i++) {
-        if (s == -1) {
-            if (line[i] != ' ' && line[i] != '\t') {
-                s = i;
-            }
-            continue;
-        }
-        if (line[i] == ' ' || i + 1 == start + length) {
-            if (s != -1) {
-                span_info_t span = {
-                    .start = s,
-                    .length = i - s + 1,
-                    .colorIndex = style.foreground.index,
-                    .bold = style.bold == bool_true,
-                    .italic = style.italic == bool_true,
-                    .state = state,
-                    .scope = scope
-                };
-                blockData->spans.insert(blockData->spans.begin(), 1, span);
-            }
-            s = -1;
-        }
-    }
-}
-#endif
 
 void highlighter_t::highlightBlocks(block_ptr block, int count)
 {
@@ -173,38 +132,6 @@ void highlighter_t::highlightBlock(block_ptr block)
         parser_state = parse::parse(first, last, parser_state, scopes, firstLine);
     }
 
- #if USE_SET_FORMAT_FOR_STYLE
-    std::string prevScopeName;
-    size_t si = 0;
-    size_t n = 0;
-    std::map<size_t, scope::scope_t>::iterator it = scopes.begin();
-    while (it != scopes.end()) {
-        n = it->first;
-        scope::scope_t scope = it->second;
-
-        // blockData->scopes.emplace(n, scope);
-        std::string scopeName(scope);
-        // std::string scopeName = to_s(scope);
-
-        it++;
-
-        if (n > si) {
-            style_t s = theme->styles_for_scope(prevScopeName);
-            // log("%s", prevScopeName.c_str());
-            setFormatFromStyle(si, n - si + 1, s, first, blockData, prevScopeName);
-        }
-
-        prevScopeName = scopeName;
-        si = n;
-    }
-
-    n = last - first;
-    if (n > si) {
-        // blockData->scopes.emplace(n, prevScopeName);
-        style_t s = theme->styles_for_scope(prevScopeName);
-        setFormatFromStyle(si, n - si + 1, s, first, blockData, prevScopeName);
-    }
-#else
     std::map<size_t, scope::scope_t>::iterator it = scopes.begin();
     size_t n = 0;
     size_t l = block->length();
@@ -213,7 +140,6 @@ void highlighter_t::highlightBlock(block_ptr block)
         scope::scope_t scope = it->second;
         std::string scopeName(scope);
         style_t s = theme->styles_for_scope(scopeName);
-        // setFormatFromStyle(si, n - si + 1, s, first, blockData, scopeName);
 
         block_state_e state;
         if (scopeName.find("comment") != std::string::npos) {
@@ -234,11 +160,15 @@ void highlighter_t::highlightBlock(block_ptr block)
                     .state = state,
                     .scope = scopeName
                 };
-        blockData->spans.insert(blockData->spans.begin(), 1, span);
 
+        if (blockData->spans.size() > 0) {
+            span_info_t &prevSpan = blockData->spans.front();
+            prevSpan.length = n - prevSpan.start;
+        }
+        blockData->spans.insert(blockData->spans.begin(), 1, span);
+        // blockData->spans.push_back(span);
         it++;
     }
-#endif
 
     //----------------------
     // langauge config
@@ -247,7 +177,6 @@ void highlighter_t::highlightBlock(block_ptr block)
     //----------------------
     // find block comments
     //----------------------
-    #if 0
     if (lang->blockCommentStart.length()) {
         size_t beginComment = text.find(lang->blockCommentStart);
         size_t endComment = text.find(lang->blockCommentEnd);
@@ -257,11 +186,47 @@ void highlighter_t::highlightBlock(block_ptr block)
             blockData->state = BLOCK_STATE_COMMENT;
             int b = beginComment != std::string::npos ? beginComment : 0;
             int e = endComment != std::string::npos ? endComment : (last - first);
-            setFormatFromStyle(b, e - b, s, first, blockData, "comment");
+
+            span_info_t span = {
+                .start = b,
+                .length = e - b,
+                .colorIndex = s.foreground.index,
+                .bold = s.bold == bool_true,
+                .italic = s.italic == bool_true,
+                .state = BLOCK_STATE_COMMENT,
+                .scope = "comment"
+            };
+            blockData->spans.insert(blockData->spans.begin(), 1, span);
+
+        } else if (beginComment != std::string::npos && endComment != std::string::npos) {
+            blockData->state = BLOCK_STATE_UNKNOWN;
+            int b = beginComment;
+            int e = endComment + lang->blockCommentEnd.length();
+            
+            span_info_t span = {
+                .start = b,
+                .length = e - b,
+                .colorIndex = s.foreground.index,
+                .bold = s.bold == bool_true,
+                .italic = s.italic == bool_true,
+                .state = BLOCK_STATE_COMMENT,
+                .scope = "comment"
+            };
+            blockData->spans.insert(blockData->spans.begin(), 1, span);
         } else {
             blockData->state = BLOCK_STATE_UNKNOWN;
             if (endComment != std::string::npos && previousBlockState == BLOCK_STATE_COMMENT) {
-                setFormatFromStyle(0, endComment + lang->blockCommentEnd.length(), s, first, blockData, "comment");
+                // setFormatFromStyle(0, endComment + lang->blockCommentEnd.length(), s, first, blockData, "comment");
+                span_info_t span = {
+                    .start = 0,
+                    .length = endComment + lang->blockCommentEnd.length(),
+                    .colorIndex = s.foreground.index,
+                    .bold = s.bold == bool_true,
+                    .italic = s.italic == bool_true,
+                    .state = BLOCK_STATE_UNKNOWN,
+                    .scope = "comment"
+                };
+                blockData->spans.insert(blockData->spans.begin(), 1, span);
             }
         }
     }
@@ -269,7 +234,6 @@ void highlighter_t::highlightBlock(block_ptr block)
     if (lang->lineComment.length()) {
         // comment out until the end
     }
-    #endif
 
     //----------------------
     // reset brackets
@@ -278,7 +242,7 @@ void highlighter_t::highlightBlock(block_ptr block)
     blockData->foldable = false;
     blockData->foldingBrackets.clear();
     blockData->ifElseHack = false;
-    // gatherBrackets(block, (char*)first, (char*)last);
+    gatherBrackets(block, (char*)first, (char*)last);
 
     blockData->parser_state = parser_state;
     blockData->dirty = false;
