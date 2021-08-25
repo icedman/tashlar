@@ -43,6 +43,7 @@ struct app_t {
     int tabSize;
     bool tabsToSpaces;
     bool lineWrap;
+    bool matchBrackets;
 
     std::string font;
     int fontSize;

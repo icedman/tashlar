@@ -114,11 +114,6 @@ void app_t::configure(int argc, char** argv)
     //-------------------
     // defaults
     //-------------------
-    lineWrap = false;
-    tabSize = 4;
-    enablePopup = true;
-    markup = "";
-
     bool fullEnv = true;
     if (render_t::instance() && render_t::instance()->isTerminal()) {
         fullEnv = false;
@@ -193,18 +188,27 @@ void app_t::configure(int argc, char** argv)
     //-------------------
     // editor settings
     //-------------------
+    matchBrackets = false;
+    if (settings.isMember("match_brackets")) {
+        matchBrackets = settings["match_brackets"].asBool();
+    }
+    lineWrap = false;
     if (settings.isMember("word_wrap")) {
         lineWrap = settings["word_wrap"].asBool();
     }
+    showStatusBar = true;
     if (settings.isMember("statusbar")) {
         showStatusBar = settings["statusbar"].asBool();
     }
+    showGutter = false;
     if (settings.isMember("gutter")) {
         showGutter = settings["gutter"].asBool();
     }
+    showSidebar = false;
     if (settings.isMember("sidebar")) {
         showSidebar = settings["sidebar"].asBool();
     }
+    showTabbar = false;
     if (settings.isMember("tabbar")) {
         showTabbar = settings["tabbar"].asBool();
     }
