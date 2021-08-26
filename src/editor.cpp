@@ -218,7 +218,7 @@ void editor_t::runOp(operation_t op)
         return;
 
     case TOGGLE_FOLD:
-        toggleFold(mainCursor.block()->lineNumber);
+        // toggleFold(mainCursor.block()->lineNumber);
         return;
 
     default:
@@ -732,10 +732,12 @@ void editor_t::toggleFold(size_t line)
         if (blockData->folded) {
             // block->setVisible(false);
             // block->setLineCount(0);
+            block->lineCount = 0;
         } else {
             targetData->dirty = true;
             // block->setVisible(true);
             // block->setLineCount(1);
+            block->lineCount = 1;
         }
         if (block == endBlock) {
             break;

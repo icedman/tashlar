@@ -128,6 +128,7 @@ void render_t::initialize()
 
     initscr();
     raw();
+    keypad(stdscr, true);
     noecho();
     nodelay(stdscr, true);
 

@@ -24,6 +24,10 @@ struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
     res.bold = false;
     res.italic = false;
     res.length = 0;
+    res.state = BLOCK_STATE_UNKNOWN;
+    if (!blockData) {
+        return res;
+    }
     for (auto span : blockData->spans) {
         if (span.length == 0) {
             continue;
@@ -202,7 +206,7 @@ void highlighter_t::highlightBlock(block_ptr block)
             blockData->state = BLOCK_STATE_UNKNOWN;
             int b = beginComment;
             int e = endComment + lang->blockCommentEnd.length();
-            
+
             span_info_t span = {
                 .start = b,
                 .length = e - b,

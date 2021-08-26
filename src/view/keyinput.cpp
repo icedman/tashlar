@@ -239,43 +239,43 @@ static int readEscapeSequence(std::string& keySequence)
                 return K_ESC;
             }
 
-        } else {
-            // log("escape+[+%d\n", seq[1]);
-            switch (seq[1]) {
-            case 'A':
-                keySequence = "up";
-                return KEY_UP;
-            case 'B':
-                keySequence = "down";
-                return KEY_DOWN;
-            case 'C':
-                keySequence = "right";
-                return KEY_RIGHT;
-            case 'D':
-                keySequence = "left";
-                return KEY_LEFT;
-            case 'H':
-                keySequence = "home";
-                return K_HOME_KEY;
-            case 'F':
-                keySequence = "end";
-                return K_END_KEY;
-            }
-
-            return K_ESC;
         }
+    }
+
+    if (seq[0] == '[' || seq[0] == 'O') {
+        switch (seq[1]) {
+        case 'A':
+            keySequence = "up";
+            return KEY_UP;
+        case 'B':
+            keySequence = "down";
+            return KEY_DOWN;
+        case 'C':
+            keySequence = "right";
+            return KEY_RIGHT;
+        case 'D':
+            keySequence = "left";
+            return KEY_LEFT;
+        case 'H':
+            keySequence = "home";
+            return K_HOME_KEY;
+        case 'F':
+            keySequence = "end";
+            return K_END_KEY;
+        }
+        log("escape+%c+%c\n", seq[0], seq[1]);
     }
 
     /* ESC O sequences. */
-    else if (seq[0] == 'O') {
-        // log("escape+O+%d\n", seq[1]);
-        switch (seq[1]) {
-        case 'H':
-            return K_HOME_KEY;
-        case 'F':
-            return K_END_KEY;
-        }
-    }
+    // else if (seq[0] == 'O') {
+    //     log("escape+O+%d\n", seq[1]);
+    //     switch (seq[1]) {
+    //     case 'H':
+    //         return K_HOME_KEY;
+    //     case 'F':
+    //         return K_END_KEY;
+    //     }
+    // }
 
     return K_ESC;
 }
