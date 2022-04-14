@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "../parser/defines.h"
+
 namespace scope {
 struct scope_t;
 

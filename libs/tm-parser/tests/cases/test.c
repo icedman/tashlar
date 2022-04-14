@@ -1,3 +1,5 @@
+// editor_command(editor, command.toNativeUtf8(), '${line}:${position}'.toNativeUtf8()); editor_command(editor, command.toNativeUtf8(), '${line}:${position}'.toNativeUtf8());
+
 /* test.c */
 #include <stdio.h>
 /* a sample app */

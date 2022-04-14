@@ -131,15 +131,17 @@ void theme_tokens(std::map<size_t, scope::scope_t>& scopes, theme_ptr theme)
         style_t s = theme->styles_for_scope(scope);
 
         std::cout << n << " size:" << scope.size() << " last:" << scope.back().c_str()
-        << " " << s.foreground.red << ", " << s.foreground.green << ", " << s.foreground.blue
-        << std::endl;
+                  << " " << s.foreground.red << ", " << s.foreground.green << ", " << s.foreground.blue
+                  << std::endl;
 
         it++;
     }
 }
 
-void test_c()
+int test_c()
 {
+    int lines = 0;
+
     grammar_ptr gm;
     // gm = load("test-cases/first-mate/fixtures/c.json");
     gm = load("extensions/cpp/syntaxes/cpp.tmLanguage.json");
@@ -149,8 +151,8 @@ void test_c()
     theme_ptr theme = parse_theme(root);
 
     // FILE* fp = fopen("tests/cases/sqlite3.c", "r");
-    FILE* fp = fopen("tests/cases/test.cpp", "r");
-    // FILE* fp = fopen("tests/cases/tinywl.c", "r");
+    // FILE* fp = fopen("tests/cases/test.cpp", "r");
+    FILE* fp = fopen("tests/cases/tinywl.c", "r");
     char str[1024];
 
     for (int i = 0; i < 1; i++) {
@@ -172,9 +174,10 @@ void test_c()
             std::map<size_t, scope::scope_t> scopes;
             parser_state = parse::parse(first, last, parser_state, scopes, firstLine);
             dump_tokens(scopes);
+            lines++;
 
             // theme_tokens(scopes, theme);
-            
+
             firstLine = false;
 
             // break;
@@ -182,6 +185,8 @@ void test_c()
     }
 
     fclose(fp);
+
+    return lines;
 }
 
 void test_markdown()
@@ -201,7 +206,6 @@ void test_markdown()
     for (int i = 0; i < 1; i++) {
         fseek(fp, 0, SEEK_SET);
         bool firstLine = true;
-
         parse::stack_ptr parser_state = gm->seed();
         while (fgets(str, 1000, fp)) {
 
@@ -216,7 +220,7 @@ void test_markdown()
             dump_tokens(scopes);
 
             // theme_tokens(scopes, theme);
-            
+
             firstLine = false;
 
             // break;
@@ -226,21 +230,71 @@ void test_markdown()
     fclose(fp);
 }
 
+void test_stream()
+{
+    grammar_ptr gm;
+    gm = load("extensions/cpp/syntaxes/cpp.tmLanguage.json");
+
+    Json::Value root = parse::loadJson("test-cases/themes/light_vs.json");
+    theme_ptr theme = parse_theme(root);
+
+    std::ifstream file = std::ifstream("tests/cases/test.cpp", std::ifstream::in);
+
+    int lines[32];
+
+    std::string content;
+    std::string line;
+    size_t pos = file.tellg();
+    size_t lineNo = 0;
+    while (std::getline(file, line)) {
+        lines[lineNo++] = pos;
+        pos = file.tellg();
+        content += line + "\n";
+    }
+    content += "\n\n";
+    lines[lineNo] = pos;
+
+    bool firstLine = true;
+    parse::stack_ptr parser_state = gm->seed();
+
+    const char* cstr = content.c_str();
+    for (int i = 0; i < lineNo; i++) {
+        const char* start = cstr + lines[i];
+        size_t len = (cstr + lines[i + 1]) - start;
+        std::string test = std::string(start, len);
+
+        std::cout << test << std::endl;
+
+        std::map<size_t, scope::scope_t> scopes;
+        parser_state = parse::parse(start, start + len, parser_state, scopes, firstLine);
+        dump_tokens(scopes);
+        break;
+
+        firstLine = false;
+    }
+    // printf("%s\n", content.c_str());
+}
+
 int main(int argc, char** argv)
 {
     clock_t start, end;
     double cpu_time_used;
     start = clock();
 
+    int lines = 1;
+
     // test_read_and_parse();
     // test_hello();
     // test_coffee();
-    test_c();
+    lines = test_c();
+    // test_stream();
+
     // test_markdown();
     // test_plist();
 
     end = clock();
     cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    std::cout << std::endl << "done in " << cpu_time_used << "s" << std::endl;
+    std::cout << std::endl
+              << "done in " << cpu_time_used << "s " << (cpu_time_used/lines) << "s/line" << std::endl;
     return 0;
 }

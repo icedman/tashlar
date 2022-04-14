@@ -11,7 +11,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef WIN64
 #include <strings.h>
+#else
+#define strcasecmp stricmp
+#endif
 
 uint32_t make_color(int r, int g, int b)
 {
@@ -109,6 +114,10 @@ bool parse_color(const char* color, uint32_t* result)
         return false;
     }
     *result = len == 6 ? ((parsed << 8) | 0xFF) : parsed;
+
+    // float rgba[4];
+    // color_to_rgba(rgba, *result);
+    // printf("parse color %s [%f,%f,%f]\n", color, rgba[0],rgba[1],rgba[2]);
     return true;
 }
 

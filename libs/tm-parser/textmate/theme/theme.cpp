@@ -1,19 +1,36 @@
 #include "theme.h"
-#include "util.h"
 #include "colors.h"
-// #include "reader.h"
+#include "util.h"
 
 #include <iostream>
 
-static theme_t *current_parsed_theme = 0;
+static theme_t* current_parsed_theme = 0;
 static std::map<int, color_info_t> trueColors;
 
-int nearest_color(int r, int g, int b)
+static int termColorCount = 256;
+static color_t* termColors = (color_t*)termColors256;
+
+
+int nearest_color(int r, int g, int b, bool trueColor = false)
 {
     int idx = -1;
     long d = 0;
-    
-    for(int i=0; i<256; i++) {
+
+    if (trueColor) {
+        for(auto cp : trueColors) {
+            color_info_t clr = cp.second;
+            int rr = r - clr.red; 
+            int gg = g - clr.green; 
+            int bb = b - clr.blue;
+            long dd = (rr * rr) + (gg * gg) + (bb * bb);
+            if (idx == -1 || d > dd) {
+                d = dd;
+                idx = clr.index;
+            } 
+        }
+    }
+
+    for(int i=0; i<termColorCount; i++) {
         const color_t clr = termColors[i];
         int rr = r - clr.r; 
         int gg = g - clr.g; 
@@ -26,8 +43,20 @@ int nearest_color(int r, int g, int b)
     }
 
     color_info_t c(r, g, b, 255);
+    if (d != 0 && trueColor) {
+        c.index = termColorCount + trueColors.size();
+        trueColors[c.index] = c;
+        return c.index;
+    }
     trueColors[idx] = c;
     return idx;
+}
+
+int color_info_t::set_term_color_count(int count)
+{
+    termColorCount = count == 8 ? 8 : 256;
+    termColors = count == 8 ? (color_t*)termColors8 : (color_t*)termColors256;
+    return termColorCount;
 }
 
 color_info_t color_info_t::true_color(int idx)
@@ -37,6 +66,9 @@ color_info_t color_info_t::true_color(int idx)
 
 color_info_t color_info_t::term_color(int idx)
 {
+    // if (idx > 255) {
+    //     return trueColors[idx];
+    // }
     const color_t clr = termColors[idx];
     color_info_t c(clr.r, clr.g, clr.b, 255);
     return c;
@@ -46,7 +78,7 @@ int color_info_t::nearest_color_index(int red, int green, int blue)
 {
     return nearest_color(red * 255, green * 255, blue * 255);
 }
-    
+
 /*
 https://code.visualstudio.com/api/references/theme-color
 */
@@ -118,7 +150,7 @@ static void get_settings_color(Json::Value const& item, color_info_t* target)
             current_parsed_theme->colorIndices.emplace(target->index, clr);
         }
     }
-    
+
     // std::cout<<item.asString()<<std::endl;
 }
 
@@ -176,6 +208,14 @@ void theme_t::shared_styles_t::setup_styles(Json::Value const& themeItem)
                 _styles.push_back(parse_styles(item, scope[j].asString()));
             }
         }
+    }
+
+    // find global background/foreground
+    // We assume that the first style is the unscoped root style
+
+    if (!_styles.empty()) {
+        _foreground = _styles[0].foreground;
+        _background = _styles[0].background;
     }
 }
 
@@ -248,6 +288,10 @@ void theme_t::theme_color(std::string const& name, color_info_t& color)
         Json::Value colors = bundle["colors"];
         current_parsed_theme = this;
         get_settings_color(colors[name], &color);
+    } else {
+        color.red = -1;
+        color.green = 0;
+        color.blue = -0;
     }
 }
 
@@ -267,6 +311,16 @@ void theme_t::setup_global_style(Json::Value const& themeItem)
             }
         }
     }
+}
+
+color_info_t theme_t::foreground() const
+{
+    return _styles->_foreground;
+}
+
+color_info_t theme_t::background(std::string const& fileType) const
+{
+    return _styles->_background;
 }
 
 theme_t::shared_styles_ptr
@@ -291,21 +345,17 @@ theme_ptr parse_theme(Json::Value& themeItem)
 {
     // std::cout << themeItem << std::endl;
     static std::map<std::string, theme_ptr> Cache;
-    std::string const& uuid = themeItem["name"].asString();
+    std::string const& uuid = themeItem["uuid"].asString();
+
+    printf("theme uuid: %s\n", uuid.c_str());
+
+    // if (uuid == "") {
+    //     return std::make_shared<theme_t>(themeItem);
+    // }
+
     auto theme = Cache.find(uuid);
     if (theme == Cache.end()) {
-
         theme_ptr _theme = std::make_shared<theme_t>(themeItem);
-
-        // include
-        if (themeItem.isMember("include")) {
-#if 0
-            // not supported for now
-            std::string filename = themeItem["include"].asString();
-            Json::Value inc = parse::loadJson(filename);
-            theme_ptr _parent_theme = parse_theme(inc);
-#endif
-        }
         theme = Cache.emplace(uuid, _theme).first;
     }
 

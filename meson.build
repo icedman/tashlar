@@ -20,7 +20,6 @@ tashlar_files = [
     'src/dots.cpp',
     'src/editor.cpp',
     'src/explorer.cpp',
-    'src/extension.cpp',
     'src/gem.cpp',
     'src/gutter.cpp',
     'src/highlighter.cpp',
@@ -33,7 +32,6 @@ tashlar_files = [
     'src/snapshot.cpp',
     'src/tabbar.cpp',
     'src/statusbar.cpp',
-    'src/util.cpp',
     'src/view.cpp',
     'src/keybinding.cpp'
 ]
@@ -54,7 +52,8 @@ tashlar_curses_files = [
 textmate_inc = include_directories(
     'libs/tm-parser/textmate/parser',
     'libs/tm-parser/textmate/theme',
-    'libs/tm-parser/textmate/scopes'
+    'libs/tm-parser/textmate/scopes',
+    'libs/tm-parser/textmate/extensions'
 )
 
 textmate_files = [
@@ -67,7 +66,11 @@ textmate_files = [
     'libs/tm-parser/textmate/scopes/parse.cpp',
     'libs/tm-parser/textmate/scopes/match.cpp',
     'libs/tm-parser/textmate/theme/theme.cpp',
-    'libs/tm-parser/textmate/theme/util.cpp'
+    'libs/tm-parser/textmate/theme/util.cpp',
+    'libs/tm-parser/textmate/extensions/tinyxml2.cpp',
+    'libs/tm-parser/textmate/extensions/extension.cpp',
+    'libs/tm-parser/textmate/extensions/utf8.cpp',
+    'libs/tm-parser/textmate/extensions/util.cpp'
 ]
  
 curses_dep = dependency('ncursesw', required: false, disabler: true)

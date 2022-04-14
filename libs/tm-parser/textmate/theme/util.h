@@ -3,6 +3,9 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <string>
+#include <vector>
+#include <set>
 
 // #include <wayland-server-protocol.h>
 
@@ -38,5 +41,13 @@ float parse_float(const char* value);
 // subpixel);
 
 // bool sway_set_cloexec(int fd, bool cloexec);
+
+std::vector<size_t> split_path_to_indices(const std::string& str,
+    const std::set<char> delimiters);
+std::vector<std::string> split_path(const std::string& str,
+    const std::set<char> delimiters);
+std::vector<std::string> enumerate_dir(const std::string path);
+
+bool expand_path(char** path);
 
 #endif

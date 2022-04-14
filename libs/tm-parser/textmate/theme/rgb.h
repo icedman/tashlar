@@ -4,7 +4,7 @@ typedef struct _colorEntry {
     int r;
     int g;
     int b;
-    char* name;
+    const char* name;
 } colorEntry;
 
 colorEntry colorTable[] = { { 255, 250, 250, "snow" },

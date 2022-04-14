@@ -23,7 +23,9 @@ static bool convert_array(Json::Value const& patterns,
 static bool convert_dictionary(Json::Value const& repository,
     repository_ptr& res)
 {
-
+    if (!repository.isObject()) {
+        return false;
+    }
     std::vector<std::string> keys = repository.getMemberNames();
     std::vector<std::string>::iterator it = keys.begin();
     while (it != keys.end()) {
@@ -44,7 +46,7 @@ rule_ptr convert_json(Json::Value const& json)
     if (!json.isObject()) {
         return res;
     }
-    
+
     //------------
     // strings
     //------------

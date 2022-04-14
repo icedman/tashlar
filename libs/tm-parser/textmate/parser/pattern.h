@@ -1,11 +1,12 @@
 #ifndef PARSE_PATTERN_H
 #define PARSE_PATTERN_H
 
-#include "defines.h"
-#include "onigmognu.h"
 #include <map>
 #include <memory>
 #include <string>
+
+#include "defines.h"
+#include "onigmognu.h"
 
 std::map<std::string, std::string> extract_captures(OnigUChar const* buffer,
     OnigRegion const* match,

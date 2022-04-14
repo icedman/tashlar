@@ -1,5 +1,5 @@
-#include "parse.h"
 #include "grammar.h"
+#include "parse.h"
 
 #include <cstring>
 #include <iostream>
@@ -159,7 +159,8 @@ static std::string expand_back_references(std::string const& ptrn,
     for (auto const& it : ptrn) {
         if (escape && isdigit(it)) {
             // int i = digittoint(it);
-            int i = (int)it;
+            // int i = (int)it;
+            int i = atoi(&it);
             if (!m.empty(i))
                 escape_regexp(m.buffer() + m.begin(i), m.buffer() + m.end(i),
                     back_inserter(res));
@@ -336,32 +337,29 @@ static void collect_children(std::vector<rule_ptr> const& children,
         collect_rule(rule.get(), res, groups);
 }
 
-#if 0
-static void collect_injections(stack_ptr const &stack,
-                               scope::context_t const &scope,
-                               std::vector<rule_t *> const &groups,
-                               std::vector<rule_t *> &res) {
+#if 1
+static void collect_injections(stack_ptr const& stack,
+    scope::context_t const& scope,
+    std::vector<rule_t*> const& groups,
+    std::vector<rule_t*>& res)
+{
     // D(DBF_Parser_Flow, bug("%s\n", to_s(scope).c_str()););
-    for(stack_ptr node = stack; node; node = node->parent)
-    {
-      for(auto const& pair : node->rule->injections)
-      {
-        if(pair.first.does_match(scope))
-          collect_rule(pair.second.get(), res, nullptr);
-      }
+    for (stack_ptr node = stack; node; node = node->parent) {
+        for (auto const& pair : node->rule->injections) {
+            if (pair.first.does_match(scope))
+                collect_rule(pair.second.get(), res, nullptr);
+        }
     }
 
-    for(rule_t const* rule : groups)
-    {
-      if(rule->is_root) // already handled via the stack
-        continue;
+    for (rule_t const* rule : groups) {
+        if (rule->is_root) // already handled via the stack
+            continue;
 
-      for(auto const& pair : rule->injections)
-      {
-        // D(DBF_Parser_Flow, bug("selector: ‘%s’ → %s\n", to_s(pair.first).c_str(), BSTR(pair.first.does_match(scope))););
-        if(pair.first.does_match(scope))
-          collect_rule(pair.second.get(), res, nullptr);
-      }
+        for (auto const& pair : rule->injections) {
+            // D(DBF_Parser_Flow, bug("selector: ‘%s’ → %s\n", to_s(pair.first).c_str(), BSTR(pair.first.does_match(scope))););
+            if (pair.first.does_match(scope))
+                collect_rule(pair.second.get(), res, nullptr);
+        }
     }
 }
 #endif
@@ -399,11 +397,11 @@ static void collect_rules(char const* first, char const* last, size_t i,
     std::vector<rule_t*> rules, groups, injectedRulesPre, injectedRulesPost;
     collect_children(stack->rule->children, rules, &groups);
 
-#if 0
-  collect_injections(stack, 
-    scope::context_t(stack->scope, ""), groups, injectedRulesPre);
-  collect_injections(stack, 
-    scope::context_t("", stack->scope), groups, injectedRulesPost);
+#if 1
+    collect_injections(stack,
+        scope::context_t(stack->scope, ""), groups, injectedRulesPre);
+    collect_injections(stack,
+        scope::context_t("", stack->scope), groups, injectedRulesPost);
 #endif
 
     for (rule_t* rule : groups)
@@ -478,7 +476,7 @@ static stack_ptr parse(char const* first, char const* last, stack_ptr stack,
                 scopes.add(m.begin(), scopeString);
             }
 
-            apply_captures(scope, m, rule->while_captures ?: rule->captures, scopes,
+            apply_captures(scope, m, rule->while_captures ? rule->while_captures : rule->captures, scopes,
                 firstLine);
 
             if (rule->content_scope_string != NULL_STR) {
@@ -539,7 +537,7 @@ static stack_ptr parse(char const* first, char const* last, stack_ptr stack,
         if (m.is_end_pattern) {
             if (stack->content_scope_string != NULL_STR)
                 scopes.remove(m.match.begin(), stack->content_scope_string, true);
-            apply_captures(scope, m.match, rule->end_captures ?: rule->captures,
+            apply_captures(scope, m.match, rule->end_captures ? rule->end_captures : rule->captures,
                 scopes, firstLine);
             if (stack->scope_string != NULL_STR)
                 scopes.remove(m.match.end(), stack->scope_string, true);
@@ -580,7 +578,7 @@ static stack_ptr parse(char const* first, char const* last, stack_ptr stack,
                 scopes.add(m.match.begin(), stack->scope_string);
             }
 
-            apply_captures(scope, m.match, rule->begin_captures ?: rule->captures,
+            apply_captures(scope, m.match, rule->begin_captures ? rule->begin_captures : rule->captures,
                 scopes, firstLine);
 
             if (rule->content_scope_string != NULL_STR) {
@@ -632,7 +630,6 @@ static stack_ptr parse(char const* first, char const* last, stack_ptr stack,
 
         // D(DBF_Parser, bug("%zu rules before collecting\n", rules.size()););
         collect_rules(first, last, i, firstLine, stack, rules, match_cache);
-
         // D(DBF_Parser, bug("%zu rules after collecting\n", rules.size()););
     }
 

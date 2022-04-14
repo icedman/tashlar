@@ -240,7 +240,7 @@ int unescape_string(char* string)
     return len - shift;
 }
 
-char* join_args(char** argv, int argc)
+char* _join_args(char** argv, int argc)
 {
     // if (!sway_assert(argc > 0, "argc should be positive")) {
     //     return NULL;
@@ -322,7 +322,8 @@ char* argsep(char** stringp, const char* delim, char* matched)
     return start;
 }
 
-bool expand_path(char** path)
+#if 0
+bool _expand_path(char** path)
 {
     wordexp_t p = { 0 };
     while (strstr(*path, "  ")) {
@@ -340,3 +341,4 @@ bool expand_path(char** path)
     wordfree(&p);
     return true;
 }
+#endif
