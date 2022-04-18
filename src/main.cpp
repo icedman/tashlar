@@ -1,57 +1,101 @@
+#include <stdio.h>
 #include "app.h"
-#include "editor.h"
-#include "explorer.h"
-#include "keyinput.h"
-#include "render.h"
-#include "scripting.h"
 #include "search.h"
+#include "statusbar.h"
+#include "explorer.h"
+#include "editor.h"
+#include "operation.h"
+#include "keyinput.h"
+#include "util.h"
 
-int main(int argc, char** argv)
+#include "view.h"
+#include "app_view.h"
+#include "editor_view.h"
+#include "gem_view.h"
+#include "explorer_view.h"
+#include "statusbar_view.h"
+#include "tabbar_view.h"
+#include "popup_view.h"
+#include "render.h"
+
+int main(int argc, char **argv)
 {
-    keybinding_t keybinding;
-    render_t renderer;
-    scripting_t scripting;
-    search_t search;
-    app_t app;
+    const int delta = 100;
 
-    renderer.initialize();
-    scripting.initialize();
-    keybinding.initialize();
+    app_t app;
+    keybinding_t keybinding;
+    explorer_t explorer;
+    statusbar_t statusbar;
+    search_t search;
+
+    render_t renderer;
+
+    popup_root_view_t popups;
 
     app.configure(argc, argv);
     app.setupColors();
-    app.applyTheme();
 
-    // editor
-    std::string file = "";
+    renderer.initialize();
+    renderer.updateColors();
+    
+    std::string file = "./";
+    // std::string file = "./src/main.cpp";
     if (argc > 1) {
         file = argv[argc - 1];
     }
 
     app.openEditor(file);
-    app.explorer.setRootFromFile(file);
+    explorer_t::instance()->setRootFromFile(file);
+
+    app_view_t root;
+    explorer_view_t explr;
+    statusbar_view_t sttbr;
+    tabbar_view_t tbbr;
+
+    view_t tabs;
+    tabs.viewLayout = LAYOUT_VERTICAL;
+    view_t content;
+    content.viewLayout = LAYOUT_HORIZONTAL;
+
+    tabs.addView(&tbbr);
+    tabs.addView(&content);
+    
+    view_t::setMainContainer(&content);
+
+    view_t main;
+    main.viewLayout = LAYOUT_HORIZONTAL;
+    main.addView(&explr);
+    main.addView(&tabs);
+
+    root.addView(&main);
+    root.addView(&sttbr);
+    root.applyTheme();
+
+    popups.applyTheme();
 
     std::string previousKeySequence;
     std::string expandedSequence;
 
     while (!app.end) {
+        root.update(delta);
+        popups.update(delta);
 
-        int delta = 100;
-        renderer.update(delta);
+        renderer.update();
 
-        // app_t::log("h:%d", renderer.height);
-        app.update(delta);
-        app.preLayout();
-        app.layout(0, 0, renderer.width, renderer.height);
-        app.preRender();
-        app.render();
+        root.preLayout();
+        root.layout(0, 0, renderer.width, renderer.height);
+        root.preRender();
+        root.render();
 
+        popups.preLayout();
+        popups.layout(0, 0, renderer.width, renderer.height);
+        popups.preRender();
+        popups.render();
+
+        // log("rows:%d", renderer.rows);
+
+        // todo run ui in separate thread
         renderer.render();
-
-        if (app.refreshCount > 0) {
-            app.refreshCount--;
-            continue;
-        }
 
         int ch = -1;
         std::string keySequence;
@@ -64,12 +108,6 @@ int main(int argc, char** argv)
             }
 
             if (ch != -1) {
-                break;
-            }
-
-            app.update(delta);
-            if (app.refreshCount) {
-                ch = -1;
                 break;
             }
         }
@@ -86,11 +124,19 @@ int main(int argc, char** argv)
             expandedSequence = "";
         }
 
-        // app_t::log("k: %d %s", ch, keySequence.c_str());
-        statusbar_t::instance()->setStatus(keySequence);
-        app.input(ch, keySequence);
+        // log("k: %d %s", ch, keySequence.c_str());
+        // statusbar_t::instance()->setStatus(keySequence);
+        // app.input(ch, keySequence);
+
+        if (popups.input(ch, keySequence)) {
+            continue;
+        }
+
+        root.input(ch, keySequence);
     }
 
+    // wait for running threads...
+    app.shutdown();
     renderer.shutdown();
     return 0;
 }

@@ -1,0 +1,18 @@
+extension dir: /opt/visual-studio-code/resources/app/extensions/
+extension dir: ~/Developer/textmate/ashlar-text/extensions/
+17 registered colors
+open: ./src/highlighter.cpp
+./src/highlighter.cpp file: highlighter.cpp suffix: .cpp
+scopeName: source.cpp
+grammar: /opt/visual-studio-code/resources/app/extensions/cpp/./syntaxes/cpp.tmLanguage.json
+grammar: /opt/visual-studio-code/resources/app/extensions/cpp/./syntaxes/cpp.tmLanguage.json
+extension: /opt/visual-studio-code/resources/app/extensions/cpp
+language configuration: /opt/visual-studio-code/resources/app/extensions/cpp/./language-configuration.json
+>updateBlocks
+./src/highlighter.cpp file: highlighter.cpp suffix: .cpp
+ctrl+96
+>updateBlocks
+ctrl+96
+>updateBlocks
+cancel
+cancel

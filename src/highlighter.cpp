@@ -1,13 +1,20 @@
 #include "highlighter.h"
-#include "app.h"
 #include "document.h"
 #include "parse.h"
+#include "util.h"
+#include "editor.h"
+#include "indexer.h"
+#include "render.h"
+#include "app.h"
 
 #include <cstring>
 #include <unistd.h>
 
+#define LINE_LENGTH_LIMIT 500
+
 highlighter_t::highlighter_t()
     : threadId(0)
+    , editor(0)
 {
 }
 
@@ -17,60 +24,39 @@ struct span_info_t spanAtBlock(struct blockdata_t* blockData, int pos)
     res.bold = false;
     res.italic = false;
     res.length = 0;
+    res.state = BLOCK_STATE_UNKNOWN;
+    if (!blockData) {
+        return res;
+    }
     for (auto span : blockData->spans) {
         if (span.length == 0) {
             continue;
         }
         if (pos >= span.start && pos < span.start + span.length) {
             res = span;
-            if (res.state != BLOCK_STATE_UNKNOWN) {
-                return res;
+            if (res.state == BLOCK_STATE_UNKNOWN) {
+                // log("unknown >>%d", span.start);
             }
+            return res;
         }
     }
 
     return res;
 }
 
-static void setFormatFromStyle(size_t start, size_t length, style_t& style, const char* line, struct blockdata_t* blockData, std::string scope)
+void highlighter_t::highlightBlocks(block_ptr block, int count)
 {
-    int s = -1;
-
-    block_state_e state;
-    if (scope.find("comment") != std::string::npos) {
-        state = BLOCK_STATE_COMMENT;
-    } else if (scope.find("string") != std::string::npos) {
-        state = BLOCK_STATE_STRING;
-    } else {
-        state = BLOCK_STATE_UNKNOWN;
-    }
-
-    for (int i = start; i < start + length; i++) {
-        if (s == -1) {
-            if (line[i] != ' ' && line[i] != '\t') {
-                s = i;
-            }
-            continue;
-        }
-        if (line[i] == ' ' || i + 1 == start + length) {
-            if (s != -1) {
-                span_info_t span = {
-                    .start = s,
-                    .length = i - s + 1,
-                    .colorIndex = style.foreground.index,
-                    .bold = style.bold == bool_true,
-                    .italic = style.italic == bool_true,
-                    .state = state
-                };
-                blockData->spans.insert(blockData->spans.begin(), 1, span);
-            }
-            s = -1;
-        }
+    while(block && count-- > 0) {
+        highlightBlock(block);
+        block = block->next();
     }
 }
 
 void highlighter_t::highlightBlock(block_ptr block)
 {
+    if (!block)
+        return;
+
     if (!block->data) {
         block->data = std::make_shared<blockdata_t>();
         block->data->dirty = true;
@@ -84,7 +70,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         return;
     }
 
-    app_t::instance()->log("highlight %d", block->lineNumber);
+    // log("hl %d", block->lineNumber);
 
     struct blockdata_t* blockData = block->data.get();
 
@@ -122,7 +108,7 @@ void highlighter_t::highlightBlock(block_ptr block)
     bool firstLine = true;
     parse::stack_ptr parser_state = NULL;
     std::map<size_t, scope::scope_t> scopes;
-    blockData->scopes.clear();
+    // blockData->scopes.clear();
     blockData->spans.clear();
 
     const char* first = str.c_str();
@@ -142,7 +128,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         firstLine = true;
     }
 
-    if (text.length() > 500) {
+    if (text.length() > LINE_LENGTH_LIMIT) {
         // too long to parse
         blockData->dirty = false;
         return;
@@ -150,32 +136,42 @@ void highlighter_t::highlightBlock(block_ptr block)
         parser_state = parse::parse(first, last, parser_state, scopes, firstLine);
     }
 
-    std::string prevScopeName;
-    size_t si = 0;
-    size_t n = 0;
     std::map<size_t, scope::scope_t>::iterator it = scopes.begin();
+    size_t n = 0;
+    size_t l = block->length();
     while (it != scopes.end()) {
         n = it->first;
         scope::scope_t scope = it->second;
+        std::string scopeName(scope);
+        style_t s = theme->styles_for_scope(scopeName);
 
-        blockData->scopes.emplace(n, scope);
-        std::string scopeName = to_s(scope);
-
-        it++;
-
-        if (n > si) {
-            style_t s = theme->styles_for_scope(prevScopeName);
-            setFormatFromStyle(si, n - si, s, first, blockData, prevScopeName);
+        block_state_e state;
+        if (scopeName.find("comment") != std::string::npos) {
+            state = BLOCK_STATE_COMMENT;
+        } else if (scopeName.find("string") != std::string::npos) {
+            state = BLOCK_STATE_STRING;
+        } else {
+            state = BLOCK_STATE_UNKNOWN;
         }
 
-        prevScopeName = scopeName;
-        si = n;
-    }
+        style_t style = theme->styles_for_scope(scopeName);
+        span_info_t span = {
+                    .start = n,
+                    .length = l - n,
+                    .colorIndex = style.foreground.index,
+                    .bold = style.bold == bool_true,
+                    .italic = style.italic == bool_true,
+                    .state = state,
+                    .scope = scopeName
+                };
 
-    n = last - first;
-    if (n > si) {
-        style_t s = theme->styles_for_scope(prevScopeName);
-        setFormatFromStyle(si, n - si, s, first, blockData, prevScopeName);
+        if (blockData->spans.size() > 0) {
+            span_info_t &prevSpan = blockData->spans.front();
+            prevSpan.length = n - prevSpan.start;
+        }
+        blockData->spans.insert(blockData->spans.begin(), 1, span);
+        // blockData->spans.push_back(span);
+        it++;
     }
 
     //----------------------
@@ -194,11 +190,47 @@ void highlighter_t::highlightBlock(block_ptr block)
             blockData->state = BLOCK_STATE_COMMENT;
             int b = beginComment != std::string::npos ? beginComment : 0;
             int e = endComment != std::string::npos ? endComment : (last - first);
-            setFormatFromStyle(b, e - b, s, first, blockData, "comment");
+
+            span_info_t span = {
+                .start = b,
+                .length = e - b,
+                .colorIndex = s.foreground.index,
+                .bold = s.bold == bool_true,
+                .italic = s.italic == bool_true,
+                .state = BLOCK_STATE_COMMENT,
+                .scope = "comment"
+            };
+            blockData->spans.insert(blockData->spans.begin(), 1, span);
+
+        } else if (beginComment != std::string::npos && endComment != std::string::npos) {
+            blockData->state = BLOCK_STATE_UNKNOWN;
+            int b = beginComment;
+            int e = endComment + lang->blockCommentEnd.length();
+
+            span_info_t span = {
+                .start = b,
+                .length = e - b,
+                .colorIndex = s.foreground.index,
+                .bold = s.bold == bool_true,
+                .italic = s.italic == bool_true,
+                .state = BLOCK_STATE_COMMENT,
+                .scope = "comment"
+            };
+            blockData->spans.insert(blockData->spans.begin(), 1, span);
         } else {
             blockData->state = BLOCK_STATE_UNKNOWN;
             if (endComment != std::string::npos && previousBlockState == BLOCK_STATE_COMMENT) {
-                setFormatFromStyle(0, endComment + lang->blockCommentEnd.length(), s, first, blockData, "comment");
+                // setFormatFromStyle(0, endComment + lang->blockCommentEnd.length(), s, first, blockData, "comment");
+                span_info_t span = {
+                    .start = 0,
+                    .length = endComment + lang->blockCommentEnd.length(),
+                    .colorIndex = s.foreground.index,
+                    .bold = s.bold == bool_true,
+                    .italic = s.italic == bool_true,
+                    .state = BLOCK_STATE_UNKNOWN,
+                    .scope = "comment"
+                };
+                blockData->spans.insert(blockData->spans.begin(), 1, span);
             }
         }
     }
@@ -239,6 +271,10 @@ void highlighter_t::highlightBlock(block_ptr block)
                 nextBlockData->dirty = true;
             }
         }
+    }
+
+    if (editor && editor->indexer) {
+        editor->indexer->updateBlock(block);
     }
 }
 
@@ -338,7 +374,7 @@ void highlighter_t::gatherBrackets(block_ptr block, char* first, char* last)
             blockData->foldable = l.open;
         }
 
-        // app_t::instance()->log("brackets %d %d", blockData->brackets.size(), blockData->foldingBrackets.size());
+        // log("brackets %d %d", blockData->brackets.size(), blockData->foldingBrackets.size());
     }
 }
 
@@ -349,19 +385,23 @@ void* highlightThread(void* arg)
 
     editor_t tmp;
     tmp.document.open(editor->document.filePath, false);
-    tmp.highlighter.lang = threadHl->lang;
+    tmp.highlighter.lang = language_from_file(editor->document.filePath, app_t::instance()->extensions);
+    // tmp.highlighter.lang = threadHl->lang;
     tmp.highlighter.theme = threadHl->theme;
 
-    usleep(200000);
-
-    int runLine = 0;
-    while (runLine < tmp.document.blocks.size()) {
-        block_ptr b = tmp.document.blocks[runLine];
-        block_ptr sb = editor->snapshots[0].snapshot[runLine];
+    block_ptr b = tmp.document.firstBlock();
+    while (b) {
         tmp.highlighter.highlightBlock(b);
+
+        block_ptr sb = editor->snapshots[0].snapshot[b->lineNumber];
         sb->data = b->data;
-        runLine++;
+
+        // log("%d", runLine);
+        b = b->next();
+        usleep(10);
     }
+
+    usleep(1000);
 
     threadHl->threadId = 0;
     return NULL;

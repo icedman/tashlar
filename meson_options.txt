@@ -9,3 +9,13 @@ option(
   type: 'boolean', value: true,
   description: 'build sdl-based app'
 )
+option(
+  'build_curses',
+  type: 'boolean', value: true,
+  description: 'build curses-based app'
+)
+option(
+  'build_test',
+  type: 'boolean', value: true,
+  description: 'build test app'
+)
