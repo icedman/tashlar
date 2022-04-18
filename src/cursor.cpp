@@ -1,7 +1,8 @@
 #include "cursor.h"
-#include "app.h"
 #include "document.h"
 #include "search.h"
+#include "util.h"
+#include "app.h"
 
 #include <algorithm>
 
@@ -742,7 +743,7 @@ int cursor_t::unindent()
             int count = _cursorUnindent(&cur);
 
             if (updatePos) {
-                app_t::instance()->log("unindent update pos %d", position());
+                log("unindent update pos %d", position());
                 if (cursor.position - count < 0) {
                     cursor.position = 0;
                 } else {
@@ -750,7 +751,7 @@ int cursor_t::unindent()
                 }
             }
             if (updateAnchor) {
-                app_t::instance()->log("unindent update anchor %d", anchorPosition());
+                log("unindent update anchor %d", anchorPosition());
                 if (anchor.position - count < 0) {
                     anchor.position = 0;
                 } else {
@@ -770,7 +771,8 @@ int cursor_t::unindent()
 
 static int _cursorToggleLineComment(cursor_t* cursor)
 {
-    editor_ptr editor = app_t::instance()->currentEditor;
+    // editor_ptr editor = app_t::instance()->currentEditor;
+    editor_t *editor = cursor->block()->document->editor;
     if (!editor->highlighter.lang || !editor->highlighter.lang->lineComment.length()) {
         return 0;
     }

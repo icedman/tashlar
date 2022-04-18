@@ -1,16 +1,19 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include "completer.h"
 #include "document.h"
 #include "highlighter.h"
-#include "keybinding.h"
+#include "operation.h"
 #include "snapshot.h"
-#include "view.h"
 
 typedef std::vector<operation_t> operation_list;
 
-struct editor_t : view_t {
+struct view_t;
+struct indexer_t;
+struct editor_t {
+
+    std::string name;
+
     editor_t();
     ~editor_t();
 
@@ -18,6 +21,7 @@ struct editor_t : view_t {
     void pushOp(operation_e op, std::string params = "");
     void pushOp(operation_t op);
     void runOp(operation_t op);
+    void runAllOps();
 
     void undo();
 
@@ -28,17 +32,14 @@ struct editor_t : view_t {
     cursor_t findBracketMatchCursor(bracket_info_t bracket, cursor_t cursor);
 
     void toggleFold(size_t line);
-    void ensureVisibleCursor();
 
-    // view
-    void update(int delta) override;
-    void layout(int x, int y, int width, int height) override;
-    void render() override;
-    void preRender() override;
-    bool input(char ch, std::string keys) override;
-    void applyTheme() override;
-    void mouseDown(int x, int y, int button, int clicks) override;
-    void mouseDrag(int x, int y, bool within) override;
+    void applyTheme();
+    bool input(char ch, std::string keys);
+
+    void highlight(int startingLine, int count);
+    void enableIndexer();
+
+    void toMarkup();
 
     document_t document;
     operation_list operations;
@@ -53,10 +54,12 @@ struct editor_t : view_t {
     bracket_info_t cursorBracket1;
     bracket_info_t cursorBracket2;
 
-    completer_t completer;
+    indexer_t *indexer;
 
     bool _scrollToCursor;
     int _foldedLines;
+
+    view_t *view;
 };
 
 typedef std::shared_ptr<struct editor_t> editor_ptr;

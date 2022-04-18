@@ -19,6 +19,7 @@ struct highlighter_t {
     highlighter_t();
 
     void gatherBrackets(block_ptr block, char* first, char* last);
+    void highlightBlocks(block_ptr block, int count = 1);
     void highlightBlock(block_ptr block);
     void run(editor_t* editor);
     void cancel();

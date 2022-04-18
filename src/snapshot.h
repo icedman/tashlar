@@ -2,7 +2,7 @@
 #define SNAPSHOT_H
 
 #include "block.h"
-#include "keybinding.h"
+#include "operation.h"
 #include <vector>
 
 struct snapshot_t {
